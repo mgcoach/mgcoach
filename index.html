@@ -1,0 +1,3618 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>NUTRI · Calculadora Profissional de Plano Alimentar</title>
+
+<!-- ============== PWA / iOS ============== -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="description" content="Calculadora profissional de plano alimentar com TMB, GET, macros e geração de PDF">
+
+<!-- iOS específico -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NutriFuel">
+
+<!-- Ícones (todos os tamanhos requeridos pelo iOS) -->
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
+<link rel="apple-touch-icon" sizes="167x167" href="icon-167.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+
+<!-- Splash screens iOS (opcionais mas dão polimento) -->
+<link rel="apple-touch-startup-image" href="splash-1290x2796.png" media="(device-width: 430px) and (device-height: 932px)">
+<link rel="apple-touch-startup-image" href="splash-1170x2532.png" media="(device-width: 390px) and (device-height: 844px)">
+<link rel="apple-touch-startup-image" href="splash-1125x2436.png" media="(device-width: 375px) and (device-height: 812px)">
+<link rel="apple-touch-startup-image" href="splash-828x1792.png" media="(device-width: 414px) and (device-height: 896px)">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  :root {
+    /* === IDENTIDADE VISUAL — Black & Orange Performance === */
+    --bg: #0a0a0a;
+    --bg-elev: #141414;
+    --bg-card: #1a1a1a;
+    --bg-input: #252525;
+    --border: #2e2e2e;
+    --border-soft: #1f1f1f;
+    
+    /* Laranja vibrante = energia, intensidade (Onnit/Barry's-style) */
+    --orange: #ff6b1a;
+    --orange-bright: #ff8533;
+    --orange-deep: #d94e00;
+    --orange-soft: rgba(255, 107, 26, 0.12);
+    --orange-glow: rgba(255, 107, 26, 0.4);
+    
+    --text: #f5f5f5;
+    --text-muted: #999;
+    --text-dim: #666;
+    
+    /* Macros — paleta complementar */
+    --kcal: #ff6b1a;
+    --protein: #ffaa3d;
+    --carb: #ffd566;
+    --fat: #c4a484;
+    
+    --success: #4ade80;
+    --warn: #fbbf24;
+    --danger: #ef4444;
+    
+    /* Tipografia */
+    --font-display: 'Bebas Neue', 'Impact', sans-serif;
+    --font-body: 'Inter', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+  }
+  
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.5;
+    background-image: 
+      radial-gradient(circle at 15% 20%, rgba(255, 107, 26, 0.06) 0%, transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(255, 107, 26, 0.04) 0%, transparent 40%);
+    background-attachment: fixed;
+    /* Safe area para notch do iPhone em modo standalone */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    /* Previne bounce/scroll horizontal indesejado no iOS */
+    -webkit-tap-highlight-color: transparent;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Quando rodando como PWA standalone, esconde indicador */
+  @media (display-mode: standalone) {
+    body { user-select: none; -webkit-user-select: none; }
+    input, textarea, select { user-select: text; -webkit-user-select: text; }
+  }
+  
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+  
+  /* === HEADER MARCA === */
+  .brand-header {
+    background: linear-gradient(135deg, #0d0d0d 0%, #1a1a1a 100%);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .brand-header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--orange-deep), var(--orange), var(--orange-bright), var(--orange));
+  }
+  
+  .brand-header::after {
+    content: '';
+    position: absolute;
+    top: -50%; right: -10%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, var(--orange-glow) 0%, transparent 60%);
+    opacity: 0.3;
+    pointer-events: none;
+  }
+  
+  .brand-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  
+  .logo-mark {
+    width: 52px;
+    height: 52px;
+    background: linear-gradient(135deg, var(--orange) 0%, var(--orange-deep) 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px var(--orange-glow);
+    position: relative;
+  }
+  
+  .logo-mark svg {
+    width: 28px;
+    height: 28px;
+    fill: var(--bg);
+  }
+  
+  .brand-text h1 {
+    font-family: var(--font-display);
+    font-size: 2.4rem;
+    line-height: 0.9;
+    letter-spacing: 0.02em;
+    color: var(--text);
+  }
+  
+  .brand-text h1 span {
+    color: var(--orange);
+  }
+  
+  .brand-tagline {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-top: 4px;
+    font-weight: 600;
+  }
+  
+  .brand-meta {
+    display: flex;
+    gap: 24px;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  
+  .brand-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  
+  .brand-meta-item strong {
+    color: var(--orange);
+    font-size: 1rem;
+    font-family: var(--font-mono);
+    letter-spacing: 0;
+  }
+  
+  /* === NAVEGAÇÃO === */
+  .nav-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    background: var(--bg-card);
+    padding: 5px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow-x: auto;
+  }
+  
+  .nav-tab {
+    flex: 1;
+    min-width: 130px;
+    padding: 11px 18px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 8px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    font-family: var(--font-body);
+  }
+  
+  .nav-tab:hover { color: var(--text); }
+  
+  .nav-tab.active {
+    background: var(--orange);
+    color: var(--bg);
+    box-shadow: 0 4px 14px var(--orange-glow);
+  }
+  
+  .panel { display: none; }
+  .panel.active { display: block; }
+  
+  /* === SEÇÕES === */
+  .section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  
+  .section-title::before {
+    content: '';
+    width: 3px;
+    height: 20px;
+    background: var(--orange);
+    border-radius: 2px;
+  }
+  
+  .section-subtitle {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+    margin-top: -10px;
+  }
+  
+  /* === CAMPOS === */
+  .field-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+  }
+  
+  .field {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .field label {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+  }
+  
+  .field input,
+  .field select,
+  .field textarea {
+    width: 100%;
+    padding: 11px 13px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.92rem;
+    font-family: var(--font-body);
+    transition: all 0.2s;
+  }
+  
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus {
+    outline: none;
+    border-color: var(--orange);
+    box-shadow: 0 0 0 3px var(--orange-soft);
+  }
+  
+  .field input:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  
+  .field-hint {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+  
+  /* === TMB ESPECÍFICO === */
+  .info-card {
+    background: linear-gradient(135deg, var(--orange-soft) 0%, transparent 100%);
+    border: 1px solid var(--orange-soft);
+    border-left: 3px solid var(--orange);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+  
+  .info-card strong { color: var(--orange); font-weight: 700; }
+  
+  .formula-toggle {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  
+  .formula-btn {
+    padding: 9px 16px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    font-family: var(--font-body);
+  }
+  
+  .formula-btn:hover { border-color: var(--orange); color: var(--text); }
+  
+  .formula-btn.active {
+    background: var(--orange);
+    border-color: var(--orange);
+    color: var(--bg);
+  }
+  
+  .results-block {
+    background: linear-gradient(135deg, #1c1c1c 0%, #161616 100%);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    margin-top: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .results-block::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--orange);
+  }
+  
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-soft);
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .result-row:last-child { border-bottom: none; padding-bottom: 4px; }
+  .result-row:first-child { padding-top: 4px; }
+  
+  .result-label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .result-label small {
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    margin-top: 3px;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+  }
+  
+  .result-value {
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--orange);
+  }
+  
+  .result-value.big {
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+    color: var(--orange-bright);
+    letter-spacing: 0.02em;
+  }
+  
+  /* === OBJETIVO === */
+  .objetivo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+  }
+  
+  .obj-btn {
+    padding: 14px 12px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    text-align: center;
+    font-family: var(--font-body);
+  }
+  
+  .obj-btn:hover { border-color: var(--orange); }
+  
+  .obj-btn small {
+    display: block;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+  }
+  
+  .obj-btn.active {
+    background: var(--orange);
+    border-color: var(--orange);
+    color: var(--bg);
+  }
+  
+  .obj-btn.active small { color: var(--bg); opacity: 0.75; }
+  
+  .macro-suggestion {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-top: 14px;
+  }
+  
+  .macro-suggestion-title {
+    font-size: 0.74rem;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+  }
+  
+  .macro-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  
+  .macro-item {
+    background: var(--bg-input);
+    padding: 14px 8px;
+    border-radius: 10px;
+    text-align: center;
+    border: 1px solid var(--border-soft);
+  }
+  
+  .macro-item-value {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    line-height: 1;
+    margin-bottom: 4px;
+    letter-spacing: 0.02em;
+  }
+  
+  .macro-item-label {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+  }
+  
+  .v-kcal { color: var(--kcal); }
+  .v-prot { color: var(--protein); }
+  .v-carb { color: var(--carb); }
+  .v-fat { color: var(--fat); }
+  
+  .apply-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--orange);
+    color: var(--bg);
+    border: none;
+    border-radius: 10px;
+    font-weight: 800;
+    cursor: pointer;
+    font-size: 0.85rem;
+    margin-top: 14px;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-family: var(--font-body);
+    box-shadow: 0 4px 14px var(--orange-glow);
+  }
+  
+  .apply-btn:hover {
+    background: var(--orange-bright);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px var(--orange-glow);
+  }
+  
+  /* === DADOS DO CLIENTE === */
+  .client-form {
+    background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-elev) 100%);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  
+  .client-form::before {
+    content: 'FICHA DO PACIENTE';
+    position: absolute;
+    top: -8px;
+    left: 16px;
+    background: var(--orange);
+    color: var(--bg);
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+  }
+  
+  /* === ADICIONAR ALIMENTO === */
+  .meal-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  
+  .meal-tab {
+    padding: 8px 14px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.78rem;
+    transition: all 0.2s;
+    font-weight: 600;
+  }
+  
+  .meal-tab:hover { border-color: var(--orange); color: var(--text); }
+  
+  .meal-tab.active {
+    background: var(--orange-soft);
+    border-color: var(--orange);
+    color: var(--orange);
+  }
+  
+  .add-form {
+    display: grid;
+    grid-template-columns: 1fr 100px 110px auto;
+    gap: 8px;
+    align-items: end;
+  }
+  
+  .search-wrapper { position: relative; }
+  
+  .input-mode-toggle {
+    display: flex;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 2px;
+    margin-bottom: 4px;
+    width: 100%;
+  }
+  
+  .input-mode-toggle button {
+    flex: 1;
+    padding: 5px 6px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.7rem;
+    border-radius: 5px;
+    font-weight: 700;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-family: var(--font-body);
+  }
+  
+  .input-mode-toggle button.active {
+    background: var(--orange);
+    color: var(--bg);
+  }
+  
+  .input-mode-toggle button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+  
+  .suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    max-height: 320px;
+    overflow-y: auto;
+    z-index: 50;
+    margin-top: 6px;
+    display: none;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.6);
+  }
+  
+  .suggestions.active { display: block; }
+  
+  .suggestion-item {
+    padding: 11px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-soft);
+    font-size: 0.86rem;
+    transition: background 0.15s;
+  }
+  
+  .suggestion-item:last-child { border-bottom: none; }
+  
+  .suggestion-item:hover, .suggestion-item.highlighted {
+    background: var(--orange-soft);
+    color: var(--orange);
+  }
+  
+  .suggestion-meta {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 3px;
+    font-family: var(--font-mono);
+  }
+  
+  .suggestion-item:hover .suggestion-meta,
+  .suggestion-item.highlighted .suggestion-meta {
+    color: var(--orange);
+    opacity: 0.75;
+  }
+  
+  .has-unit-badge {
+    display: inline-block;
+    background: var(--orange);
+    color: var(--bg);
+    font-size: 0.6rem;
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin-left: 6px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    vertical-align: middle;
+  }
+  
+  #addBtn {
+    padding: 11px 22px;
+    background: var(--orange);
+    color: var(--bg);
+    border: none;
+    border-radius: 8px;
+    font-weight: 800;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: var(--font-body);
+    box-shadow: 0 3px 12px var(--orange-glow);
+  }
+  
+  #addBtn:hover {
+    background: var(--orange-bright);
+    transform: translateY(-1px);
+  }
+  
+  /* === REFEIÇÕES === */
+  .meals-container {
+    display: grid;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  
+  .meal-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  
+  .meal-card:hover { border-color: rgba(255, 107, 26, 0.3); }
+  
+  .meal-header {
+    padding: 14px 18px;
+    background: linear-gradient(90deg, #1f1f1f 0%, var(--bg-card) 100%);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .meal-name {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    letter-spacing: 0.04em;
+    color: var(--orange);
+  }
+  
+  .meal-totals {
+    display: flex;
+    gap: 14px;
+    font-size: 0.76rem;
+    flex-wrap: wrap;
+    font-family: var(--font-mono);
+  }
+  
+  .meal-total-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--text-muted);
+  }
+  
+  .meal-total-item strong { color: var(--text); font-weight: 700; }
+  
+  .meal-total-item .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+  
+  .dot-kcal { background: var(--kcal); }
+  .dot-prot { background: var(--protein); }
+  .dot-carb { background: var(--carb); }
+  .dot-fat { background: var(--fat); }
+  
+  .food-list { padding: 4px; }
+  
+  .food-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto auto auto;
+    gap: 8px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    align-items: center;
+    transition: background 0.15s;
+  }
+  
+  .food-row:hover { background: var(--bg-elev); }
+  
+  .food-info { min-width: 0; }
+  
+  .food-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--text);
+  }
+  
+  .food-name .has-subs {
+    color: var(--orange);
+    font-size: 0.72rem;
+    margin-left: 6px;
+    cursor: pointer;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .food-name .has-subs:hover { text-decoration: underline; }
+  
+  .food-macros {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-family: var(--font-mono);
+  }
+  
+  .food-macros span strong { color: var(--text); font-weight: 700; }
+  
+  .food-qty-edit {
+    width: 64px;
+    padding: 6px 8px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.82rem;
+    text-align: right;
+    font-family: var(--font-mono);
+  }
+  
+  .food-qty-edit:focus {
+    outline: none;
+    border-color: var(--orange);
+  }
+  
+  .food-unit-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    min-width: 32px;
+    font-family: var(--font-mono);
+  }
+  
+  .icon-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    line-height: 1;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  
+  .icon-btn.subs:hover {
+    background: var(--orange-soft);
+    color: var(--orange);
+    border-color: var(--orange);
+  }
+  
+  .icon-btn.remove:hover {
+    background: var(--danger);
+    color: white;
+    border-color: var(--danger);
+  }
+  
+  /* === SUBSTITUIÇÕES === */
+  .subs-row {
+    background: var(--bg-elev);
+    border-top: 1px dashed var(--border);
+    padding: 10px 14px;
+    margin-top: -2px;
+  }
+  
+  .subs-title {
+    font-size: 0.7rem;
+    color: var(--orange);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .subs-title::before { content: '⇄'; font-size: 0.9rem; }
+  
+  .subs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .sub-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--bg-input);
+    border-radius: 6px;
+    font-size: 0.82rem;
+  }
+  
+  .sub-item .sub-name { flex: 1; min-width: 0; }
+  
+  .sub-item .sub-qty {
+    font-family: var(--font-mono);
+    color: var(--orange);
+    font-weight: 600;
+    font-size: 0.78rem;
+  }
+  
+  .sub-item .sub-macros {
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    font-size: 0.7rem;
+  }
+  
+  .sub-item button {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 0.95rem;
+    padding: 0 4px;
+    line-height: 1;
+  }
+  
+  .sub-item button:hover { color: var(--danger); }
+  
+  .add-sub-form {
+    display: grid;
+    grid-template-columns: 1fr 70px 80px auto;
+    gap: 6px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-soft);
+  }
+  
+  .add-sub-form input,
+  .add-sub-form select {
+    padding: 6px 8px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text);
+    font-size: 0.78rem;
+    font-family: var(--font-body);
+  }
+  
+  .add-sub-form input:focus,
+  .add-sub-form select:focus {
+    outline: none;
+    border-color: var(--orange);
+  }
+  
+  .add-sub-form button {
+    padding: 6px 10px;
+    background: var(--orange);
+    color: var(--bg);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .sub-search-wrapper { position: relative; }
+  
+  .sub-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 60;
+    margin-top: 4px;
+    display: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  }
+  
+  .sub-suggestions.active { display: block; }
+  
+  .sub-suggestions .suggestion-item {
+    padding: 7px 10px;
+    font-size: 0.78rem;
+  }
+  
+  /* === SUMMARY === */
+  .summary {
+    background: linear-gradient(135deg, var(--bg-card) 0%, #1f1f1f 100%);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    position: sticky;
+    bottom: 16px;
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.5);
+    overflow: hidden;
+  }
+  
+  .summary::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--orange-deep), var(--orange-bright));
+  }
+  
+  .summary-title {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    letter-spacing: 0.06em;
+    margin-bottom: 16px;
+    text-align: center;
+    color: var(--text);
+  }
+  
+  .summary-title span { color: var(--orange); }
+  
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  
+  .summary-item {
+    text-align: center;
+    padding: 14px 8px;
+    background: var(--bg-input);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    position: relative;
+  }
+  
+  .summary-value {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    line-height: 1;
+    margin-bottom: 4px;
+    letter-spacing: 0.02em;
+  }
+  
+  .summary-label {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+  }
+  
+  .summary-meta {
+    font-size: 0.66rem;
+    color: var(--text-dim);
+    margin-top: 6px;
+    display: block;
+    font-family: var(--font-mono);
+  }
+  
+  .summary-meta.over { color: var(--warn); }
+  .summary-meta.under { color: var(--text-muted); }
+  .summary-meta.ok { color: var(--success); }
+  
+  .actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  
+  .action-btn {
+    flex: 1;
+    min-width: 100px;
+    padding: 11px 14px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    transition: all 0.2s;
+    font-family: var(--font-body);
+  }
+  
+  .action-btn:hover {
+    border-color: var(--orange);
+    color: var(--orange);
+  }
+  
+  .action-btn.primary {
+    background: var(--orange);
+    color: var(--bg);
+    border-color: var(--orange);
+    box-shadow: 0 3px 12px var(--orange-glow);
+  }
+  
+  .action-btn.primary:hover {
+    background: var(--orange-bright);
+    color: var(--bg);
+  }
+  
+  .action-btn.danger:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+  
+  .footer-note {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    padding: 16px;
+    line-height: 1.6;
+  }
+  
+  .footer-note strong { color: var(--orange); }
+  
+  /* === MODAL === */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(6px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 16px;
+  }
+  
+  .modal-overlay.active { display: flex; }
+  
+  .modal {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    max-width: 520px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+  }
+  
+  .modal-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.4rem;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+  }
+  
+  .modal-close:hover { background: var(--bg-input); color: var(--text); }
+  
+  .modal-title {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+  
+  .modal-subtitle {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-bottom: 18px;
+  }
+  
+  .modal-subtitle strong { color: var(--orange); }
+  
+  /* === SCROLLBAR === */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--orange); }
+  
+  /* === RESPONSIVE === */
+  @media (max-width: 640px) {
+    .container { padding: 12px; }
+    .add-form { grid-template-columns: 1fr; }
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    .macro-grid { grid-template-columns: repeat(2, 1fr); }
+    .brand-text h1 { font-size: 1.8rem; }
+    .brand-meta { gap: 12px; font-size: 0.62rem; }
+    .nav-tab { min-width: 110px; padding: 10px 12px; font-size: 0.72rem; }
+    .add-sub-form { grid-template-columns: 1fr 60px 70px auto; }
+    .food-row { grid-template-columns: 1fr auto auto; }
+    .food-row .food-unit-label { display: none; }
+    .results-block .result-row { font-size: 0.85rem; }
+    .result-value.big { font-size: 1.7rem; }
+  }
+  
+  /* =====================================================
+     PRINT / PDF — Layout estilizado para impressão e PDF
+     ===================================================== */
+  
+  /* Esconde tudo no modo print exceto a área dedicada */
+  #pdfArea {
+    display: none;
+  }
+  
+  @media print {
+    @page {
+      size: A4;
+      margin: 12mm;
+    }
+    
+    body {
+      background: #fff !important;
+      background-image: none !important;
+      color: #000 !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    
+    .container > *:not(#pdfArea) { display: none !important; }
+    
+    #pdfArea {
+      display: block !important;
+      padding: 0;
+      max-width: 100%;
+    }
+    
+    .pdf-page {
+      page-break-after: always;
+    }
+    .pdf-page:last-child { page-break-after: auto; }
+    
+    .meal-block, .info-card-pdf, .totals-pdf {
+      page-break-inside: avoid;
+    }
+  }
+  
+  /* === PDF AREA STYLES (visíveis somente no print) === */
+  #pdfArea {
+    background: #fff;
+    color: #1a1a1a;
+    font-family: 'Inter', system-ui, sans-serif;
+    padding: 0;
+    width: 100%;
+    max-width: 794px;
+    margin: 0 auto;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  #pdfArea *,
+  #pdfArea *::before,
+  #pdfArea *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  .pdf-header {
+    background: #0a0a0a !important;
+    background-color: #0a0a0a !important;
+    color: #fff !important;
+    padding: 24px 28px;
+    border-radius: 12px;
+    margin-bottom: 18px;
+    position: relative;
+    overflow: hidden;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  .pdf-header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: #ff6b1a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  .pdf-header::after {
+    content: '';
+    position: absolute;
+    top: -40%; right: -10%;
+    width: 250px;
+    height: 250px;
+    background: radial-gradient(circle, rgba(255, 107, 26, 0.25) 0%, transparent 60%);
+  }
+  
+  .pdf-brand-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .pdf-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  
+  .pdf-logo {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #ff6b1a 0%, #d94e00 100%);
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0a0a0a;
+    font-family: 'Bebas Neue', Impact, sans-serif;
+    font-size: 1.6rem;
+    font-weight: 900;
+  }
+  
+  .pdf-title-block h1 {
+    font-family: 'Bebas Neue', Impact, sans-serif;
+    font-size: 2rem;
+    line-height: 0.95;
+    letter-spacing: 0.03em;
+    color: #fff;
+  }
+  
+  .pdf-title-block h1 span { color: #ff6b1a; }
+  
+  .pdf-tagline {
+    font-size: 0.62rem;
+    color: #999;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-top: 3px;
+  }
+  
+  .pdf-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: #ff6b1a;
+    letter-spacing: 0.1em;
+    text-align: right;
+  }
+  
+  .pdf-date-label {
+    font-size: 0.58rem;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 2px;
+    font-weight: 600;
+  }
+  
+  /* Card cliente */
+  .pdf-client {
+    background: #ffffff !important;
+    border: 1.5px solid #e5e5e5;
+    border-left: 4px solid #ff6b1a !important;
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 16px;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  .pdf-client-label {
+    font-size: 0.62rem;
+    color: #ff6b1a;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-weight: 800;
+    margin-bottom: 6px;
+  }
+  
+  .pdf-client-name {
+    font-family: 'Bebas Neue', Impact, sans-serif;
+    font-size: 1.7rem;
+    color: #0a0a0a;
+    letter-spacing: 0.02em;
+    margin-bottom: 8px;
+    line-height: 1;
+  }
+  
+  .pdf-client-meta {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    font-size: 0.78rem;
+    color: #555;
+  }
+  
+  .pdf-client-meta strong {
+    color: #1a1a1a;
+    font-weight: 700;
+  }
+  
+  /* Info do plano */
+  .pdf-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  
+  .pdf-stat {
+    background: #fff;
+    border: 1.5px solid #e5e5e5;
+    border-radius: 10px;
+    padding: 14px 10px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .pdf-stat::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  
+  .pdf-stat.kcal::before { background: #ff6b1a !important; }
+  .pdf-stat.prot::before { background: #ff8533 !important; }
+  .pdf-stat.carb::before { background: #d4a017 !important; }
+  .pdf-stat.fat::before { background: #8b6f47 !important; }
+  
+  .pdf-stat-value {
+    font-family: 'Bebas Neue', Impact, sans-serif;
+    font-size: 1.85rem;
+    line-height: 1;
+    margin-bottom: 4px;
+    letter-spacing: 0.02em;
+  }
+  
+  .pdf-stat.kcal .pdf-stat-value { color: #ff6b1a; }
+  .pdf-stat.prot .pdf-stat-value { color: #ff8533; }
+  .pdf-stat.carb .pdf-stat-value { color: #c89010; }
+  .pdf-stat.fat .pdf-stat-value { color: #8b6f47; }
+  
+  .pdf-stat-label {
+    font-size: 0.6rem;
+    color: #777;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+  }
+  
+  .pdf-stat-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: #999;
+    margin-top: 4px;
+  }
+  
+  /* Refeições no PDF */
+  .pdf-section-title {
+    font-family: 'Bebas Neue', Impact, sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.06em;
+    color: #0a0a0a;
+    margin: 18px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #ff6b1a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .pdf-meal {
+    background: #fff;
+    border: 1.5px solid #e5e5e5;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    page-break-inside: avoid;
+  }
+  
+  .pdf-meal-header {
+    background: #ff6b1a !important;
+    background-color: #ff6b1a !important;
+    color: #ffffff !important;
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  .pdf-meal-name {
+    font-family: 'Bebas Neue', Impact, sans-serif;
+    font-size: 1.1rem;
+    color: #ffffff !important;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+  }
+  
+  .pdf-meal-totals {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: #ffffff !important;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  
+  .pdf-meal-totals strong { color: #1a1a1a !important; background: rgba(255,255,255,0.95); padding: 1px 5px; border-radius: 3px; }
+  
+  .pdf-foods {
+    padding: 0;
+  }
+  
+  .pdf-food {
+    padding: 10px 14px;
+    border-bottom: 1px solid #f0f0f0;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: start;
+  }
+  
+  .pdf-food:last-child { border-bottom: none; }
+  
+  .pdf-food-name {
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 3px;
+  }
+  
+  .pdf-food-qty {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.74rem;
+    color: #ff6b1a;
+    font-weight: 700;
+  }
+  
+  .pdf-food-macros {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: #666;
+    text-align: right;
+    line-height: 1.5;
+  }
+  
+  .pdf-food-macros strong { color: #1a1a1a; }
+  
+  /* Substituições no PDF */
+  .pdf-subs {
+    background: #fff8f3 !important;
+    border-top: 1px dashed #ffaa3d;
+    padding: 8px 14px 10px;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  .pdf-subs-title {
+    font-size: 0.62rem;
+    color: #d94e00 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 800;
+    margin-bottom: 5px;
+  }
+  
+  .pdf-sub-item {
+    font-size: 0.74rem;
+    color: #555;
+    padding: 2px 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  
+  .pdf-sub-item strong { color: #1a1a1a; font-weight: 600; }
+  
+  .pdf-sub-item .pdf-sub-qty {
+    font-family: 'JetBrains Mono', monospace;
+    color: #d94e00 !important;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  
+  /* Footer do PDF */
+  .pdf-footer {
+    margin-top: 20px;
+    padding: 14px 18px;
+    background: #0a0a0a !important;
+    color: #ffffff !important;
+    border-radius: 10px;
+    font-size: 0.68rem;
+    line-height: 1.6;
+    text-align: center;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  .pdf-footer strong { color: #ff6b1a !important; }
+  .pdf-footer div { color: #cccccc !important; }
+  .pdf-footer div:first-child strong { color: #ffffff !important; }
+  
+  .pdf-disclaimer {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: #f8f8f8;
+    border-left: 3px solid #999;
+    border-radius: 6px;
+    font-size: 0.66rem;
+    color: #666;
+    line-height: 1.5;
+  }
+  
+  /* Quando estiver no modo "preview do PDF" antes de imprimir */
+  .pdf-preview-mode #pdfArea {
+    display: block !important;
+    margin-top: 20px;
+    background: #fff;
+    padding: 28px;
+    border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  
+  <!-- ============== HEADER MARCA ============== -->
+  <header class="brand-header">
+    <div class="brand-row">
+      <div class="brand-logo">
+        <div class="logo-mark">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L13.5 8L20 9L15 13.5L16.5 20L12 16.5L7.5 20L9 13.5L4 9L10.5 8L12 2Z"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>NUTRI<span>.</span>FUEL</h1>
+          <div class="brand-tagline">Performance · Nutrição · Ciência</div>
+        </div>
+      </div>
+      <div class="brand-meta">
+        <div class="brand-meta-item">
+          <span>Base TACO</span>
+          <strong id="metaTotalAlimentos">—</strong>
+        </div>
+        <div class="brand-meta-item">
+          <span>Versão</span>
+          <strong>3.0</strong>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============== NAVEGAÇÃO ============== -->
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-panel="metabolismo">⚡ TMB · GET</button>
+    <button class="nav-tab" data-panel="cliente">👤 Paciente</button>
+    <button class="nav-tab" data-panel="plano">🍽️ Plano</button>
+    <button class="nav-tab" data-panel="export">📄 Exportar</button>
+  </div>
+
+  <!-- ============== PAINEL TMB/GET ============== -->
+  <div class="panel active" id="panel-metabolismo">
+    
+    <div class="section">
+      <div class="section-title">Cálculo Metabólico</div>
+      
+      <div class="info-card">
+        <strong>TMB</strong> (Taxa Metabólica Basal) é a energia gasta em repouso. <strong>GET</strong> (Gasto Energético Total) = TMB × fator de atividade. Use <strong>Mifflin-St Jeor</strong> em adultos saudáveis ou <strong>Katch-McArdle</strong> se conhecer o % de gordura.
+      </div>
+
+      <div class="formula-toggle">
+        <button class="formula-btn active" data-formula="mifflin">Mifflin-St Jeor</button>
+        <button class="formula-btn" data-formula="harris">Harris-Benedict</button>
+        <button class="formula-btn" data-formula="katch">Katch-McArdle</button>
+        <button class="formula-btn" data-formula="cunningham">Cunningham</button>
+      </div>
+      
+      <div class="field-grid">
+        <div class="field">
+          <label>Sexo</label>
+          <select id="sexo">
+            <option value="m">Masculino</option>
+            <option value="f">Feminino</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Idade</label>
+          <input type="number" id="idade" placeholder="anos" min="1" max="120">
+        </div>
+        <div class="field">
+          <label>Peso (kg)</label>
+          <input type="number" id="peso" placeholder="kg" step="0.1" min="20">
+        </div>
+        <div class="field">
+          <label>Altura (cm)</label>
+          <input type="number" id="altura" placeholder="cm" min="100" max="230">
+        </div>
+        <div class="field" id="bfField" style="display:none">
+          <label>% Gordura</label>
+          <input type="number" id="bodyfat" placeholder="%" step="0.1" min="3" max="60">
+        </div>
+      </div>
+      
+      <div style="margin-top: 14px;">
+        <div class="field">
+          <label>Fator de Atividade (NAF)</label>
+          <select id="fator">
+            <option value="1.2">Sedentário · 1,2 — sem exercício, trabalho de escritório</option>
+            <option value="1.375">Levemente ativo · 1,375 — exercício leve 1-3x/sem</option>
+            <option value="1.55" selected>Moderadamente ativo · 1,55 — exercício 3-5x/sem</option>
+            <option value="1.725">Muito ativo · 1,725 — exercício intenso 6-7x/sem</option>
+            <option value="1.9">Extremamente ativo · 1,9 — atleta, 2x ao dia</option>
+            <option value="2.0">Atleta de elite · 2,0 — treino + trabalho físico</option>
+            <option value="2.2">Atleta endurance · 2,2+ — ultra, ciclismo competitivo</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="results-block" id="resultsBlock" style="display:none">
+        <div class="result-row">
+          <div class="result-label">
+            TMB
+            <small id="formulaUsada">Mifflin-St Jeor</small>
+          </div>
+          <div class="result-value" id="resTMB">— kcal</div>
+        </div>
+        <div class="result-row">
+          <div class="result-label">
+            GET — Gasto Total
+            <small>TMB × fator de atividade</small>
+          </div>
+          <div class="result-value big" id="resGET">— kcal</div>
+        </div>
+        <div class="result-row" id="imcRow">
+          <div class="result-label">
+            IMC
+            <small id="imcClass">—</small>
+          </div>
+          <div class="result-value" id="resIMC">—</div>
+        </div>
+      </div>
+      
+      <div id="objetivoSection" style="display:none; margin-top: 18px;">
+        <div class="section-title" style="font-size: 1rem; margin-bottom: 12px;">Objetivo</div>
+        
+        <div class="objetivo-grid">
+          <button class="obj-btn" data-ajuste="-0.25">Cutting Agressivo<small>−25% kcal</small></button>
+          <button class="obj-btn" data-ajuste="-0.20">Emagrecimento<small>−20% kcal</small></button>
+          <button class="obj-btn" data-ajuste="-0.15">Déficit Moderado<small>−15% kcal</small></button>
+          <button class="obj-btn active" data-ajuste="0">Manutenção<small>0%</small></button>
+          <button class="obj-btn" data-ajuste="0.10">Bulking Lean<small>+10% kcal</small></button>
+          <button class="obj-btn" data-ajuste="0.15">Hipertrofia<small>+15% kcal</small></button>
+          <button class="obj-btn" data-ajuste="0.20">Bulking<small>+20% kcal</small></button>
+        </div>
+        
+        <div class="macro-suggestion">
+          <div class="macro-suggestion-title">Distribuição de Macros</div>
+          
+          <div class="field-grid" style="margin-bottom: 14px;">
+            <div class="field">
+              <label>Proteína (g/kg)</label>
+              <input type="number" id="protKg" value="2.0" step="0.1" min="0.8" max="4">
+            </div>
+            <div class="field">
+              <label>Gordura (g/kg)</label>
+              <input type="number" id="fatKg" value="1.0" step="0.1" min="0.4" max="2">
+            </div>
+            <div class="field">
+              <label>Preset</label>
+              <select id="preset">
+                <option value="custom">Personalizado</option>
+                <option value="hipertrofia" selected>Hipertrofia (P 2,0 / G 1,0)</option>
+                <option value="cutting">Cutting (P 2,4 / G 0,8)</option>
+                <option value="endurance">Endurance (P 1,6 / G 1,0)</option>
+                <option value="lowcarb">Low-carb (P 2,0 / G 1,5)</option>
+                <option value="manutencao">Manutenção (P 1,8 / G 1,0)</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="macro-grid">
+            <div class="macro-item">
+              <div class="macro-item-value v-kcal" id="sugKcal">—</div>
+              <div class="macro-item-label">Kcal Alvo</div>
+            </div>
+            <div class="macro-item">
+              <div class="macro-item-value v-prot" id="sugProt">—</div>
+              <div class="macro-item-label">Proteína</div>
+            </div>
+            <div class="macro-item">
+              <div class="macro-item-value v-carb" id="sugCarb">—</div>
+              <div class="macro-item-label">Carboidrato</div>
+            </div>
+            <div class="macro-item">
+              <div class="macro-item-value v-fat" id="sugFat">—</div>
+              <div class="macro-item-label">Gordura</div>
+            </div>
+          </div>
+          
+          <button class="apply-btn" onclick="aplicarMetas()">Aplicar como Meta</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== PAINEL CLIENTE ============== -->
+  <div class="panel" id="panel-cliente">
+    
+    <div class="client-form">
+      <div style="margin-top: 8px;">
+        <div class="field-grid" style="grid-template-columns: 2fr 1fr 1fr;">
+          <div class="field">
+            <label>Nome do Paciente</label>
+            <input type="text" id="cliNome" placeholder="ex: Maria da Silva">
+          </div>
+          <div class="field">
+            <label>Idade</label>
+            <input type="number" id="cliIdade" placeholder="anos" min="1" max="120">
+          </div>
+          <div class="field">
+            <label>Telefone</label>
+            <input type="text" id="cliTel" placeholder="(00) 00000-0000">
+          </div>
+        </div>
+        
+        <div class="field-grid" style="margin-top: 12px; grid-template-columns: 1fr 1fr 1fr 1fr;">
+          <div class="field">
+            <label>Peso (kg)</label>
+            <input type="number" id="cliPeso" placeholder="kg" step="0.1">
+          </div>
+          <div class="field">
+            <label>Altura (cm)</label>
+            <input type="number" id="cliAltura" placeholder="cm">
+          </div>
+          <div class="field">
+            <label>Objetivo</label>
+            <select id="cliObjetivo">
+              <option value="">—</option>
+              <option>Emagrecimento</option>
+              <option>Manutenção</option>
+              <option>Hipertrofia</option>
+              <option>Performance esportiva</option>
+              <option>Saúde geral</option>
+              <option>Cutting</option>
+              <option>Bulking</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Nível de Atividade</label>
+            <select id="cliAtividade">
+              <option value="">—</option>
+              <option>Sedentário</option>
+              <option>Levemente ativo</option>
+              <option>Moderadamente ativo</option>
+              <option>Muito ativo</option>
+              <option>Atleta</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="field-grid" style="margin-top: 12px; grid-template-columns: 1fr 1fr;">
+          <div class="field">
+            <label>Profissional Responsável</label>
+            <input type="text" id="profNome" placeholder="ex: Dr. Matheus — Nutricionista CRN-X 00000">
+          </div>
+          <div class="field">
+            <label>Data do Plano</label>
+            <input type="date" id="planData">
+          </div>
+        </div>
+        
+        <div class="field" style="margin-top: 12px;">
+          <label>Observações Clínicas / Restrições</label>
+          <textarea id="cliObs" rows="3" placeholder="ex: Intolerância a lactose; alergia a amendoim; preferência por preparações simples..."></textarea>
+        </div>
+      </div>
+    </div>
+    
+    <div class="info-card">
+      Esses dados aparecerão no PDF do plano alimentar enviado ao paciente. Preencha com cuidado para passar credibilidade.
+    </div>
+  </div>
+
+  <!-- ============== PAINEL PLANO ============== -->
+  <div class="panel" id="panel-plano">
+    
+    <div class="section">
+      <div class="section-title">Metas Nutricionais</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Kcal alvo</label>
+          <input type="number" id="metaKcal" placeholder="ex: 2500">
+        </div>
+        <div class="field">
+          <label>Proteína (g)</label>
+          <input type="number" id="metaProt" placeholder="ex: 180">
+        </div>
+        <div class="field">
+          <label>Carboidrato (g)</label>
+          <input type="number" id="metaCarb" placeholder="ex: 280">
+        </div>
+        <div class="field">
+          <label>Gordura (g)</label>
+          <input type="number" id="metaFat" placeholder="ex: 70">
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Adicionar Alimento</div>
+      
+      <div class="meal-tabs" id="mealTabs">
+        <div class="meal-tab active" data-meal="cafe">☕ Café</div>
+        <div class="meal-tab" data-meal="lanche1">🍎 Lanche 1</div>
+        <div class="meal-tab" data-meal="almoco">🍽️ Almoço</div>
+        <div class="meal-tab" data-meal="lanche2">🥤 Lanche 2</div>
+        <div class="meal-tab" data-meal="jantar">🌙 Jantar</div>
+        <div class="meal-tab" data-meal="ceia">🌜 Ceia</div>
+      </div>
+
+      <div class="add-form">
+        <div class="search-wrapper">
+          <label style="font-size: 0.68rem; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; display: block;">Alimento</label>
+          <input type="text" id="foodSearch" placeholder="Digite: arroz, ovo, frango..." autocomplete="off" style="width: 100%; padding: 11px 13px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.92rem;">
+          <div class="suggestions" id="suggestions"></div>
+        </div>
+        <div>
+          <div class="input-mode-toggle">
+            <button id="modeG" class="active" type="button">Gramas</button>
+            <button id="modeU" type="button" disabled>Unidade</button>
+          </div>
+          <input type="number" id="foodQty" placeholder="100" value="100" min="0" step="0.5" style="width: 100%; padding: 11px 13px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.92rem;">
+        </div>
+        <div>
+          <label style="font-size: 0.68rem; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; display: block;">Peso/un</label>
+          <input type="number" id="foodUnit" placeholder="—" disabled style="width: 100%; padding: 11px 13px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.92rem;">
+        </div>
+        <button id="addBtn">+ Adicionar</button>
+      </div>
+    </div>
+
+    <div class="meals-container" id="mealsContainer"></div>
+
+    <div class="summary">
+      <div class="summary-title">Total <span>do Dia</span></div>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <div class="summary-value v-kcal" id="totalKcal">0</div>
+          <div class="summary-label">Kcal</div>
+          <span class="summary-meta" id="metaKcalDiff"></span>
+        </div>
+        <div class="summary-item">
+          <div class="summary-value v-prot" id="totalProt">0g</div>
+          <div class="summary-label">Proteína</div>
+          <span class="summary-meta" id="metaProtDiff"></span>
+        </div>
+        <div class="summary-item">
+          <div class="summary-value v-carb" id="totalCarb">0g</div>
+          <div class="summary-label">Carbo</div>
+          <span class="summary-meta" id="metaCarbDiff"></span>
+        </div>
+        <div class="summary-item">
+          <div class="summary-value v-fat" id="totalFat">0g</div>
+          <div class="summary-label">Gordura</div>
+          <span class="summary-meta" id="metaFatDiff"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== PAINEL EXPORT ============== -->
+  <div class="panel" id="panel-export">
+    
+    <div class="section">
+      <div class="section-title">Exportar Plano</div>
+      <div class="section-subtitle">Gere o PDF profissional do plano para enviar ao paciente, ou salve o arquivo JSON para reabrir depois.</div>
+      
+      <div class="actions" style="margin-top: 0;">
+        <button class="action-btn primary" onclick="gerarPDF()">📄 Baixar PDF</button>
+        <button class="action-btn primary" onclick="imprimir()">🖨️ Imprimir</button>
+        <button class="action-btn" onclick="exportarJSON()">💾 Salvar JSON</button>
+        <button class="action-btn" onclick="document.getElementById('importFile').click()">📂 Importar JSON</button>
+        <button class="action-btn" onclick="exportarTexto()">📋 Copiar Texto</button>
+        <button class="action-btn danger" onclick="limparTudo()">🗑️ Limpar Tudo</button>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importarJSON(event)">
+      </div>
+    </div>
+    
+    <div class="info-card">
+      <strong>Dica:</strong> Antes de gerar o PDF, certifique-se de que preencheu os dados do paciente na aba <strong>Paciente</strong>. O PDF é gerado a partir do plano completo com refeições, substituições e totais.
+    </div>
+  </div>
+
+  <p class="footer-note">
+    <strong>NUTRI.FUEL · v3.0</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
+  </p>
+  
+  <!-- ============== ÁREA DO PDF (oculta na tela, visível na impressão) ============== -->
+  <div id="pdfArea"></div>
+
+</div>
+
+<!-- ============== MODAL DE SUBSTITUIÇÕES ============== -->
+<div class="modal-overlay" id="subsModal">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModalSubs()">×</button>
+    <div class="modal-title">Substituições Equivalentes</div>
+    <div class="modal-subtitle">Para <strong id="subsForFood">—</strong></div>
+    
+    <div id="subsListContainer">
+      <!-- preenchido via JS -->
+    </div>
+    
+    <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border);">
+      <div style="font-size: 0.74rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; margin-bottom: 10px;">Adicionar substituição</div>
+      
+      <div class="add-sub-form">
+        <div class="sub-search-wrapper">
+          <input type="text" id="subSearch" placeholder="Buscar alimento..." autocomplete="off">
+          <div class="sub-suggestions" id="subSuggestions"></div>
+        </div>
+        <input type="number" id="subQty" placeholder="Qtd" step="0.5" min="0">
+        <select id="subMode">
+          <option value="g">gramas</option>
+          <option value="u">unidades</option>
+        </select>
+        <button onclick="adicionarSub()">Add</button>
+      </div>
+      
+      <div class="field-hint" style="margin-top: 8px;">💡 Sugestão: quando adicionar a primeira substituição, clique em "Equivalente" para calcular automaticamente uma porção que iguale as kcal do alimento principal.</div>
+      <button class="action-btn" style="margin-top: 8px; width: 100%;" onclick="sugerirEquivalente()">⚖️ Calcular Quantidade Equivalente</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// BASE DE DADOS DE ALIMENTOS (valores por 100g)
+// "u" = peso médio por unidade em gramas (quando aplicável)
+// ============================================================
+const ALIMENTOS = [
+  // === CEREAIS, GRÃOS E DERIVADOS ===
+  { n: "Arroz branco cozido", k: 128, p: 2.5, c: 28.1, f: 0.2, cat: "Cereais" },
+  { n: "Arroz integral cozido", k: 124, p: 2.6, c: 25.8, f: 1.0, cat: "Cereais" },
+  { n: "Arroz parboilizado cozido", k: 130, p: 2.5, c: 28.6, f: 0.3, cat: "Cereais" },
+  { n: "Aveia em flocos", k: 394, p: 13.9, c: 66.6, f: 8.5, cat: "Cereais", u: 15, uName: "colher de sopa" },
+  { n: "Granola tradicional", k: 471, p: 11.0, c: 65.0, f: 19.0, cat: "Cereais", u: 30, uName: "colher de sopa" },
+  { n: "Pão francês", k: 300, p: 8.0, c: 58.6, f: 3.1, cat: "Cereais", u: 50, uName: "unidade" },
+  { n: "Pão integral (forma)", k: 253, p: 9.4, c: 49.0, f: 3.7, cat: "Cereais", u: 25, uName: "fatia" },
+  { n: "Pão de forma branco", k: 269, p: 9.1, c: 51.0, f: 3.0, cat: "Cereais", u: 25, uName: "fatia" },
+  { n: "Pão sírio integral", k: 271, p: 10.6, c: 55.9, f: 2.5, cat: "Cereais", u: 60, uName: "unidade" },
+  { n: "Pão de queijo médio", k: 363, p: 5.0, c: 39.0, f: 20.0, cat: "Cereais", u: 25, uName: "unidade" },
+  { n: "Tapioca (goma hidratada)", k: 240, p: 0.5, c: 59.0, f: 0.2, cat: "Cereais", u: 80, uName: "unidade média" },
+  { n: "Cuscuz de milho cozido", k: 113, p: 2.3, c: 25.0, f: 0.4, cat: "Cereais" },
+  { n: "Macarrão cozido (sem molho)", k: 158, p: 5.8, c: 30.4, f: 1.3, cat: "Cereais" },
+  { n: "Macarrão integral cozido", k: 124, p: 5.3, c: 26.5, f: 0.5, cat: "Cereais" },
+  { n: "Quinoa cozida", k: 120, p: 4.4, c: 21.3, f: 1.9, cat: "Cereais" },
+  { n: "Farinha de aveia", k: 394, p: 14.0, c: 67.0, f: 8.0, cat: "Cereais" },
+  { n: "Farinha de trigo", k: 360, p: 9.8, c: 75.1, f: 1.4, cat: "Cereais" },
+  { n: "Farinha de mandioca", k: 361, p: 1.2, c: 87.9, f: 0.3, cat: "Cereais" },
+  { n: "Farinha de milho (fubá)", k: 365, p: 7.2, c: 79.1, f: 1.5, cat: "Cereais" },
+  { n: "Polenta cozida", k: 91, p: 1.9, c: 19.7, f: 0.4, cat: "Cereais" },
+  { n: "Milho verde cozido", k: 96, p: 3.4, c: 17.7, f: 1.5, cat: "Cereais" },
+  { n: "Pipoca (sem óleo)", k: 387, p: 12.0, c: 78.0, f: 4.3, cat: "Cereais" },
+  { n: "Biscoito cream cracker", k: 432, p: 11.4, c: 68.7, f: 13.6, cat: "Cereais", u: 6, uName: "unidade" },
+  { n: "Biscoito de arroz", k: 380, p: 8.0, c: 81.0, f: 3.0, cat: "Cereais", u: 8, uName: "unidade" },
+  { n: "Cereal matinal (corn flakes)", k: 378, p: 7.3, c: 86.0, f: 0.4, cat: "Cereais" },
+  { n: "Couscous marroquino cozido", k: 112, p: 3.8, c: 23.2, f: 0.2, cat: "Cereais" },
+  { n: "Torrada integral", k: 380, p: 11.0, c: 70.0, f: 5.0, cat: "Cereais", u: 8, uName: "fatia" },
+
+  // === LEGUMINOSAS ===
+  { n: "Feijão preto cozido", k: 77, p: 4.5, c: 14.0, f: 0.5, cat: "Leguminosas", u: 80, uName: "concha" },
+  { n: "Feijão carioca cozido", k: 76, p: 4.8, c: 13.6, f: 0.5, cat: "Leguminosas", u: 80, uName: "concha" },
+  { n: "Feijão branco cozido", k: 84, p: 5.2, c: 14.8, f: 0.5, cat: "Leguminosas", u: 80, uName: "concha" },
+  { n: "Feijão fradinho cozido", k: 105, p: 6.6, c: 18.6, f: 0.7, cat: "Leguminosas", u: 80, uName: "concha" },
+  { n: "Lentilha cozida", k: 93, p: 6.3, c: 16.3, f: 0.5, cat: "Leguminosas", u: 80, uName: "concha" },
+  { n: "Grão de bico cozido", k: 121, p: 7.5, c: 21.2, f: 2.1, cat: "Leguminosas", u: 80, uName: "concha" },
+  { n: "Ervilha cozida", k: 63, p: 5.0, c: 9.2, f: 0.7, cat: "Leguminosas" },
+  { n: "Soja cozida", k: 173, p: 16.6, c: 9.9, f: 9.0, cat: "Leguminosas" },
+  { n: "Edamame cozido", k: 121, p: 11.9, c: 8.9, f: 5.2, cat: "Leguminosas" },
+
+  // === CARNES BOVINAS ===
+  { n: "Filé mignon grelhado", k: 219, p: 32.8, c: 0, f: 8.8, cat: "Carnes" },
+  { n: "Patinho moído cozido", k: 219, p: 35.9, c: 0, f: 7.3, cat: "Carnes" },
+  { n: "Patinho grelhado", k: 133, p: 28.3, c: 0, f: 1.6, cat: "Carnes" },
+  { n: "Coxão mole grelhado", k: 219, p: 32.4, c: 0, f: 9.0, cat: "Carnes" },
+  { n: "Alcatra grelhada", k: 220, p: 31.9, c: 0, f: 9.4, cat: "Carnes" },
+  { n: "Maminha grelhada", k: 215, p: 31.6, c: 0, f: 9.0, cat: "Carnes" },
+  { n: "Picanha grelhada", k: 289, p: 26.7, c: 0, f: 19.6, cat: "Carnes" },
+  { n: "Contrafilé grelhado", k: 224, p: 29.6, c: 0, f: 11.0, cat: "Carnes" },
+  { n: "Costela bovina assada", k: 373, p: 26.0, c: 0, f: 29.0, cat: "Carnes" },
+  { n: "Acém cozido", k: 213, p: 29.0, c: 0, f: 10.0, cat: "Carnes" },
+  { n: "Músculo cozido", k: 165, p: 27.6, c: 0, f: 5.1, cat: "Carnes" },
+  { n: "Carne moída magra (5%) cozida", k: 175, p: 27.0, c: 0, f: 7.0, cat: "Carnes" },
+  { n: "Carne moída comum cozida", k: 240, p: 24.0, c: 0, f: 16.0, cat: "Carnes" },
+  { n: "Fígado bovino grelhado", k: 175, p: 26.5, c: 4.0, f: 4.7, cat: "Carnes" },
+  { n: "Hambúrguer caseiro 100g grelhado", k: 240, p: 25.0, c: 0, f: 16.0, cat: "Carnes", u: 100, uName: "unidade" },
+
+  // === CARNES DE FRANGO ===
+  { n: "Peito de frango grelhado", k: 159, p: 32.0, c: 0, f: 3.0, cat: "Frango", u: 150, uName: "filé médio" },
+  { n: "Peito de frango cozido", k: 165, p: 31.0, c: 0, f: 3.6, cat: "Frango" },
+  { n: "Peito de frango cru", k: 120, p: 22.5, c: 0, f: 2.6, cat: "Frango" },
+  { n: "Coxa de frango assada (sem pele)", k: 209, p: 27.0, c: 0, f: 10.9, cat: "Frango", u: 90, uName: "unidade" },
+  { n: "Sobrecoxa de frango assada", k: 232, p: 26.0, c: 0, f: 13.2, cat: "Frango", u: 110, uName: "unidade" },
+  { n: "Asa de frango assada (com pele)", k: 290, p: 27.0, c: 0, f: 19.5, cat: "Frango", u: 35, uName: "unidade" },
+  { n: "Frango inteiro assado (com pele)", k: 239, p: 27.3, c: 0, f: 13.4, cat: "Frango" },
+  { n: "Filé de frango empanado (nuggets)", k: 280, p: 14.0, c: 16.0, f: 18.0, cat: "Frango", u: 17, uName: "unidade" },
+  { n: "Frango desfiado cozido", k: 165, p: 31.0, c: 0, f: 3.6, cat: "Frango" },
+  { n: "Coração de frango grelhado", k: 153, p: 21.0, c: 0, f: 7.0, cat: "Frango" },
+  { n: "Fígado de frango grelhado", k: 167, p: 25.0, c: 0.7, f: 6.5, cat: "Frango" },
+
+  // === CARNE SUÍNA ===
+  { n: "Lombo suíno assado", k: 211, p: 29.6, c: 0, f: 9.5, cat: "Suína" },
+  { n: "Pernil suíno assado", k: 250, p: 28.0, c: 0, f: 14.5, cat: "Suína" },
+  { n: "Costela suína assada", k: 397, p: 26.8, c: 0, f: 31.5, cat: "Suína" },
+  { n: "Bacon frito", k: 541, p: 37.0, c: 1.4, f: 41.8, cat: "Suína", u: 8, uName: "fatia" },
+  { n: "Linguiça calabresa", k: 305, p: 17.0, c: 1.0, f: 26.0, cat: "Suína", u: 50, uName: "gomo" },
+  { n: "Linguiça toscana grelhada", k: 296, p: 18.0, c: 0.5, f: 24.5, cat: "Suína", u: 60, uName: "gomo" },
+  { n: "Presunto magro", k: 110, p: 17.0, c: 1.5, f: 4.0, cat: "Suína", u: 15, uName: "fatia" },
+  { n: "Salame", k: 383, p: 22.0, c: 1.0, f: 32.0, cat: "Suína", u: 5, uName: "fatia" },
+  { n: "Mortadela", k: 311, p: 12.4, c: 4.0, f: 27.0, cat: "Suína", u: 20, uName: "fatia" },
+  { n: "Salsicha", k: 268, p: 11.0, c: 4.5, f: 23.0, cat: "Suína", u: 50, uName: "unidade" },
+
+  // === PEIXES E FRUTOS DO MAR ===
+  { n: "Tilápia grelhada", k: 128, p: 26.2, c: 0, f: 2.7, cat: "Peixes", u: 150, uName: "filé" },
+  { n: "Filé de merluza grelhado", k: 105, p: 21.0, c: 0, f: 1.6, cat: "Peixes", u: 130, uName: "filé" },
+  { n: "Salmão grelhado", k: 208, p: 22.1, c: 0, f: 13.4, cat: "Peixes", u: 150, uName: "filé" },
+  { n: "Salmão cru (sashimi)", k: 142, p: 19.8, c: 0, f: 6.3, cat: "Peixes" },
+  { n: "Atum em conserva (água)", k: 116, p: 26.0, c: 0, f: 1.0, cat: "Peixes", u: 120, uName: "lata" },
+  { n: "Atum em conserva (óleo)", k: 198, p: 27.0, c: 0, f: 9.0, cat: "Peixes", u: 120, uName: "lata" },
+  { n: "Atum fresco grelhado", k: 184, p: 30.0, c: 0, f: 6.3, cat: "Peixes" },
+  { n: "Sardinha em conserva", k: 208, p: 24.6, c: 0, f: 11.5, cat: "Peixes", u: 125, uName: "lata" },
+  { n: "Sardinha fresca assada", k: 158, p: 26.0, c: 0, f: 5.7, cat: "Peixes", u: 60, uName: "unidade" },
+  { n: "Bacalhau cozido", k: 105, p: 22.8, c: 0, f: 0.9, cat: "Peixes" },
+  { n: "Pescada grelhada", k: 100, p: 21.0, c: 0, f: 1.5, cat: "Peixes" },
+  { n: "Linguado grelhado", k: 98, p: 20.5, c: 0, f: 1.4, cat: "Peixes" },
+  { n: "Camarão cozido", k: 99, p: 24.0, c: 0.2, f: 0.3, cat: "Peixes" },
+  { n: "Polvo cozido", k: 164, p: 30.0, c: 4.4, f: 2.1, cat: "Peixes" },
+  { n: "Lula cozida", k: 175, p: 17.9, c: 7.8, f: 7.5, cat: "Peixes" },
+
+  // === OVOS ===
+  { n: "Ovo de galinha inteiro cozido", k: 146, p: 13.3, c: 0.6, f: 9.5, cat: "Ovos", u: 50, uName: "unidade" },
+  { n: "Ovo inteiro mexido (sem óleo)", k: 154, p: 13.0, c: 1.0, f: 11.0, cat: "Ovos", u: 50, uName: "unidade" },
+  { n: "Clara de ovo cozida", k: 52, p: 10.9, c: 0.7, f: 0.2, cat: "Ovos", u: 33, uName: "unidade" },
+  { n: "Gema de ovo cozida", k: 322, p: 16.0, c: 3.6, f: 27.0, cat: "Ovos", u: 17, uName: "unidade" },
+  { n: "Ovo de codorna cozido", k: 158, p: 13.1, c: 0.4, f: 11.1, cat: "Ovos", u: 10, uName: "unidade" },
+  { n: "Ovo frito (com óleo)", k: 196, p: 13.6, c: 0.8, f: 15.3, cat: "Ovos", u: 55, uName: "unidade" },
+  { n: "Omelete simples (2 ovos)", k: 154, p: 11.0, c: 0.8, f: 12.0, cat: "Ovos", u: 100, uName: "porção" },
+
+  // === LATICÍNIOS ===
+  { n: "Leite integral", k: 61, p: 3.2, c: 4.7, f: 3.3, cat: "Laticínios", u: 200, uName: "copo" },
+  { n: "Leite semidesnatado", k: 47, p: 3.2, c: 4.9, f: 1.8, cat: "Laticínios", u: 200, uName: "copo" },
+  { n: "Leite desnatado", k: 35, p: 3.4, c: 5.0, f: 0.2, cat: "Laticínios", u: 200, uName: "copo" },
+  { n: "Leite em pó integral", k: 496, p: 26.0, c: 38.0, f: 27.0, cat: "Laticínios", u: 25, uName: "colher de sopa" },
+  { n: "Leite em pó desnatado", k: 362, p: 36.2, c: 52.0, f: 0.8, cat: "Laticínios", u: 25, uName: "colher de sopa" },
+  { n: "Iogurte natural integral", k: 51, p: 4.1, c: 1.9, f: 3.0, cat: "Laticínios", u: 170, uName: "pote" },
+  { n: "Iogurte natural desnatado", k: 41, p: 4.1, c: 5.7, f: 0.2, cat: "Laticínios", u: 170, uName: "pote" },
+  { n: "Iogurte grego natural", k: 97, p: 9.0, c: 4.0, f: 5.0, cat: "Laticínios", u: 130, uName: "pote" },
+  { n: "Iogurte grego desnatado", k: 59, p: 10.2, c: 3.6, f: 0.4, cat: "Laticínios", u: 130, uName: "pote" },
+  { n: "Kefir natural", k: 65, p: 3.3, c: 4.5, f: 3.5, cat: "Laticínios", u: 200, uName: "copo" },
+  { n: "Coalhada seca", k: 162, p: 11.0, c: 3.4, f: 11.5, cat: "Laticínios" },
+  { n: "Queijo minas frescal", k: 264, p: 17.4, c: 3.2, f: 20.2, cat: "Laticínios", u: 30, uName: "fatia" },
+  { n: "Queijo cottage", k: 88, p: 11.0, c: 3.4, f: 3.5, cat: "Laticínios", u: 30, uName: "colher de sopa" },
+  { n: "Queijo ricota fresca", k: 140, p: 11.3, c: 3.0, f: 9.5, cat: "Laticínios", u: 30, uName: "fatia" },
+  { n: "Queijo mussarela", k: 280, p: 24.5, c: 2.2, f: 19.5, cat: "Laticínios", u: 15, uName: "fatia" },
+  { n: "Queijo prato", k: 360, p: 22.7, c: 1.9, f: 29.1, cat: "Laticínios", u: 15, uName: "fatia" },
+  { n: "Queijo parmesão ralado", k: 453, p: 35.7, c: 4.1, f: 30.0, cat: "Laticínios", u: 5, uName: "colher de sopa" },
+  { n: "Queijo cheddar", k: 403, p: 25.0, c: 1.3, f: 33.0, cat: "Laticínios", u: 18, uName: "fatia" },
+  { n: "Queijo cream cheese", k: 342, p: 6.0, c: 4.0, f: 34.0, cat: "Laticínios", u: 15, uName: "colher de sopa" },
+  { n: "Requeijão cremoso tradicional", k: 257, p: 9.3, c: 3.0, f: 23.4, cat: "Laticínios", u: 15, uName: "colher de sopa" },
+  { n: "Requeijão light", k: 175, p: 11.0, c: 3.5, f: 13.0, cat: "Laticínios", u: 15, uName: "colher de sopa" },
+  { n: "Manteiga com sal", k: 726, p: 0.4, c: 0.1, f: 82.4, cat: "Laticínios", u: 5, uName: "colher de chá" },
+  { n: "Creme de leite (caixinha)", k: 240, p: 2.5, c: 3.5, f: 24.0, cat: "Laticínios" },
+
+  // === FRUTAS ===
+  { n: "Banana prata", k: 98, p: 1.3, c: 26.0, f: 0.1, cat: "Frutas", u: 86, uName: "unidade" },
+  { n: "Banana nanica", k: 92, p: 1.4, c: 23.8, f: 0.1, cat: "Frutas", u: 100, uName: "unidade" },
+  { n: "Banana da terra", k: 128, p: 1.4, c: 33.6, f: 0.2, cat: "Frutas", u: 130, uName: "unidade" },
+  { n: "Maçã com casca", k: 56, p: 0.3, c: 15.2, f: 0.0, cat: "Frutas", u: 130, uName: "unidade" },
+  { n: "Pera", k: 53, p: 0.3, c: 14.0, f: 0.1, cat: "Frutas", u: 130, uName: "unidade" },
+  { n: "Laranja pera", k: 37, p: 1.0, c: 8.9, f: 0.1, cat: "Frutas", u: 130, uName: "unidade" },
+  { n: "Mexerica/Tangerina", k: 38, p: 0.8, c: 9.6, f: 0.2, cat: "Frutas", u: 90, uName: "unidade" },
+  { n: "Mamão papaya", k: 40, p: 0.5, c: 10.4, f: 0.1, cat: "Frutas", u: 150, uName: "fatia média" },
+  { n: "Mamão formosa", k: 45, p: 0.8, c: 11.6, f: 0.1, cat: "Frutas", u: 170, uName: "fatia" },
+  { n: "Manga", k: 64, p: 0.4, c: 16.7, f: 0.2, cat: "Frutas", u: 200, uName: "unidade média" },
+  { n: "Abacaxi", k: 48, p: 0.9, c: 12.3, f: 0.1, cat: "Frutas", u: 100, uName: "fatia" },
+  { n: "Melancia", k: 33, p: 0.9, c: 8.1, f: 0.2, cat: "Frutas", u: 200, uName: "fatia" },
+  { n: "Melão", k: 29, p: 0.7, c: 7.5, f: 0.1, cat: "Frutas", u: 150, uName: "fatia" },
+  { n: "Uva itália", k: 53, p: 0.7, c: 13.6, f: 0.1, cat: "Frutas", u: 6, uName: "bago" },
+  { n: "Uva passa", k: 299, p: 3.1, c: 79.2, f: 0.5, cat: "Frutas", u: 15, uName: "colher de sopa" },
+  { n: "Morango", k: 30, p: 0.9, c: 6.8, f: 0.3, cat: "Frutas", u: 12, uName: "unidade" },
+  { n: "Goiaba vermelha", k: 52, p: 0.9, c: 13.0, f: 0.5, cat: "Frutas", u: 130, uName: "unidade" },
+  { n: "Abacate", k: 96, p: 1.2, c: 6.0, f: 8.4, cat: "Frutas", u: 200, uName: "metade" },
+  { n: "Coco fresco", k: 354, p: 3.3, c: 15.2, f: 33.5, cat: "Frutas" },
+  { n: "Açaí polpa pura (sem açúcar)", k: 58, p: 0.8, c: 6.2, f: 3.9, cat: "Frutas", u: 100, uName: "porção" },
+  { n: "Caju", k: 43, p: 1.0, c: 10.3, f: 0.3, cat: "Frutas", u: 70, uName: "unidade" },
+  { n: "Pêssego", k: 36, p: 0.8, c: 8.9, f: 0.1, cat: "Frutas", u: 130, uName: "unidade" },
+  { n: "Ameixa fresca", k: 53, p: 0.8, c: 13.9, f: 0.6, cat: "Frutas", u: 65, uName: "unidade" },
+  { n: "Ameixa seca", k: 240, p: 2.2, c: 63.9, f: 0.4, cat: "Frutas", u: 8, uName: "unidade" },
+  { n: "Kiwi", k: 51, p: 1.0, c: 12.6, f: 0.5, cat: "Frutas", u: 75, uName: "unidade" },
+  { n: "Limão", k: 32, p: 0.7, c: 8.1, f: 0.3, cat: "Frutas", u: 60, uName: "unidade" },
+  { n: "Maracujá polpa", k: 68, p: 1.2, c: 12.3, f: 2.1, cat: "Frutas", u: 50, uName: "polpa de uma" },
+  { n: "Tâmara seca", k: 282, p: 2.5, c: 75.0, f: 0.4, cat: "Frutas", u: 8, uName: "unidade" },
+  { n: "Damasco seco", k: 241, p: 3.4, c: 62.6, f: 0.5, cat: "Frutas", u: 8, uName: "unidade" },
+  { n: "Figo fresco", k: 74, p: 0.8, c: 19.2, f: 0.3, cat: "Frutas", u: 50, uName: "unidade" },
+  { n: "Cereja", k: 50, p: 1.0, c: 12.2, f: 0.3, cat: "Frutas", u: 8, uName: "unidade" },
+  { n: "Romã", k: 83, p: 1.7, c: 18.7, f: 1.2, cat: "Frutas", u: 280, uName: "unidade" },
+  { n: "Mirtilo (blueberry)", k: 57, p: 0.7, c: 14.5, f: 0.3, cat: "Frutas" },
+  { n: "Framboesa", k: 52, p: 1.2, c: 11.9, f: 0.7, cat: "Frutas" },
+  { n: "Amora", k: 43, p: 1.4, c: 9.6, f: 0.5, cat: "Frutas" },
+
+  // === HORTALIÇAS / VERDURAS ===
+  { n: "Alface crespa", k: 11, p: 1.3, c: 1.7, f: 0.2, cat: "Verduras" },
+  { n: "Alface americana", k: 13, p: 0.9, c: 2.0, f: 0.1, cat: "Verduras" },
+  { n: "Rúcula", k: 13, p: 1.8, c: 2.2, f: 0.4, cat: "Verduras" },
+  { n: "Agrião", k: 17, p: 2.2, c: 2.5, f: 0.2, cat: "Verduras" },
+  { n: "Espinafre cozido", k: 24, p: 2.8, c: 3.6, f: 0.4, cat: "Verduras" },
+  { n: "Couve manteiga refogada", k: 90, p: 3.3, c: 5.5, f: 6.0, cat: "Verduras" },
+  { n: "Couve crua", k: 27, p: 2.9, c: 4.3, f: 0.5, cat: "Verduras" },
+  { n: "Repolho cru", k: 25, p: 1.3, c: 5.8, f: 0.1, cat: "Verduras" },
+  { n: "Brócolis cozido", k: 25, p: 2.1, c: 4.0, f: 0.3, cat: "Verduras" },
+  { n: "Couve-flor cozida", k: 19, p: 1.2, c: 4.4, f: 0.1, cat: "Verduras" },
+  { n: "Tomate", k: 15, p: 1.1, c: 3.1, f: 0.2, cat: "Verduras", u: 100, uName: "unidade" },
+  { n: "Pepino", k: 10, p: 0.9, c: 2.0, f: 0.1, cat: "Verduras", u: 250, uName: "unidade" },
+  { n: "Cenoura crua", k: 34, p: 1.3, c: 7.7, f: 0.2, cat: "Verduras", u: 80, uName: "unidade média" },
+  { n: "Cenoura cozida", k: 30, p: 0.8, c: 6.7, f: 0.2, cat: "Verduras" },
+  { n: "Beterraba cozida", k: 32, p: 1.3, c: 7.2, f: 0.1, cat: "Verduras", u: 80, uName: "unidade" },
+  { n: "Abobrinha cozida", k: 12, p: 1.0, c: 2.6, f: 0.2, cat: "Verduras" },
+  { n: "Berinjela cozida", k: 25, p: 0.8, c: 5.7, f: 0.2, cat: "Verduras" },
+  { n: "Pimentão verde", k: 21, p: 0.9, c: 4.9, f: 0.2, cat: "Verduras", u: 130, uName: "unidade" },
+  { n: "Pimentão vermelho", k: 30, p: 1.0, c: 6.5, f: 0.4, cat: "Verduras", u: 130, uName: "unidade" },
+  { n: "Cebola crua", k: 39, p: 1.7, c: 8.9, f: 0.0, cat: "Verduras", u: 110, uName: "unidade média" },
+  { n: "Alho cru", k: 113, p: 7.0, c: 23.9, f: 0.2, cat: "Verduras", u: 4, uName: "dente" },
+  { n: "Vagem cozida", k: 35, p: 2.4, c: 7.0, f: 0.3, cat: "Verduras" },
+  { n: "Quiabo cozido", k: 30, p: 1.7, c: 6.4, f: 0.3, cat: "Verduras" },
+  { n: "Aspargos cozidos", k: 22, p: 2.4, c: 4.1, f: 0.2, cat: "Verduras" },
+  { n: "Cogumelo champignon", k: 27, p: 3.1, c: 4.3, f: 0.3, cat: "Verduras" },
+  { n: "Shimeji refogado", k: 34, p: 2.7, c: 5.0, f: 0.4, cat: "Verduras" },
+  { n: "Shitake refogado", k: 39, p: 2.2, c: 6.8, f: 0.5, cat: "Verduras" },
+  { n: "Palmito em conserva", k: 28, p: 2.0, c: 5.0, f: 0.3, cat: "Verduras" },
+  { n: "Chuchu cozido", k: 17, p: 0.7, c: 4.1, f: 0.1, cat: "Verduras" },
+  { n: "Abóbora cozida", k: 12, p: 0.8, c: 2.7, f: 0.1, cat: "Verduras" },
+  { n: "Abóbora japonesa (cabotiá) cozida", k: 39, p: 1.1, c: 9.5, f: 0.5, cat: "Verduras" },
+
+  // === TUBÉRCULOS E RAÍZES ===
+  { n: "Batata inglesa cozida", k: 52, p: 1.2, c: 11.9, f: 0.0, cat: "Tubérculos", u: 130, uName: "unidade média" },
+  { n: "Batata doce cozida", k: 77, p: 0.6, c: 18.4, f: 0.1, cat: "Tubérculos", u: 130, uName: "unidade média" },
+  { n: "Batata doce assada", k: 90, p: 2.0, c: 20.7, f: 0.1, cat: "Tubérculos", u: 130, uName: "unidade média" },
+  { n: "Batata frita (palito)", k: 312, p: 4.0, c: 41.0, f: 15.0, cat: "Tubérculos" },
+  { n: "Mandioca cozida", k: 125, p: 0.6, c: 30.1, f: 0.3, cat: "Tubérculos" },
+  { n: "Mandioca frita", k: 326, p: 1.5, c: 39.0, f: 18.0, cat: "Tubérculos" },
+  { n: "Inhame cozido", k: 97, p: 2.1, c: 23.2, f: 0.2, cat: "Tubérculos" },
+  { n: "Cará cozido", k: 116, p: 1.5, c: 27.5, f: 0.2, cat: "Tubérculos" },
+  { n: "Mandioquinha (batata baroa) cozida", k: 80, p: 1.0, c: 18.9, f: 0.3, cat: "Tubérculos" },
+
+  // === OLEAGINOSAS E SEMENTES ===
+  { n: "Castanha do Pará", k: 643, p: 14.5, c: 15.1, f: 63.5, cat: "Oleaginosas", u: 5, uName: "unidade" },
+  { n: "Castanha de caju torrada", k: 570, p: 18.5, c: 28.7, f: 46.3, cat: "Oleaginosas", u: 1.5, uName: "unidade" },
+  { n: "Amêndoa", k: 581, p: 19.5, c: 19.5, f: 47.3, cat: "Oleaginosas", u: 1.2, uName: "unidade" },
+  { n: "Avelã", k: 689, p: 14.0, c: 16.7, f: 62.6, cat: "Oleaginosas", u: 1.4, uName: "unidade" },
+  { n: "Noz", k: 620, p: 14.0, c: 18.4, f: 59.4, cat: "Oleaginosas", u: 4, uName: "metade" },
+  { n: "Nozes pecan", k: 691, p: 9.2, c: 13.9, f: 72.0, cat: "Oleaginosas", u: 1.5, uName: "metade" },
+  { n: "Macadâmia", k: 718, p: 7.9, c: 13.8, f: 75.8, cat: "Oleaginosas", u: 2.5, uName: "unidade" },
+  { n: "Pistache torrado", k: 581, p: 21.0, c: 28.0, f: 45.3, cat: "Oleaginosas", u: 0.7, uName: "unidade" },
+  { n: "Amendoim torrado", k: 544, p: 27.0, c: 20.3, f: 43.9, cat: "Oleaginosas" },
+  { n: "Pasta de amendoim integral", k: 588, p: 25.0, c: 20.0, f: 50.0, cat: "Oleaginosas", u: 16, uName: "colher de sopa" },
+  { n: "Pasta de amendoim light", k: 519, p: 26.0, c: 24.0, f: 36.0, cat: "Oleaginosas", u: 16, uName: "colher de sopa" },
+  { n: "Tahine (pasta de gergelim)", k: 595, p: 17.0, c: 21.2, f: 53.8, cat: "Oleaginosas", u: 15, uName: "colher de sopa" },
+  { n: "Sementes de chia", k: 486, p: 16.5, c: 42.1, f: 30.7, cat: "Oleaginosas", u: 12, uName: "colher de sopa" },
+  { n: "Linhaça (semente)", k: 534, p: 18.3, c: 28.9, f: 42.2, cat: "Oleaginosas", u: 10, uName: "colher de sopa" },
+  { n: "Sementes de girassol", k: 584, p: 20.8, c: 20.0, f: 51.5, cat: "Oleaginosas" },
+  { n: "Sementes de abóbora", k: 559, p: 30.2, c: 10.7, f: 49.0, cat: "Oleaginosas" },
+  { n: "Sementes de gergelim", k: 573, p: 17.7, c: 23.4, f: 49.7, cat: "Oleaginosas" },
+
+  // === ÓLEOS E GORDURAS ===
+  { n: "Azeite de oliva extra virgem", k: 884, p: 0, c: 0, f: 100.0, cat: "Óleos", u: 13, uName: "colher de sopa" },
+  { n: "Óleo de soja", k: 884, p: 0, c: 0, f: 100.0, cat: "Óleos", u: 13, uName: "colher de sopa" },
+  { n: "Óleo de canola", k: 884, p: 0, c: 0, f: 100.0, cat: "Óleos", u: 13, uName: "colher de sopa" },
+  { n: "Óleo de coco", k: 892, p: 0, c: 0, f: 100.0, cat: "Óleos", u: 13, uName: "colher de sopa" },
+  { n: "Óleo de girassol", k: 884, p: 0, c: 0, f: 100.0, cat: "Óleos", u: 13, uName: "colher de sopa" },
+  { n: "Margarina (80% lipídios)", k: 717, p: 0.2, c: 0.7, f: 80.5, cat: "Óleos", u: 5, uName: "colher de chá" },
+  { n: "Banha de porco", k: 902, p: 0, c: 0, f: 100.0, cat: "Óleos", u: 13, uName: "colher de sopa" },
+
+  // === SUPLEMENTOS E PROTEÍNAS ===
+  { n: "Whey protein concentrado (médio)", k: 380, p: 75.0, c: 8.0, f: 5.0, cat: "Suplementos", u: 30, uName: "scoop" },
+  { n: "Whey protein isolado", k: 360, p: 88.0, c: 2.0, f: 1.0, cat: "Suplementos", u: 30, uName: "scoop" },
+  { n: "Whey protein hidrolisado", k: 370, p: 85.0, c: 3.0, f: 2.0, cat: "Suplementos", u: 30, uName: "scoop" },
+  { n: "Albumina pura", k: 376, p: 85.0, c: 4.0, f: 0.5, cat: "Suplementos", u: 12, uName: "colher de sopa" },
+  { n: "Caseína", k: 360, p: 80.0, c: 5.0, f: 1.5, cat: "Suplementos", u: 30, uName: "scoop" },
+  { n: "Proteína vegetal isolada (soja/ervilha)", k: 370, p: 80.0, c: 5.0, f: 3.5, cat: "Suplementos", u: 30, uName: "scoop" },
+  { n: "Hipercalórico médio", k: 380, p: 18.0, c: 70.0, f: 3.0, cat: "Suplementos", u: 50, uName: "scoop" },
+  { n: "Maltodextrina", k: 380, p: 0, c: 95.0, f: 0, cat: "Suplementos", u: 20, uName: "colher de sopa" },
+  { n: "Dextrose", k: 380, p: 0, c: 95.0, f: 0, cat: "Suplementos", u: 20, uName: "colher de sopa" },
+  { n: "Creatina monohidratada", k: 0, p: 0, c: 0, f: 0, cat: "Suplementos", u: 5, uName: "colher de chá" },
+  { n: "Barra de proteína média", k: 380, p: 30.0, c: 35.0, f: 12.0, cat: "Suplementos", u: 60, uName: "unidade" },
+  { n: "Pasta de amendoim proteica", k: 510, p: 35.0, c: 20.0, f: 32.0, cat: "Suplementos", u: 16, uName: "colher de sopa" },
+  { n: "Iogurte proteico (tipo Yopro)", k: 64, p: 10.0, c: 5.0, f: 0.2, cat: "Suplementos", u: 250, uName: "garrafinha" },
+
+  // === BEBIDAS ===
+  { n: "Café preto sem açúcar", k: 2, p: 0.3, c: 0, f: 0, cat: "Bebidas", u: 50, uName: "xícara" },
+  { n: "Chá verde", k: 1, p: 0.2, c: 0, f: 0, cat: "Bebidas", u: 200, uName: "xícara" },
+  { n: "Chá preto", k: 1, p: 0.0, c: 0.3, f: 0, cat: "Bebidas", u: 200, uName: "xícara" },
+  { n: "Suco de laranja natural", k: 41, p: 0.7, c: 9.6, f: 0.1, cat: "Bebidas", u: 200, uName: "copo" },
+  { n: "Suco de uva integral", k: 60, p: 0.4, c: 14.8, f: 0.1, cat: "Bebidas", u: 200, uName: "copo" },
+  { n: "Refrigerante cola", k: 42, p: 0, c: 10.6, f: 0, cat: "Bebidas", u: 350, uName: "lata" },
+  { n: "Refrigerante zero", k: 0, p: 0, c: 0, f: 0, cat: "Bebidas", u: 350, uName: "lata" },
+  { n: "Água de coco natural", k: 22, p: 0.6, c: 5.3, f: 0.1, cat: "Bebidas", u: 200, uName: "copo" },
+  { n: "Cerveja pilsen", k: 41, p: 0.5, c: 3.3, f: 0, cat: "Bebidas", u: 350, uName: "lata" },
+  { n: "Vinho tinto seco", k: 75, p: 0.1, c: 1.8, f: 0, cat: "Bebidas", u: 150, uName: "taça" },
+  { n: "Cachaça/Vodka/Whisky", k: 231, p: 0, c: 0, f: 0, cat: "Bebidas", u: 50, uName: "dose" },
+  { n: "Leite vegetal de amêndoas", k: 30, p: 1.0, c: 3.0, f: 1.5, cat: "Bebidas", u: 200, uName: "copo" },
+  { n: "Leite vegetal de aveia", k: 47, p: 1.0, c: 7.0, f: 1.5, cat: "Bebidas", u: 200, uName: "copo" },
+  { n: "Leite de soja", k: 36, p: 2.7, c: 1.6, f: 1.8, cat: "Bebidas", u: 200, uName: "copo" },
+
+  // === DOCES E AÇÚCARES ===
+  { n: "Açúcar refinado", k: 387, p: 0, c: 100.0, f: 0, cat: "Doces", u: 5, uName: "colher de chá" },
+  { n: "Açúcar mascavo", k: 369, p: 0, c: 95.0, f: 0, cat: "Doces", u: 5, uName: "colher de chá" },
+  { n: "Açúcar demerara", k: 380, p: 0, c: 99.0, f: 0, cat: "Doces", u: 5, uName: "colher de chá" },
+  { n: "Mel", k: 309, p: 0.4, c: 84.0, f: 0, cat: "Doces", u: 7, uName: "colher de chá" },
+  { n: "Geleia de frutas", k: 257, p: 0.5, c: 64.0, f: 0.1, cat: "Doces", u: 20, uName: "colher de sopa" },
+  { n: "Doce de leite pastoso", k: 305, p: 6.6, c: 56.0, f: 6.7, cat: "Doces", u: 20, uName: "colher de sopa" },
+  { n: "Chocolate ao leite", k: 540, p: 7.7, c: 56.0, f: 30.0, cat: "Doces", u: 25, uName: "barra pequena" },
+  { n: "Chocolate amargo 70%", k: 559, p: 7.8, c: 45.9, f: 39.0, cat: "Doces", u: 10, uName: "quadradinho" },
+  { n: "Chocolate branco", k: 539, p: 5.9, c: 59.0, f: 32.0, cat: "Doces", u: 25, uName: "barra pequena" },
+  { n: "Cacau em pó (sem açúcar)", k: 228, p: 19.6, c: 57.9, f: 13.7, cat: "Doces", u: 5, uName: "colher de sopa" },
+  { n: "Brigadeiro", k: 357, p: 4.6, c: 53.0, f: 14.0, cat: "Doces", u: 20, uName: "unidade" },
+  { n: "Sorvete creme", k: 207, p: 3.5, c: 23.6, f: 11.0, cat: "Doces", u: 60, uName: "bola" },
+  { n: "Bolo simples (massa branca)", k: 329, p: 5.0, c: 50.0, f: 12.0, cat: "Doces", u: 80, uName: "fatia" },
+  { n: "Brownie", k: 466, p: 6.0, c: 53.0, f: 26.0, cat: "Doces", u: 60, uName: "unidade" },
+
+  // === FAST FOOD / PRONTOS ===
+  { n: "Pizza mussarela", k: 266, p: 11.0, c: 33.0, f: 10.0, cat: "Pronto", u: 100, uName: "fatia" },
+  { n: "Hambúrguer (sanduíche)", k: 250, p: 12.0, c: 30.0, f: 10.0, cat: "Pronto", u: 220, uName: "unidade" },
+  { n: "Coxinha frita", k: 295, p: 10.0, c: 28.0, f: 16.0, cat: "Pronto", u: 80, uName: "unidade" },
+  { n: "Pastel de carne frito", k: 320, p: 10.5, c: 27.0, f: 19.0, cat: "Pronto", u: 100, uName: "unidade" },
+  { n: "Esfiha de carne", k: 240, p: 10.0, c: 30.0, f: 9.0, cat: "Pronto", u: 60, uName: "unidade" },
+  { n: "Açaí com banana e granola", k: 180, p: 2.5, c: 28.0, f: 7.0, cat: "Pronto", u: 300, uName: "porção" },
+  { n: "Tapioca com queijo e ovo", k: 215, p: 9.0, c: 25.0, f: 9.0, cat: "Pronto", u: 150, uName: "unidade" },
+  { n: "Salada caesar (com molho)", k: 158, p: 8.0, c: 8.0, f: 11.0, cat: "Pronto" },
+
+  // === MOLHOS E CONDIMENTOS ===
+  { n: "Maionese tradicional", k: 680, p: 1.0, c: 2.0, f: 75.0, cat: "Molhos", u: 15, uName: "colher de sopa" },
+  { n: "Maionese light", k: 280, p: 1.0, c: 8.0, f: 27.0, cat: "Molhos", u: 15, uName: "colher de sopa" },
+  { n: "Catchup", k: 112, p: 1.7, c: 27.0, f: 0.3, cat: "Molhos", u: 15, uName: "colher de sopa" },
+  { n: "Mostarda amarela", k: 60, p: 4.0, c: 5.0, f: 3.0, cat: "Molhos", u: 5, uName: "colher de chá" },
+  { n: "Molho de tomate pronto", k: 39, p: 1.8, c: 7.0, f: 0.5, cat: "Molhos", u: 30, uName: "colher de sopa" },
+  { n: "Molho shoyu", k: 53, p: 8.1, c: 4.9, f: 0, cat: "Molhos", u: 5, uName: "colher de chá" },
+  { n: "Molho barbecue", k: 172, p: 0.8, c: 41.0, f: 0.6, cat: "Molhos", u: 17, uName: "colher de sopa" }
+];
+
+
+// ============================================================
+// ESTADO E CONSTANTES
+// ============================================================
+const REFEICOES = {
+  cafe: "☕ Café da Manhã",
+  lanche1: "🍎 Lanche da Manhã",
+  almoco: "🍽️ Almoço",
+  lanche2: "🥤 Lanche da Tarde",
+  jantar: "🌙 Jantar",
+  ceia: "🌜 Ceia"
+};
+
+let plano = {
+  cafe: [], lanche1: [], almoco: [], lanche2: [], jantar: [], ceia: []
+};
+let metas = { kcal: null, prot: null, carb: null, fat: null };
+let cliente = { nome: '', idade: '', tel: '', peso: '', altura: '', objetivo: '', atividade: '', obs: '', profNome: '', planData: '' };
+
+let refeicaoAtiva = "cafe";
+let alimentoSelecionado = null;
+let highlightedIndex = -1;
+let inputMode = 'g';
+let formulaAtual = 'mifflin';
+let ajusteObjetivo = 0;
+let resultadoTMB = null;
+let resultadoGET = null;
+
+// Modal subs
+let subsContext = { mealKey: null, foodIdx: null };
+let subAlimentoSelecionado = null;
+
+// Atualiza badge total alimentos
+document.getElementById('metaTotalAlimentos').textContent = ALIMENTOS.length + '+';
+
+// Data padrão = hoje
+document.getElementById('planData').valueAsDate = new Date();
+
+// ============================================================
+// NAVEGAÇÃO ENTRE PAINÉIS
+// ============================================================
+document.querySelectorAll('.nav-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+
+// ============================================================
+// FÓRMULAS DE TMB
+// ============================================================
+function calcMifflin(sexo, peso, altura, idade) {
+  const base = 10 * peso + 6.25 * altura - 5 * idade;
+  return sexo === 'm' ? base + 5 : base - 161;
+}
+function calcHarrisRev(sexo, peso, altura, idade) {
+  if (sexo === 'm') return 88.362 + (13.397 * peso) + (4.799 * altura) - (5.677 * idade);
+  return 447.593 + (9.247 * peso) + (3.098 * altura) - (4.330 * idade);
+}
+function calcKatch(peso, bf) {
+  const massaMagra = peso * (1 - bf / 100);
+  return 370 + 21.6 * massaMagra;
+}
+function calcCunningham(peso, bf) {
+  const massaMagra = peso * (1 - bf / 100);
+  return 500 + 22 * massaMagra;
+}
+
+function calcularTMB() {
+  const sexo = document.getElementById('sexo').value;
+  const idade = parseFloat(document.getElementById('idade').value);
+  const peso = parseFloat(document.getElementById('peso').value);
+  const altura = parseFloat(document.getElementById('altura').value);
+  const bf = parseFloat(document.getElementById('bodyfat').value);
+  const fator = parseFloat(document.getElementById('fator').value);
+  
+  if (!peso || peso <= 0) return;
+  
+  let tmb = 0;
+  let nomeFormula = '';
+  
+  if (formulaAtual === 'mifflin') {
+    if (!idade || !altura) return;
+    tmb = calcMifflin(sexo, peso, altura, idade);
+    nomeFormula = 'Mifflin-St Jeor (1990)';
+  } else if (formulaAtual === 'harris') {
+    if (!idade || !altura) return;
+    tmb = calcHarrisRev(sexo, peso, altura, idade);
+    nomeFormula = 'Harris-Benedict revisada';
+  } else if (formulaAtual === 'katch') {
+    if (!bf) return;
+    tmb = calcKatch(peso, bf);
+    nomeFormula = 'Katch-McArdle (massa magra)';
+  } else if (formulaAtual === 'cunningham') {
+    if (!bf) return;
+    tmb = calcCunningham(peso, bf);
+    nomeFormula = 'Cunningham (atletas)';
+  }
+  
+  if (tmb <= 0) return;
+  
+  const get = tmb * fator;
+  resultadoTMB = tmb;
+  resultadoGET = get;
+  
+  document.getElementById('resultsBlock').style.display = 'block';
+  document.getElementById('objetivoSection').style.display = 'block';
+  document.getElementById('resTMB').textContent = Math.round(tmb).toLocaleString('pt-BR') + ' kcal/dia';
+  document.getElementById('resGET').textContent = Math.round(get).toLocaleString('pt-BR') + ' kcal';
+  document.getElementById('formulaUsada').textContent = nomeFormula;
+  
+  if (altura && peso) {
+    const imc = peso / Math.pow(altura / 100, 2);
+    document.getElementById('resIMC').textContent = imc.toFixed(1) + ' kg/m²';
+    let classe = '';
+    if (imc < 18.5) classe = 'Abaixo do peso';
+    else if (imc < 25) classe = 'Peso normal';
+    else if (imc < 30) classe = 'Sobrepeso';
+    else if (imc < 35) classe = 'Obesidade grau I';
+    else if (imc < 40) classe = 'Obesidade grau II';
+    else classe = 'Obesidade grau III';
+    document.getElementById('imcClass').textContent = classe;
+    document.getElementById('imcRow').style.display = 'flex';
+  } else {
+    document.getElementById('imcRow').style.display = 'none';
+  }
+  
+  calcularMacros();
+}
+
+function calcularMacros() {
+  if (!resultadoGET) return;
+  
+  const peso = parseFloat(document.getElementById('peso').value);
+  const protKg = parseFloat(document.getElementById('protKg').value) || 2.0;
+  const fatKg = parseFloat(document.getElementById('fatKg').value) || 1.0;
+  
+  const kcalAlvo = resultadoGET * (1 + ajusteObjetivo);
+  const protG = peso * protKg;
+  const fatG = peso * fatKg;
+  const protKcal = protG * 4;
+  const fatKcal = fatG * 9;
+  const carbKcal = kcalAlvo - protKcal - fatKcal;
+  const carbG = Math.max(0, carbKcal / 4);
+  
+  document.getElementById('sugKcal').textContent = Math.round(kcalAlvo).toLocaleString('pt-BR');
+  document.getElementById('sugProt').textContent = Math.round(protG) + 'g';
+  document.getElementById('sugCarb').textContent = Math.round(carbG) + 'g';
+  document.getElementById('sugFat').textContent = Math.round(fatG) + 'g';
+}
+
+function aplicarMetas() {
+  if (!resultadoGET) {
+    alert('Calcule a TMB primeiro preenchendo os dados.');
+    return;
+  }
+  
+  const peso = parseFloat(document.getElementById('peso').value);
+  const protKg = parseFloat(document.getElementById('protKg').value) || 2.0;
+  const fatKg = parseFloat(document.getElementById('fatKg').value) || 1.0;
+  
+  const kcalAlvo = resultadoGET * (1 + ajusteObjetivo);
+  const protG = peso * protKg;
+  const fatG = peso * fatKg;
+  const carbG = Math.max(0, (kcalAlvo - protG * 4 - fatG * 9) / 4);
+  
+  metas.kcal = Math.round(kcalAlvo);
+  metas.prot = Math.round(protG);
+  metas.carb = Math.round(carbG);
+  metas.fat = Math.round(fatG);
+  
+  document.getElementById('metaKcal').value = metas.kcal;
+  document.getElementById('metaProt').value = metas.prot;
+  document.getElementById('metaCarb').value = metas.carb;
+  document.getElementById('metaFat').value = metas.fat;
+  
+  // Auto-preenche dados do paciente se vazios
+  if (!document.getElementById('cliPeso').value) document.getElementById('cliPeso').value = peso;
+  if (!document.getElementById('cliAltura').value) document.getElementById('cliAltura').value = document.getElementById('altura').value;
+  if (!document.getElementById('cliIdade').value) document.getElementById('cliIdade').value = document.getElementById('idade').value;
+  
+  document.querySelector('[data-panel="plano"]').click();
+  render();
+  
+  const btn = event.target;
+  const original = btn.textContent;
+  btn.textContent = '✓ Metas Aplicadas';
+  setTimeout(() => { btn.textContent = original; }, 1800);
+}
+
+['sexo', 'idade', 'peso', 'altura', 'bodyfat', 'fator'].forEach(id => {
+  document.getElementById(id).addEventListener('input', calcularTMB);
+});
+document.getElementById('protKg').addEventListener('input', calcularMacros);
+document.getElementById('fatKg').addEventListener('input', calcularMacros);
+
+document.querySelectorAll('.formula-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.formula-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    formulaAtual = btn.dataset.formula;
+    const precisaBF = ['katch', 'cunningham'].includes(formulaAtual);
+    document.getElementById('bfField').style.display = precisaBF ? 'flex' : 'none';
+    calcularTMB();
+  });
+});
+
+document.querySelectorAll('.obj-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.obj-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    ajusteObjetivo = parseFloat(btn.dataset.ajuste);
+    calcularMacros();
+  });
+});
+
+document.getElementById('preset').addEventListener('change', (e) => {
+  const v = e.target.value;
+  const presets = {
+    hipertrofia: [2.0, 1.0],
+    cutting: [2.4, 0.8],
+    endurance: [1.6, 1.0],
+    lowcarb: [2.0, 1.5],
+    manutencao: [1.8, 1.0]
+  };
+  if (presets[v]) {
+    document.getElementById('protKg').value = presets[v][0];
+    document.getElementById('fatKg').value = presets[v][1];
+    calcularMacros();
+  }
+});
+
+// ============================================================
+// RENDER PLANO
+// ============================================================
+function calcMacrosItem(item) {
+  const gramas = item.modo === 'u' ? item.q * item.u : item.q;
+  return {
+    gramas,
+    k: item.k * gramas / 100,
+    p: item.p * gramas / 100,
+    c: item.c * gramas / 100,
+    f: item.f * gramas / 100
+  };
+}
+
+function render() {
+  const container = document.getElementById('mealsContainer');
+  container.innerHTML = '';
+  
+  let totalKcal = 0, totalProt = 0, totalCarb = 0, totalFat = 0;
+  
+  Object.keys(REFEICOES).forEach(key => {
+    const itens = plano[key];
+    let mKcal = 0, mProt = 0, mCarb = 0, mFat = 0;
+    
+    itens.forEach(item => {
+      const m = calcMacrosItem(item);
+      mKcal += m.k; mProt += m.p; mCarb += m.c; mFat += m.f;
+    });
+    
+    totalKcal += mKcal; totalProt += mProt; totalCarb += mCarb; totalFat += mFat;
+    
+    if (itens.length === 0) return;
+    
+    const card = document.createElement('div');
+    card.className = 'meal-card';
+    card.innerHTML = `
+      <div class="meal-header">
+        <div class="meal-name">${REFEICOES[key]}</div>
+        <div class="meal-totals">
+          <div class="meal-total-item"><span class="dot dot-kcal"></span><span><strong>${Math.round(mKcal)}</strong> kcal</span></div>
+          <div class="meal-total-item"><span class="dot dot-prot"></span><span>P <strong>${mProt.toFixed(1)}g</strong></span></div>
+          <div class="meal-total-item"><span class="dot dot-carb"></span><span>C <strong>${mCarb.toFixed(1)}g</strong></span></div>
+          <div class="meal-total-item"><span class="dot dot-fat"></span><span>G <strong>${mFat.toFixed(1)}g</strong></span></div>
+        </div>
+      </div>
+      <div class="food-list">
+        ${itens.map((item, i) => {
+          const m = calcMacrosItem(item);
+          const unidadeLabel = item.modo === 'u' ? (item.uName || 'un') : 'g';
+          const detalheGramas = item.modo === 'u' ? ` <span style="color:var(--text-dim); font-size:0.8em; font-weight:400;">(${Math.round(m.gramas)}g)</span>` : '';
+          const subsCount = (item.subs || []).length;
+          const subsBadge = subsCount > 0 
+            ? `<span class="has-subs" onclick="abrirModalSubs('${key}', ${i})">⇄ ${subsCount} ${subsCount === 1 ? 'sub' : 'subs'}</span>`
+            : '';
+          return `
+            <div class="food-row">
+              <div class="food-info">
+                <div class="food-name">${item.n}${detalheGramas}${subsBadge}</div>
+                <div class="food-macros">
+                  <span><strong>${Math.round(m.k)}</strong> kcal</span>
+                  <span>P <strong>${m.p.toFixed(1)}g</strong></span>
+                  <span>C <strong>${m.c.toFixed(1)}g</strong></span>
+                  <span>G <strong>${m.f.toFixed(1)}g</strong></span>
+                </div>
+              </div>
+              <input type="number" class="food-qty-edit" value="${item.q}" min="0" step="0.5"
+                onchange="atualizarQtd('${key}', ${i}, this.value)">
+              <span class="food-unit-label">${unidadeLabel}</span>
+              <button class="icon-btn subs" onclick="abrirModalSubs('${key}', ${i})" title="Substituições">⇄</button>
+              <button class="icon-btn remove" onclick="remover('${key}', ${i})" title="Remover">×</button>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+    container.appendChild(card);
+  });
+  
+  document.getElementById('totalKcal').textContent = Math.round(totalKcal);
+  document.getElementById('totalProt').textContent = totalProt.toFixed(1) + 'g';
+  document.getElementById('totalCarb').textContent = totalCarb.toFixed(1) + 'g';
+  document.getElementById('totalFat').textContent = totalFat.toFixed(1) + 'g';
+  
+  atualizarDiffMetas('metaKcalDiff', totalKcal, metas.kcal, 'kcal');
+  atualizarDiffMetas('metaProtDiff', totalProt, metas.prot, 'g');
+  atualizarDiffMetas('metaCarbDiff', totalCarb, metas.carb, 'g');
+  atualizarDiffMetas('metaFatDiff', totalFat, metas.fat, 'g');
+}
+
+function atualizarDiffMetas(elId, atual, meta, unidade) {
+  const el = document.getElementById(elId);
+  if (!meta) { el.textContent = ''; el.className = 'summary-meta'; return; }
+  const diff = atual - meta;
+  const tol = meta * 0.05;
+  if (Math.abs(diff) <= tol) {
+    el.textContent = `meta: ${meta}${unidade} ✓`;
+    el.className = 'summary-meta ok';
+  } else if (diff > 0) {
+    el.textContent = `+${Math.round(diff)} acima`;
+    el.className = 'summary-meta over';
+  } else {
+    el.textContent = `${Math.round(Math.abs(diff))}${unidade} restante`;
+    el.className = 'summary-meta under';
+  }
+}
+
+// ============================================================
+// BUSCA
+// ============================================================
+function normalizar(s) {
+  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function buscar(termo) {
+  if (!termo || termo.length < 1) return [];
+  const t = normalizar(termo);
+  const palavras = t.split(/\s+/).filter(p => p);
+  
+  return ALIMENTOS
+    .map(a => {
+      const nome = normalizar(a.n);
+      const cat = normalizar(a.cat);
+      let score = 0;
+      palavras.forEach(p => {
+        if (nome.startsWith(p)) score += 100;
+        else if (nome.includes(' ' + p)) score += 50;
+        else if (nome.includes(p)) score += 20;
+        else if (cat.includes(p)) score += 5;
+        else score -= 999;
+      });
+      return { ...a, score };
+    })
+    .filter(a => a.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 12);
+}
+
+function mostrarSugestoes(lista, divId, onClickFn) {
+  const div = document.getElementById(divId);
+  if (lista.length === 0) { div.classList.remove('active'); return; }
+  div.innerHTML = lista.map((a, i) => {
+    const idx = ALIMENTOS.indexOf(ALIMENTOS.find(x => x.n === a.n));
+    const badge = a.u ? `<span class="has-unit-badge">UN</span>` : '';
+    const unidadeInfo = a.u ? ` · 1 ${a.uName} ≈ ${a.u}g` : '';
+    return `
+      <div class="suggestion-item" data-index="${i}" onclick="${onClickFn}(${idx})">
+        <div>${a.n}${badge}</div>
+        <div class="suggestion-meta">${a.cat} · ${a.k} kcal · P${a.p}g · C${a.c}g · G${a.f}g · /100g${unidadeInfo}</div>
+      </div>
+    `;
+  }).join('');
+  div.classList.add('active');
+}
+
+function selecionar(idx) {
+  alimentoSelecionado = ALIMENTOS[idx];
+  document.getElementById('foodSearch').value = alimentoSelecionado.n;
+  document.getElementById('suggestions').classList.remove('active');
+  
+  const modoUBtn = document.getElementById('modeU');
+  const unitField = document.getElementById('foodUnit');
+  
+  if (alimentoSelecionado.u) {
+    modoUBtn.disabled = false;
+    unitField.value = alimentoSelecionado.u;
+    unitField.placeholder = alimentoSelecionado.u;
+    setInputMode('u');
+    document.getElementById('foodQty').value = 1;
+  } else {
+    modoUBtn.disabled = true;
+    unitField.value = '';
+    unitField.placeholder = '—';
+    setInputMode('g');
+    document.getElementById('foodQty').value = 100;
+  }
+  
+  document.getElementById('foodQty').focus();
+  document.getElementById('foodQty').select();
+}
+
+function setInputMode(mode) {
+  inputMode = mode;
+  document.getElementById('modeG').classList.toggle('active', mode === 'g');
+  document.getElementById('modeU').classList.toggle('active', mode === 'u');
+  const unitInput = document.getElementById('foodUnit');
+  unitInput.disabled = (mode !== 'u');
+  document.getElementById('foodQty').placeholder = (mode === 'u') ? '1' : '100';
+}
+
+document.getElementById('modeG').addEventListener('click', () => {
+  if (inputMode === 'g') return;
+  if (alimentoSelecionado && alimentoSelecionado.u) {
+    const q = parseFloat(document.getElementById('foodQty').value) || 1;
+    document.getElementById('foodQty').value = Math.round(q * alimentoSelecionado.u);
+  }
+  setInputMode('g');
+});
+
+document.getElementById('modeU').addEventListener('click', () => {
+  if (inputMode === 'u' || !alimentoSelecionado || !alimentoSelecionado.u) return;
+  const q = parseFloat(document.getElementById('foodQty').value) || 100;
+  document.getElementById('foodQty').value = (q / alimentoSelecionado.u).toFixed(1);
+  setInputMode('u');
+});
+
+// ============================================================
+// ADICIONAR / EDITAR / REMOVER
+// ============================================================
+function adicionar() {
+  let qty = parseFloat(document.getElementById('foodQty').value);
+  
+  if (!alimentoSelecionado) {
+    const termo = document.getElementById('foodSearch').value;
+    const sugs = buscar(termo);
+    if (sugs.length > 0) {
+      alimentoSelecionado = ALIMENTOS.find(x => x.n === sugs[0].n);
+    } else {
+      alert('Selecione um alimento da lista.');
+      return;
+    }
+  }
+  if (!qty || qty <= 0) { alert('Informe uma quantidade válida.'); return; }
+  
+  const customUnit = parseFloat(document.getElementById('foodUnit').value);
+  const pesoUnit = (inputMode === 'u' && customUnit > 0) ? customUnit : alimentoSelecionado.u;
+  
+  plano[refeicaoAtiva].push({
+    n: alimentoSelecionado.n,
+    k: alimentoSelecionado.k,
+    p: alimentoSelecionado.p,
+    c: alimentoSelecionado.c,
+    f: alimentoSelecionado.f,
+    q: qty,
+    modo: inputMode,
+    u: pesoUnit,
+    uName: alimentoSelecionado.uName,
+    subs: []
+  });
+  
+  document.getElementById('foodSearch').value = '';
+  document.getElementById('foodQty').value = 100;
+  document.getElementById('foodUnit').value = '';
+  document.getElementById('foodUnit').disabled = true;
+  document.getElementById('modeU').disabled = true;
+  setInputMode('g');
+  alimentoSelecionado = null;
+  document.getElementById('suggestions').classList.remove('active');
+  document.getElementById('foodSearch').focus();
+  
+  render();
+}
+
+function atualizarQtd(refeicao, idx, novaQtd) {
+  const q = parseFloat(novaQtd);
+  if (q && q > 0) { plano[refeicao][idx].q = q; render(); }
+}
+
+function remover(refeicao, idx) {
+  plano[refeicao].splice(idx, 1);
+  render();
+}
+
+function limparTudo() {
+  if (confirm('Limpar todo o plano alimentar?')) {
+    plano = { cafe: [], lanche1: [], almoco: [], lanche2: [], jantar: [], ceia: [] };
+    render();
+  }
+}
+
+// ============================================================
+// MODAL DE SUBSTITUIÇÕES
+// ============================================================
+function abrirModalSubs(mealKey, foodIdx) {
+  subsContext = { mealKey, foodIdx };
+  const item = plano[mealKey][foodIdx];
+  document.getElementById('subsForFood').textContent = item.n;
+  document.getElementById('subsModal').classList.add('active');
+  renderSubsList();
+  
+  // Limpar form
+  document.getElementById('subSearch').value = '';
+  document.getElementById('subQty').value = '';
+  subAlimentoSelecionado = null;
+  document.getElementById('subSuggestions').classList.remove('active');
+}
+
+function fecharModalSubs() {
+  document.getElementById('subsModal').classList.remove('active');
+}
+
+function renderSubsList() {
+  const { mealKey, foodIdx } = subsContext;
+  const item = plano[mealKey][foodIdx];
+  const subs = item.subs || [];
+  const container = document.getElementById('subsListContainer');
+  
+  if (subs.length === 0) {
+    container.innerHTML = '<div style="font-size: 0.82rem; color: var(--text-dim); text-align: center; padding: 16px; font-style: italic;">Nenhuma substituição cadastrada ainda. Adicione abaixo.</div>';
+    return;
+  }
+  
+  container.innerHTML = `
+    <div class="subs-list">
+      ${subs.map((sub, i) => {
+        const subItem = { ...sub };
+        const m = calcMacrosItem(subItem);
+        const qtyLabel = sub.modo === 'u' ? `${sub.q} ${sub.uName || 'un'}` : `${sub.q}g`;
+        const gramasInfo = sub.modo === 'u' ? ` (${Math.round(m.gramas)}g)` : '';
+        return `
+          <div class="sub-item">
+            <div class="sub-name">${sub.n}${gramasInfo}</div>
+            <div class="sub-qty">${qtyLabel}</div>
+            <div class="sub-macros">${Math.round(m.k)}kcal</div>
+            <button onclick="removerSub(${i})" title="Remover">×</button>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function buscarSub(termo) {
+  if (!termo || termo.length < 1) return [];
+  return buscar(termo);
+}
+
+document.getElementById('subSearch').addEventListener('input', (e) => {
+  subAlimentoSelecionado = null;
+  const sugs = buscarSub(e.target.value);
+  mostrarSugestoes(sugs, 'subSuggestions', 'selecionarSub');
+});
+
+function selecionarSub(idx) {
+  subAlimentoSelecionado = ALIMENTOS[idx];
+  document.getElementById('subSearch').value = subAlimentoSelecionado.n;
+  document.getElementById('subSuggestions').classList.remove('active');
+  
+  const modeSel = document.getElementById('subMode');
+  if (subAlimentoSelecionado.u) {
+    modeSel.value = 'u';
+    document.getElementById('subQty').value = 1;
+  } else {
+    modeSel.value = 'g';
+    document.getElementById('subQty').value = 100;
+  }
+  document.getElementById('subQty').focus();
+}
+
+function adicionarSub() {
+  if (!subAlimentoSelecionado) {
+    const termo = document.getElementById('subSearch').value;
+    const sugs = buscar(termo);
+    if (sugs.length > 0) subAlimentoSelecionado = ALIMENTOS.find(x => x.n === sugs[0].n);
+    else { alert('Selecione um alimento.'); return; }
+  }
+  const qty = parseFloat(document.getElementById('subQty').value);
+  if (!qty || qty <= 0) { alert('Informe uma quantidade válida.'); return; }
+  
+  const modo = document.getElementById('subMode').value;
+  if (modo === 'u' && !subAlimentoSelecionado.u) {
+    alert('Esse alimento não tem unidade definida. Use gramas.');
+    return;
+  }
+  
+  const { mealKey, foodIdx } = subsContext;
+  if (!plano[mealKey][foodIdx].subs) plano[mealKey][foodIdx].subs = [];
+  
+  plano[mealKey][foodIdx].subs.push({
+    n: subAlimentoSelecionado.n,
+    k: subAlimentoSelecionado.k,
+    p: subAlimentoSelecionado.p,
+    c: subAlimentoSelecionado.c,
+    f: subAlimentoSelecionado.f,
+    q: qty,
+    modo,
+    u: subAlimentoSelecionado.u,
+    uName: subAlimentoSelecionado.uName
+  });
+  
+  document.getElementById('subSearch').value = '';
+  document.getElementById('subQty').value = '';
+  subAlimentoSelecionado = null;
+  document.getElementById('subSuggestions').classList.remove('active');
+  
+  renderSubsList();
+  render();
+}
+
+function removerSub(idx) {
+  const { mealKey, foodIdx } = subsContext;
+  plano[mealKey][foodIdx].subs.splice(idx, 1);
+  renderSubsList();
+  render();
+}
+
+function sugerirEquivalente() {
+  if (!subAlimentoSelecionado) {
+    alert('Primeiro selecione um alimento na busca.');
+    return;
+  }
+  const { mealKey, foodIdx } = subsContext;
+  const principal = plano[mealKey][foodIdx];
+  const principalKcal = calcMacrosItem(principal).k;
+  
+  // Calcula gramas equivalentes em kcal
+  const gramasEquiv = (principalKcal / subAlimentoSelecionado.k) * 100;
+  
+  const modo = document.getElementById('subMode').value;
+  if (modo === 'u' && subAlimentoSelecionado.u) {
+    document.getElementById('subQty').value = (gramasEquiv / subAlimentoSelecionado.u).toFixed(1);
+  } else {
+    document.getElementById('subMode').value = 'g';
+    document.getElementById('subQty').value = Math.round(gramasEquiv);
+  }
+}
+
+// Fechar modal clicando fora
+document.getElementById('subsModal').addEventListener('click', (e) => {
+  if (e.target.id === 'subsModal') fecharModalSubs();
+});
+
+// ============================================================
+// EVENTOS DE BUSCA PRINCIPAL
+// ============================================================
+document.getElementById('foodSearch').addEventListener('input', (e) => {
+  alimentoSelecionado = null;
+  document.getElementById('modeU').disabled = true;
+  document.getElementById('foodUnit').disabled = true;
+  document.getElementById('foodUnit').value = '';
+  setInputMode('g');
+  const sugs = buscar(e.target.value);
+  mostrarSugestoes(sugs, 'suggestions', 'selecionar');
+  highlightedIndex = -1;
+});
+
+document.getElementById('foodSearch').addEventListener('keydown', (e) => {
+  const div = document.getElementById('suggestions');
+  const items = div.querySelectorAll('.suggestion-item');
+  
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    highlightedIndex = Math.min(highlightedIndex + 1, items.length - 1);
+    atualizarHighlight(items);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    highlightedIndex = Math.max(highlightedIndex - 1, 0);
+    atualizarHighlight(items);
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (highlightedIndex >= 0 && items[highlightedIndex]) items[highlightedIndex].click();
+    else adicionar();
+  } else if (e.key === 'Escape') div.classList.remove('active');
+});
+
+function atualizarHighlight(items) {
+  items.forEach(i => i.classList.remove('highlighted'));
+  if (items[highlightedIndex]) {
+    items[highlightedIndex].classList.add('highlighted');
+    items[highlightedIndex].scrollIntoView({ block: 'nearest' });
+  }
+}
+
+document.getElementById('foodQty').addEventListener('keydown', (e) => { if (e.key === 'Enter') adicionar(); });
+document.getElementById('foodUnit').addEventListener('keydown', (e) => { if (e.key === 'Enter') adicionar(); });
+document.getElementById('addBtn').addEventListener('click', adicionar);
+
+document.querySelectorAll('.meal-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.meal-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    refeicaoAtiva = tab.dataset.meal;
+  });
+});
+
+['metaKcal', 'metaProt', 'metaCarb', 'metaFat'].forEach((id, i) => {
+  const keys = ['kcal', 'prot', 'carb', 'fat'];
+  document.getElementById(id).addEventListener('input', (e) => {
+    metas[keys[i]] = parseFloat(e.target.value) || null;
+    render();
+  });
+});
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.search-wrapper')) {
+    document.getElementById('suggestions').classList.remove('active');
+  }
+  if (!e.target.closest('.sub-search-wrapper')) {
+    document.getElementById('subSuggestions').classList.remove('active');
+  }
+});
+
+// ============================================================
+// COLETAR DADOS DO CLIENTE
+// ============================================================
+function coletarCliente() {
+  return {
+    nome: document.getElementById('cliNome').value || '—',
+    idade: document.getElementById('cliIdade').value,
+    tel: document.getElementById('cliTel').value,
+    peso: document.getElementById('cliPeso').value,
+    altura: document.getElementById('cliAltura').value,
+    objetivo: document.getElementById('cliObjetivo').value,
+    atividade: document.getElementById('cliAtividade').value,
+    obs: document.getElementById('cliObs').value,
+    profNome: document.getElementById('profNome').value,
+    planData: document.getElementById('planData').value
+  };
+}
+
+// ============================================================
+// PDF — CONSTRUÇÃO DO LAYOUT IMPRIMÍVEL
+// ============================================================
+function buildPDFContent() {
+  const c = coletarCliente();
+  const dataF = c.planData 
+    ? new Date(c.planData + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
+    : new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+  
+  // Totais
+  let tK = 0, tP = 0, tC = 0, tF = 0;
+  Object.keys(REFEICOES).forEach(key => {
+    plano[key].forEach(item => {
+      const m = calcMacrosItem(item);
+      tK += m.k; tP += m.p; tC += m.c; tF += m.f;
+    });
+  });
+  
+  // Header
+  let html = `
+    <div class="pdf-header">
+      <div class="pdf-brand-row">
+        <div class="pdf-brand">
+          <div class="pdf-logo">★</div>
+          <div class="pdf-title-block">
+            <h1>NUTRI<span>.</span>FUEL</h1>
+            <div class="pdf-tagline">Performance · Nutrição · Ciência</div>
+          </div>
+        </div>
+        <div>
+          <div class="pdf-date-label">Data do Plano</div>
+          <div class="pdf-date">${dataF}</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="pdf-client">
+      <div class="pdf-client-label">Plano Alimentar Personalizado</div>
+      <div class="pdf-client-name">${c.nome.toUpperCase()}</div>
+      <div class="pdf-client-meta">
+        ${c.idade ? `<div><strong>Idade:</strong> ${c.idade} anos</div>` : ''}
+        ${c.peso ? `<div><strong>Peso:</strong> ${c.peso} kg</div>` : ''}
+        ${c.altura ? `<div><strong>Altura:</strong> ${c.altura} cm</div>` : ''}
+        ${c.objetivo ? `<div><strong>Objetivo:</strong> ${c.objetivo}</div>` : ''}
+        ${c.atividade ? `<div><strong>Atividade:</strong> ${c.atividade}</div>` : ''}
+      </div>
+      ${c.obs ? `<div style="margin-top:10px; padding-top:10px; border-top:1px solid #eee; font-size:0.78rem; color:#555;"><strong style="color:#1a1a1a;">Observações:</strong> ${c.obs}</div>` : ''}
+    </div>
+    
+    <div class="pdf-stats-grid">
+      <div class="pdf-stat kcal">
+        <div class="pdf-stat-value">${Math.round(tK)}</div>
+        <div class="pdf-stat-label">Kcal Totais</div>
+        ${metas.kcal ? `<div class="pdf-stat-meta">meta: ${metas.kcal}</div>` : ''}
+      </div>
+      <div class="pdf-stat prot">
+        <div class="pdf-stat-value">${tP.toFixed(0)}g</div>
+        <div class="pdf-stat-label">Proteína</div>
+        ${metas.prot ? `<div class="pdf-stat-meta">meta: ${metas.prot}g</div>` : ''}
+      </div>
+      <div class="pdf-stat carb">
+        <div class="pdf-stat-value">${tC.toFixed(0)}g</div>
+        <div class="pdf-stat-label">Carboidrato</div>
+        ${metas.carb ? `<div class="pdf-stat-meta">meta: ${metas.carb}g</div>` : ''}
+      </div>
+      <div class="pdf-stat fat">
+        <div class="pdf-stat-value">${tF.toFixed(0)}g</div>
+        <div class="pdf-stat-label">Gordura</div>
+        ${metas.fat ? `<div class="pdf-stat-meta">meta: ${metas.fat}g</div>` : ''}
+      </div>
+    </div>
+    
+    <div class="pdf-section-title">📋 Distribuição das Refeições</div>
+  `;
+  
+  // Refeições
+  Object.keys(REFEICOES).forEach(key => {
+    const itens = plano[key];
+    if (itens.length === 0) return;
+    
+    let mK = 0, mP = 0, mC = 0, mF = 0;
+    itens.forEach(item => {
+      const m = calcMacrosItem(item);
+      mK += m.k; mP += m.p; mC += m.c; mF += m.f;
+    });
+    
+    html += `
+      <div class="pdf-meal">
+        <div class="pdf-meal-header">
+          <div class="pdf-meal-name">${REFEICOES[key]}</div>
+          <div class="pdf-meal-totals">
+            <span><strong>${Math.round(mK)}</strong> kcal</span>
+            <span>P <strong>${mP.toFixed(1)}g</strong></span>
+            <span>C <strong>${mC.toFixed(1)}g</strong></span>
+            <span>G <strong>${mF.toFixed(1)}g</strong></span>
+          </div>
+        </div>
+        <div class="pdf-foods">
+    `;
+    
+    itens.forEach(item => {
+      const m = calcMacrosItem(item);
+      const qtyLabel = item.modo === 'u' ? `${item.q} ${item.uName || 'un'} (${Math.round(m.gramas)}g)` : `${item.q}g`;
+      
+      html += `
+        <div class="pdf-food">
+          <div>
+            <div class="pdf-food-name">${item.n}</div>
+            <div class="pdf-food-qty">${qtyLabel}</div>
+          </div>
+          <div class="pdf-food-macros">
+            <div><strong>${Math.round(m.k)}</strong> kcal</div>
+            <div>P ${m.p.toFixed(1)}g · C ${m.c.toFixed(1)}g · G ${m.f.toFixed(1)}g</div>
+          </div>
+        </div>
+      `;
+      
+      // Substituições
+      if (item.subs && item.subs.length > 0) {
+        html += `<div class="pdf-subs">
+          <div class="pdf-subs-title">⇄ Substituições Equivalentes</div>`;
+        item.subs.forEach(sub => {
+          const ms = calcMacrosItem(sub);
+          const qLabel = sub.modo === 'u' ? `${sub.q} ${sub.uName || 'un'}` : `${sub.q}g`;
+          const gInfo = sub.modo === 'u' ? ` <span style="color:#999; font-size:0.92em;">(${Math.round(ms.gramas)}g)</span>` : '';
+          html += `
+            <div class="pdf-sub-item">
+              <div><strong>${sub.n}</strong>${gInfo}</div>
+              <div class="pdf-sub-qty">${qLabel} · ${Math.round(ms.k)} kcal</div>
+            </div>
+          `;
+        });
+        html += `</div>`;
+      }
+    });
+    
+    html += `</div></div>`;
+  });
+  
+  // Footer
+  html += `
+    <div class="pdf-disclaimer">
+      <strong>⚠️ Importante:</strong> As substituições mantêm aproximadamente o mesmo valor calórico do alimento principal, mas os macronutrientes podem variar. Respeite as quantidades indicadas e mantenha a hidratação adequada (35ml/kg de peso corporal). Em caso de mal-estar ou dúvidas, contate o profissional responsável.
+    </div>
+    
+    <div class="pdf-footer">
+      ${c.profNome ? `<div style="font-size:0.78rem; color:#fff; margin-bottom:6px;"><strong>${c.profNome}</strong></div>` : ''}
+      <div>Plano gerado em ${dataF} · NUTRI<strong>.</strong>FUEL · Sistema Profissional de Cálculo Nutricional</div>
+      <div style="margin-top:6px; opacity:0.7;">Base: TACO 4ª ed. (UNICAMP) + USDA FoodData Central</div>
+    </div>
+  `;
+  
+  return html;
+}
+
+// ============================================================
+// GERAR PDF (via html2pdf)
+// ============================================================
+async function gerarPDF() {
+  const totalItens = Object.values(plano).reduce((s, a) => s + a.length, 0);
+  if (totalItens === 0) {
+    alert('Adicione pelo menos um alimento ao plano antes de gerar o PDF.');
+    return;
+  }
+  
+  const c = coletarCliente();
+  if (c.nome === '—' || !c.nome.trim()) {
+    if (!confirm('O nome do paciente não foi preenchido. Deseja continuar mesmo assim?')) return;
+  }
+  
+  if (typeof html2pdf === 'undefined') {
+    alert('Biblioteca PDF não carregou. Verifique sua conexão ou use o botão "Imprimir" como alternativa (Ctrl+P → Salvar como PDF).');
+    return;
+  }
+  
+  const filename = `Plano-Alimentar-${(c.nome || 'paciente').replace(/[^a-zA-Z0-9]/g, '_')}-${new Date().toISOString().split('T')[0]}.pdf`;
+  
+  // Cria container DEDICADO e visível em posição válida (fora da viewport mas no fluxo)
+  // O segredo: precisa estar no fluxo do documento e visível para o html2canvas capturar
+  const pdfWrapper = document.createElement('div');
+  pdfWrapper.id = 'pdfRenderWrapper';
+  pdfWrapper.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 794px;
+    background: #ffffff;
+    padding: 24px;
+    z-index: -1;
+    opacity: 0;
+    pointer-events: none;
+    box-sizing: border-box;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: #1a1a1a;
+  `;
+  pdfWrapper.innerHTML = `<div id="pdfRenderInner" style="width: 100%;">${buildPDFContent()}</div>`;
+  document.body.appendChild(pdfWrapper);
+  
+  // Mostra feedback visual no botão
+  const btn = event && event.target ? event.target : null;
+  let originalText = '';
+  if (btn) {
+    originalText = btn.textContent;
+    btn.textContent = '⏳ Gerando PDF...';
+    btn.disabled = true;
+  }
+  
+  try {
+    // Aguarda fontes carregarem (crítico — sem isso o canvas pode capturar antes)
+    if (document.fonts && document.fonts.ready) {
+      await document.fonts.ready;
+    }
+    
+    // Pequeno delay extra para garantir layout estabilizado
+    await new Promise(r => setTimeout(r, 250));
+    
+    const opt = {
+      margin: [10, 8, 10, 8],
+      filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        windowWidth: 794,
+        scrollX: 0,
+        scrollY: 0,
+        onclone: function(clonedDoc) {
+          // Garante visibilidade no clone (html2canvas trabalha com clone do DOM)
+          const cloned = clonedDoc.getElementById('pdfRenderWrapper');
+          if (cloned) {
+            cloned.style.opacity = '1';
+            cloned.style.position = 'static';
+            cloned.style.zIndex = 'auto';
+          }
+        }
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
+      pagebreak: { mode: ['css', 'legacy'], avoid: ['.pdf-meal', '.pdf-stat', '.pdf-client', '.pdf-header'] }
+    };
+    
+    await html2pdf().set(opt).from(document.getElementById('pdfRenderInner')).save();
+    
+  } catch (err) {
+    console.error('Erro PDF:', err);
+    alert('Erro ao gerar PDF: ' + (err.message || 'desconhecido') + '\n\nUse o botão "Imprimir" como alternativa.');
+  } finally {
+    // Limpa
+    const wrap = document.getElementById('pdfRenderWrapper');
+    if (wrap) wrap.remove();
+    if (btn) {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+  }
+}
+
+// ============================================================
+// IMPRIMIR (window.print)
+// ============================================================
+function imprimir() {
+  const totalItens = Object.values(plano).reduce((s, a) => s + a.length, 0);
+  if (totalItens === 0) {
+    alert('Adicione pelo menos um alimento ao plano antes de imprimir.');
+    return;
+  }
+  
+  const pdfArea = document.getElementById('pdfArea');
+  pdfArea.innerHTML = buildPDFContent();
+  
+  // Espera renderizar
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => { pdfArea.innerHTML = ''; }, 1000);
+  }, 100);
+}
+
+// ============================================================
+// EXPORT/IMPORT JSON E TEXTO
+// ============================================================
+function exportarJSON() {
+  const data = {
+    versao: '3.0',
+    plano,
+    metas,
+    cliente: coletarCliente(),
+    dadosTMB: {
+      sexo: document.getElementById('sexo').value,
+      idade: document.getElementById('idade').value,
+      peso: document.getElementById('peso').value,
+      altura: document.getElementById('altura').value,
+      bodyfat: document.getElementById('bodyfat').value,
+      fator: document.getElementById('fator').value,
+      formula: formulaAtual,
+      ajuste: ajusteObjetivo
+    },
+    dataCriacao: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const nomeCli = (data.cliente.nome || 'plano').replace(/[^a-zA-Z0-9]/g, '_');
+  a.href = url;
+  a.download = `nutrifuel-${nomeCli}-${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importarJSON(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try {
+      const data = JSON.parse(evt.target.result);
+      if (data.plano) {
+        // Garante compatibilidade — itens antigos sem "subs"
+        Object.keys(data.plano).forEach(k => {
+          data.plano[k].forEach(item => {
+            if (!item.subs) item.subs = [];
+          });
+        });
+        plano = data.plano;
+      }
+      if (data.metas) {
+        metas = data.metas;
+        document.getElementById('metaKcal').value = metas.kcal || '';
+        document.getElementById('metaProt').value = metas.prot || '';
+        document.getElementById('metaCarb').value = metas.carb || '';
+        document.getElementById('metaFat').value = metas.fat || '';
+      }
+      if (data.cliente) {
+        const c = data.cliente;
+        ['nome','idade','tel','peso','altura','obs','profNome','planData'].forEach(f => {
+          const el = document.getElementById('cli' + f.charAt(0).toUpperCase() + f.slice(1));
+          const altMap = { profNome: 'profNome', planData: 'planData' };
+          const target = altMap[f] ? document.getElementById(altMap[f]) : el;
+          if (target && c[f]) target.value = c[f];
+        });
+        if (c.objetivo) document.getElementById('cliObjetivo').value = c.objetivo;
+        if (c.atividade) document.getElementById('cliAtividade').value = c.atividade;
+      }
+      if (data.dadosTMB) {
+        const d = data.dadosTMB;
+        if (d.sexo) document.getElementById('sexo').value = d.sexo;
+        if (d.idade) document.getElementById('idade').value = d.idade;
+        if (d.peso) document.getElementById('peso').value = d.peso;
+        if (d.altura) document.getElementById('altura').value = d.altura;
+        if (d.bodyfat) document.getElementById('bodyfat').value = d.bodyfat;
+        if (d.fator) document.getElementById('fator').value = d.fator;
+        calcularTMB();
+      }
+      render();
+      alert('Plano importado com sucesso!');
+    } catch (err) {
+      alert('Erro ao importar: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function exportarTexto() {
+  const c = coletarCliente();
+  let txt = `╔════════════════════════════════════════╗\n`;
+  txt += `   NUTRI.FUEL · PLANO ALIMENTAR\n`;
+  txt += `╚════════════════════════════════════════╝\n\n`;
+  
+  if (c.nome !== '—') txt += `PACIENTE: ${c.nome}\n`;
+  if (c.idade) txt += `Idade: ${c.idade} anos · `;
+  if (c.peso) txt += `Peso: ${c.peso}kg · `;
+  if (c.altura) txt += `Altura: ${c.altura}cm\n`;
+  if (c.objetivo) txt += `Objetivo: ${c.objetivo}\n`;
+  txt += `\n`;
+  
+  if (metas.kcal) txt += `META: ${metas.kcal} kcal | P:${metas.prot}g · C:${metas.carb}g · G:${metas.fat}g\n\n`;
+  
+  let tK = 0, tP = 0, tC = 0, tF = 0;
+  
+  Object.keys(REFEICOES).forEach(key => {
+    if (plano[key].length === 0) return;
+    txt += `▸ ${REFEICOES[key].toUpperCase()}\n`;
+    let mK = 0, mP = 0, mC = 0, mF = 0;
+    plano[key].forEach(item => {
+      const m = calcMacrosItem(item);
+      mK += m.k; mP += m.p; mC += m.c; mF += m.f;
+      const qtdLabel = item.modo === 'u' ? `${item.q} ${item.uName || 'un'} (${Math.round(m.gramas)}g)` : `${item.q}g`;
+      txt += `   • ${item.n} — ${qtdLabel}\n`;
+      txt += `     ${Math.round(m.k)} kcal | P:${m.p.toFixed(1)} C:${m.c.toFixed(1)} G:${m.f.toFixed(1)}\n`;
+      if (item.subs && item.subs.length > 0) {
+        txt += `     ⇄ Substituições:\n`;
+        item.subs.forEach(sub => {
+          const ms = calcMacrosItem(sub);
+          const qLabel = sub.modo === 'u' ? `${sub.q} ${sub.uName || 'un'}` : `${sub.q}g`;
+          txt += `        - ${sub.n} (${qLabel}) · ${Math.round(ms.k)} kcal\n`;
+        });
+      }
+    });
+    txt += `   Subtotal: ${Math.round(mK)} kcal · P${mP.toFixed(1)} C${mC.toFixed(1)} G${mF.toFixed(1)}\n\n`;
+    tK += mK; tP += mP; tC += mC; tF += mF;
+  });
+  
+  txt += `═══════════════════════════════════════\n`;
+  txt += `TOTAL: ${Math.round(tK)} kcal\n`;
+  txt += `Proteína: ${tP.toFixed(1)}g · Carbo: ${tC.toFixed(1)}g · Gordura: ${tF.toFixed(1)}g\n`;
+  if (c.profNome) txt += `\n${c.profNome}\n`;
+  
+  navigator.clipboard.writeText(txt).then(() => {
+    alert('✓ Plano copiado para a área de transferência!');
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = txt;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    alert('✓ Plano copiado!');
+  });
+}
+
+// ============================================================
+// INIT
+// ============================================================
+render();
+console.log(`✅ NUTRI.FUEL v3.0 carregado · ${ALIMENTOS.length} alimentos · ${ALIMENTOS.filter(a => a.u).length} com unidade definida`);
+
+// ============================================================
+// PWA — Registro do Service Worker
+// ============================================================
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => {
+        console.log('✅ PWA Service Worker registrado:', reg.scope);
+        
+        // Detecta updates disponíveis
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              if (confirm('Nova versão do app disponível. Atualizar agora?')) {
+                newWorker.postMessage({ action: 'skipWaiting' });
+                window.location.reload();
+              }
+            }
+          });
+        });
+      })
+      .catch(err => console.warn('⚠️ Service Worker falhou:', err));
+  });
+}
+
+// Detecta se está rodando como PWA standalone
+if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+  console.log('📱 Rodando como PWA instalado');
+  document.documentElement.classList.add('pwa-mode');
+}
+
+</script>
+</body>
+</html>
