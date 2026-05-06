@@ -1261,6 +1261,163 @@
     display: none;
   }
   
+  /* ============================================================ */
+  /* CICLAGEM DE CARBOS + DIVISÃO DE REFEIÇÕES (v3.1)             */
+  /* ============================================================ */
+  .ciclo-card {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .ciclo-card-header {
+    color: #1a1a1a;
+    padding: 10px 14px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.15rem;
+    letter-spacing: 0.06em;
+    text-align: center;
+    font-weight: 700;
+  }
+  .ciclo-card-body {
+    padding: 12px 14px;
+  }
+  .ciclo-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+  }
+  .ciclo-stat {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 8px;
+    background: var(--bg);
+    border-radius: 4px;
+  }
+  .ciclo-stat span { color: var(--text-muted); }
+  .ciclo-stat strong { color: var(--text); }
+  .ciclo-stat-total {
+    background: rgba(255, 107, 26, 0.15) !important;
+    border: 1px solid rgba(255, 107, 26, 0.4);
+    margin-top: 4px;
+  }
+  .ciclo-stat-total strong { color: var(--orange); font-size: 0.85rem; }
+  
+  .distrib-row {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .distrib-row label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .distrib-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .distrib-input-wrap input {
+    width: 60px;
+    padding: 6px 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.92rem;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+  }
+  .distrib-input-wrap span {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  }
+  .distrib-kcal {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--orange);
+    font-weight: 700;
+  }
+  
+  /* Soma fora do range */
+  #distribTotal.warn {
+    background: rgba(247, 167, 58, 0.1) !important;
+    border-left-color: #f7a73a !important;
+  }
+  #distribTotal.warn strong { color: #f7a73a; }
+  #distribTotal.error {
+    background: rgba(239, 68, 68, 0.1) !important;
+    border-left-color: #ef4444 !important;
+  }
+  #distribTotal.error strong { color: #ef4444; }
+  
+  /* Seletor de dia ativo (para ciclagem) */
+  .ciclo-day-selector {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    background: var(--bg-input);
+    padding: 4px;
+    border-radius: 8px;
+  }
+  .ciclo-day-btn {
+    flex: 1;
+    padding: 8px 12px;
+    background: transparent;
+    color: var(--text-muted);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.15s;
+  }
+  .ciclo-day-btn.active {
+    background: var(--orange);
+    color: #1a1a1a;
+  }
+  .ciclo-day-btn:not(.active):hover {
+    background: rgba(255, 107, 26, 0.15);
+    color: var(--text);
+  }
+  
+  /* Indicador de meta da refeição */
+  .meal-meta-indicator {
+    background: rgba(255, 107, 26, 0.1);
+    border: 1px solid rgba(255, 107, 26, 0.3);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .meal-meta-indicator span:first-child { color: var(--text-muted); }
+  .meal-meta-indicator strong { color: var(--orange); }
+  .meal-meta-indicator.ok { 
+    background: rgba(34, 197, 94, 0.1);
+    border-color: rgba(34, 197, 94, 0.3);
+  }
+  .meal-meta-indicator.ok strong { color: #22c55e; }
+  .meal-meta-indicator.over {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+  .meal-meta-indicator.over strong { color: #ef4444; }
+  
   @media print {
     @page {
       size: A4;
@@ -1968,6 +2125,172 @@
       </div>
     </div>
 
+    <!-- ============================================================ -->
+    <!-- CICLAGEM DE CARBOIDRATOS (NOVO - v3.1) -->
+    <!-- ============================================================ -->
+    <div class="section">
+      <div class="section-title" style="display: flex; align-items: center; gap: 12px;">
+        🔥 Ciclagem de Carboidratos
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.78rem; font-weight: 500; color: var(--text-muted); text-transform: none; letter-spacing: 0; margin-left: auto;">
+          <input type="checkbox" id="ciclagemAtiva" onchange="toggleCiclagem()" style="width: 18px; height: 18px; accent-color: var(--orange);">
+          Ativar ciclagem
+        </label>
+      </div>
+      
+      <div id="ciclagemBody" style="display: none;">
+        <div style="background: var(--bg-input); padding: 12px; border-radius: 8px; margin-bottom: 14px; font-size: 0.82rem; color: var(--text-muted); line-height: 1.5;">
+          💡 Configure 3 perfis (Alto/Médio/Baixo). Proteína e gordura permanecem constantes; só o <strong>carboidrato</strong> varia entre os dias. 
+          As kcal de cada dia são calculadas automaticamente.
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;" id="ciclagemGrid">
+          <!-- Card ALTO -->
+          <div class="ciclo-card" data-tipo="alto">
+            <div class="ciclo-card-header" style="background: linear-gradient(135deg, #ff6b1a, #cc4f10);">
+              🔥 ALTO
+            </div>
+            <div class="ciclo-card-body">
+              <div class="field" style="margin-bottom: 10px;">
+                <label>Carbo (g/kg)</label>
+                <input type="number" step="0.1" class="ciclo-carbo" data-tipo="alto" placeholder="5.0" value="5.0" oninput="recalcCiclagem()">
+              </div>
+              <div class="ciclo-stats">
+                <div class="ciclo-stat"><span>Carbo:</span> <strong class="c-carbo">—</strong></div>
+                <div class="ciclo-stat"><span>Ptn:</span> <strong class="c-ptn">—</strong></div>
+                <div class="ciclo-stat"><span>Gord:</span> <strong class="c-fat">—</strong></div>
+                <div class="ciclo-stat ciclo-stat-total"><span>Total:</span> <strong class="c-kcal">— kcal</strong></div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Card MÉDIO -->
+          <div class="ciclo-card" data-tipo="medio">
+            <div class="ciclo-card-header" style="background: linear-gradient(135deg, #f7a73a, #d8830f);">
+              ⚖️ MÉDIO
+            </div>
+            <div class="ciclo-card-body">
+              <div class="field" style="margin-bottom: 10px;">
+                <label>Carbo (g/kg)</label>
+                <input type="number" step="0.1" class="ciclo-carbo" data-tipo="medio" placeholder="3.5" value="3.5" oninput="recalcCiclagem()">
+              </div>
+              <div class="ciclo-stats">
+                <div class="ciclo-stat"><span>Carbo:</span> <strong class="c-carbo">—</strong></div>
+                <div class="ciclo-stat"><span>Ptn:</span> <strong class="c-ptn">—</strong></div>
+                <div class="ciclo-stat"><span>Gord:</span> <strong class="c-fat">—</strong></div>
+                <div class="ciclo-stat ciclo-stat-total"><span>Total:</span> <strong class="c-kcal">— kcal</strong></div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Card BAIXO -->
+          <div class="ciclo-card" data-tipo="baixo">
+            <div class="ciclo-card-header" style="background: linear-gradient(135deg, #5a7fc2, #3958a0);">
+              💤 BAIXO
+            </div>
+            <div class="ciclo-card-body">
+              <div class="field" style="margin-bottom: 10px;">
+                <label>Carbo (g/kg)</label>
+                <input type="number" step="0.1" class="ciclo-carbo" data-tipo="baixo" placeholder="2.0" value="2.0" oninput="recalcCiclagem()">
+              </div>
+              <div class="ciclo-stats">
+                <div class="ciclo-stat"><span>Carbo:</span> <strong class="c-carbo">—</strong></div>
+                <div class="ciclo-stat"><span>Ptn:</span> <strong class="c-ptn">—</strong></div>
+                <div class="ciclo-stat"><span>Gord:</span> <strong class="c-fat">—</strong></div>
+                <div class="ciclo-stat ciclo-stat-total"><span>Total:</span> <strong class="c-kcal">— kcal</strong></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div style="margin-top: 14px; padding: 12px; background: var(--bg-input); border-radius: 8px; border-left: 3px solid var(--orange); font-size: 0.78rem; color: var(--text-muted); line-height: 1.5;">
+          ✓ <strong>Visualização do plano:</strong> Use o seletor abaixo (na seção "Adicionar Alimento") para alternar qual dia você está editando. Ao montar o plano para o <strong>dia ALTO</strong>, os outros dias serão recalculados automaticamente mantendo a estrutura de alimentos e ajustando proporcionalmente as quantidades de carboidrato.
+        </div>
+      </div>
+    </div>
+    
+    <!-- ============================================================ -->
+    <!-- DIVISÃO POR REFEIÇÃO (NOVO - v3.1) -->
+    <!-- ============================================================ -->
+    <div class="section">
+      <div class="section-title" style="display: flex; align-items: center; gap: 12px;">
+        🍽️ Divisão de Kcal por Refeição
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.78rem; font-weight: 500; color: var(--text-muted); text-transform: none; letter-spacing: 0; margin-left: auto;">
+          <input type="checkbox" id="distribuicaoAtiva" onchange="toggleDistribuicao()" style="width: 18px; height: 18px; accent-color: var(--orange);">
+          Ativar divisão %
+        </label>
+      </div>
+      
+      <div id="distribuicaoBody" style="display: none;">
+        <div class="field" style="margin-bottom: 12px;">
+          <label>Template de refeições</label>
+          <select id="templateRefeicoes" onchange="aplicarTemplate()" style="width: 100%; padding: 11px 13px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.92rem;">
+            <option value="custom">Personalizado</option>
+            <option value="3ref">3 refeições (Café 30 / Almoço 40 / Jantar 30)</option>
+            <option value="4ref" selected>4 refeições (Café 30 / Almoço 30 / Lanche 20 / Jantar 20)</option>
+            <option value="5ref">5 refeições (Café 25 / L1 10 / Almoço 30 / L2 15 / Jantar 20)</option>
+            <option value="6ref">6 refeições (Café 20 / L1 10 / Almoço 25 / L2 15 / Jantar 20 / Ceia 10)</option>
+            <option value="atleta">Atleta (Café 20 / L1 15 / Almoço 25 / L2 15 / Jantar 20 / Ceia 5)</option>
+          </select>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;" id="distribGrid">
+          <div class="distrib-row" data-meal="cafe">
+            <label>☕ Café da Manhã</label>
+            <div class="distrib-input-wrap">
+              <input type="number" min="0" max="100" step="1" class="distrib-pct" data-meal="cafe" value="30" oninput="recalcDistribuicao()">
+              <span>%</span>
+            </div>
+            <div class="distrib-kcal">— kcal</div>
+          </div>
+          <div class="distrib-row" data-meal="lanche1">
+            <label>🍎 Lanche Manhã</label>
+            <div class="distrib-input-wrap">
+              <input type="number" min="0" max="100" step="1" class="distrib-pct" data-meal="lanche1" value="0" oninput="recalcDistribuicao()">
+              <span>%</span>
+            </div>
+            <div class="distrib-kcal">— kcal</div>
+          </div>
+          <div class="distrib-row" data-meal="almoco">
+            <label>🍽️ Almoço</label>
+            <div class="distrib-input-wrap">
+              <input type="number" min="0" max="100" step="1" class="distrib-pct" data-meal="almoco" value="30" oninput="recalcDistribuicao()">
+              <span>%</span>
+            </div>
+            <div class="distrib-kcal">— kcal</div>
+          </div>
+          <div class="distrib-row" data-meal="lanche2">
+            <label>🥤 Lanche Tarde</label>
+            <div class="distrib-input-wrap">
+              <input type="number" min="0" max="100" step="1" class="distrib-pct" data-meal="lanche2" value="20" oninput="recalcDistribuicao()">
+              <span>%</span>
+            </div>
+            <div class="distrib-kcal">— kcal</div>
+          </div>
+          <div class="distrib-row" data-meal="jantar">
+            <label>🌙 Jantar</label>
+            <div class="distrib-input-wrap">
+              <input type="number" min="0" max="100" step="1" class="distrib-pct" data-meal="jantar" value="20" oninput="recalcDistribuicao()">
+              <span>%</span>
+            </div>
+            <div class="distrib-kcal">— kcal</div>
+          </div>
+          <div class="distrib-row" data-meal="ceia">
+            <label>🌜 Ceia</label>
+            <div class="distrib-input-wrap">
+              <input type="number" min="0" max="100" step="1" class="distrib-pct" data-meal="ceia" value="0" oninput="recalcDistribuicao()">
+              <span>%</span>
+            </div>
+            <div class="distrib-kcal">— kcal</div>
+          </div>
+        </div>
+        
+        <div id="distribTotal" style="margin-top: 14px; padding: 10px 14px; background: var(--bg-input); border-radius: 8px; border-left: 3px solid var(--orange); font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center;">
+          <span>Total da distribuição:</span>
+          <strong id="distribSomaPct" style="font-size: 1.1rem;">100%</strong>
+        </div>
+      </div>
+    </div>
+
     <div class="section">
       <div class="section-title">Adicionar Alimento</div>
       
@@ -2035,11 +2358,12 @@
     
     <div class="section">
       <div class="section-title">Exportar Plano</div>
-      <div class="section-subtitle">Gere o PDF profissional do plano para enviar ao paciente, ou salve o arquivo JSON para reabrir depois.</div>
+      <div class="section-subtitle">Envie o plano para o paciente via WhatsApp em formato HTML interativo, ou exporte como PDF/JSON.</div>
       
       <div class="actions" style="margin-top: 0;">
-        <button class="action-btn primary" onclick="gerarPDF()">📄 Baixar PDF</button>
-        <button class="action-btn primary" onclick="imprimir()">🖨️ Imprimir</button>
+        <button class="action-btn primary" onclick="exportarHTML()" style="font-size: 1.05rem; padding: 14px 18px; background: linear-gradient(135deg, #ff8c42, #cc4f10);">📲 Salvar para WhatsApp (HTML)</button>
+        <button class="action-btn" onclick="gerarPDF()">📄 Baixar PDF</button>
+        <button class="action-btn" onclick="imprimir()">🖨️ Imprimir</button>
         <button class="action-btn" onclick="exportarJSON()">💾 Salvar JSON</button>
         <button class="action-btn" onclick="document.getElementById('importFile').click()">📂 Importar JSON</button>
         <button class="action-btn" onclick="exportarTexto()">📋 Copiar Texto</button>
@@ -2049,12 +2373,20 @@
     </div>
     
     <div class="info-card">
-      <strong>Dica:</strong> Antes de gerar o PDF, certifique-se de que preencheu os dados do paciente na aba <strong>Paciente</strong>. O PDF é gerado a partir do plano completo com refeições, substituições e totais.
+      <strong>📲 RECOMENDADO: Salvar para WhatsApp (HTML)</strong><br>
+      O arquivo HTML preserva todas as funcionalidades — substituições clicáveis, ciclagem de carbos (3 dias), divisão por refeição, e funciona perfeitamente no celular do paciente via WhatsApp.<br>
+      <br>
+      <strong>Como usar:</strong><br>
+      1. Clique em <strong>"📲 Salvar para WhatsApp (HTML)"</strong><br>
+      2. O arquivo .html é baixado<br>
+      3. Anexe no WhatsApp do paciente (📎 → Documento)<br>
+      4. Paciente toca no arquivo → abre no celular<br>
+      5. Pode tocar nas <strong>substituições</strong> e ver alternativas!
     </div>
   </div>
 
   <p class="footer-note">
-    <strong>NUTRI.FUEL · v3.0</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
+    <strong>NUTRI.FUEL · v3.1</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
   </p>
   
   <!-- ============== ÁREA DO PDF (oculta na tela, visível na impressão) ============== -->
@@ -2429,6 +2761,32 @@ let plano = {
 let metas = { kcal: null, prot: null, carb: null, fat: null };
 let cliente = { nome: '', idade: '', tel: '', peso: '', altura: '', objetivo: '', atividade: '', obs: '', profNome: '', planData: '' };
 
+// ============================================================
+// CICLAGEM DE CARBOIDRATOS (v3.1)
+// ============================================================
+let ciclagem = {
+  ativa: false,
+  diaAtivo: 'alto', // qual dia está sendo editado/visualizado
+  carbos: { alto: 5.0, medio: 3.5, baixo: 2.0 }, // g/kg de cada dia
+  // Calculado automaticamente: { alto: {carbo, ptn, fat, kcal}, medio: {...}, baixo: {...} }
+  metas: { alto: null, medio: null, baixo: null }
+};
+
+// Distribuição por refeição (% das kcal totais)
+let distribuicao = {
+  ativa: false,
+  pcts: { cafe: 30, lanche1: 0, almoco: 30, lanche2: 20, jantar: 20, ceia: 0 }
+};
+
+// Templates pré-definidos
+const TEMPLATES_DIST = {
+  '3ref': { cafe: 30, lanche1: 0, almoco: 40, lanche2: 0, jantar: 30, ceia: 0 },
+  '4ref': { cafe: 30, lanche1: 0, almoco: 30, lanche2: 20, jantar: 20, ceia: 0 },
+  '5ref': { cafe: 25, lanche1: 10, almoco: 30, lanche2: 15, jantar: 20, ceia: 0 },
+  '6ref': { cafe: 20, lanche1: 10, almoco: 25, lanche2: 15, jantar: 20, ceia: 10 },
+  'atleta': { cafe: 20, lanche1: 15, almoco: 25, lanche2: 15, jantar: 20, ceia: 5 }
+};
+
 let refeicaoAtiva = "cafe";
 let alimentoSelecionado = null;
 let highlightedIndex = -1;
@@ -2594,6 +2952,10 @@ function aplicarMetas() {
   if (!document.getElementById('cliAltura').value) document.getElementById('cliAltura').value = document.getElementById('altura').value;
   if (!document.getElementById('cliIdade').value) document.getElementById('cliIdade').value = document.getElementById('idade').value;
   
+  // Recalcula ciclagem e distribuição (se ativos)
+  if (ciclagem.ativa) recalcCiclagem();
+  if (distribuicao.ativa) recalcDistribuicao();
+  
   document.querySelector('[data-panel="plano"]').click();
   render();
   
@@ -2608,6 +2970,17 @@ function aplicarMetas() {
 });
 document.getElementById('protKg').addEventListener('input', calcularMacros);
 document.getElementById('fatKg').addEventListener('input', calcularMacros);
+
+// Listeners para recalc da ciclagem/distribuição quando as metas mudam manualmente
+['metaKcal', 'metaProt', 'metaFat', 'cliPeso'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) {
+    el.addEventListener('input', () => {
+      if (ciclagem.ativa) recalcCiclagem();
+      if (distribuicao.ativa) recalcDistribuicao();
+    });
+  }
+});
 
 document.querySelectorAll('.formula-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -2646,6 +3019,194 @@ document.getElementById('preset').addEventListener('change', (e) => {
 });
 
 // ============================================================
+// CICLAGEM DE CARBOIDRATOS (v3.1)
+// ============================================================
+function toggleCiclagem() {
+  ciclagem.ativa = document.getElementById('ciclagemAtiva').checked;
+  document.getElementById('ciclagemBody').style.display = ciclagem.ativa ? 'block' : 'none';
+  
+  if (ciclagem.ativa) {
+    // Mostra seletor de dia ativo na seção de adicionar alimento
+    mostrarSeletorDia();
+    recalcCiclagem();
+  } else {
+    esconderSeletorDia();
+  }
+  render();
+}
+
+function recalcCiclagem() {
+  // Pega peso do cliente da aba paciente
+  const peso = parseFloat(document.getElementById('cliPeso')?.value || cliente.peso || 0);
+  
+  // Pega proteína e gordura das metas (constantes em todos os dias)
+  const ptnG = parseFloat(document.getElementById('metaProt')?.value || metas.prot || 0);
+  const fatG = parseFloat(document.getElementById('metaFat')?.value || metas.fat || 0);
+  
+  if (!peso || !ptnG || !fatG) {
+    // Limpa cards se faltam dados
+    ['alto', 'medio', 'baixo'].forEach(tipo => {
+      const card = document.querySelector(`.ciclo-card[data-tipo="${tipo}"]`);
+      if (card) {
+        card.querySelector('.c-carbo').textContent = '—';
+        card.querySelector('.c-ptn').textContent = '—';
+        card.querySelector('.c-fat').textContent = '—';
+        card.querySelector('.c-kcal').textContent = '— kcal';
+      }
+    });
+    return;
+  }
+  
+  // Atualiza valores g/kg do estado a partir dos inputs
+  document.querySelectorAll('.ciclo-carbo').forEach(input => {
+    const tipo = input.dataset.tipo;
+    ciclagem.carbos[tipo] = parseFloat(input.value) || 0;
+  });
+  
+  // Calcula macros de cada dia
+  ['alto', 'medio', 'baixo'].forEach(tipo => {
+    const carboG = ciclagem.carbos[tipo] * peso;
+    const kcal = (carboG * 4) + (ptnG * 4) + (fatG * 9);
+    
+    ciclagem.metas[tipo] = {
+      carbo: Math.round(carboG),
+      ptn: Math.round(ptnG),
+      fat: Math.round(fatG),
+      kcal: Math.round(kcal)
+    };
+    
+    // Atualiza UI
+    const card = document.querySelector(`.ciclo-card[data-tipo="${tipo}"]`);
+    if (card) {
+      card.querySelector('.c-carbo').textContent = Math.round(carboG) + 'g';
+      card.querySelector('.c-ptn').textContent = Math.round(ptnG) + 'g';
+      card.querySelector('.c-fat').textContent = Math.round(fatG) + 'g';
+      card.querySelector('.c-kcal').textContent = Math.round(kcal) + ' kcal';
+    }
+  });
+  
+  // Se distribuição estiver ativa, recalcula também
+  if (distribuicao.ativa) recalcDistribuicao();
+}
+
+function mostrarSeletorDia() {
+  // Adiciona seletor de dia antes das tabs de refeições
+  const mealTabsParent = document.getElementById('mealTabs')?.parentElement;
+  if (!mealTabsParent || document.getElementById('cicloDaySelector')) return;
+  
+  const seletor = document.createElement('div');
+  seletor.id = 'cicloDaySelector';
+  seletor.className = 'ciclo-day-selector';
+  seletor.innerHTML = `
+    <button class="ciclo-day-btn active" data-dia="alto" onclick="setDiaAtivo('alto')">🔥 Dia ALTO</button>
+    <button class="ciclo-day-btn" data-dia="medio" onclick="setDiaAtivo('medio')">⚖️ MÉDIO</button>
+    <button class="ciclo-day-btn" data-dia="baixo" onclick="setDiaAtivo('baixo')">💤 BAIXO</button>
+  `;
+  mealTabsParent.insertBefore(seletor, document.getElementById('mealTabs'));
+}
+
+function esconderSeletorDia() {
+  const seletor = document.getElementById('cicloDaySelector');
+  if (seletor) seletor.remove();
+}
+
+function setDiaAtivo(dia) {
+  ciclagem.diaAtivo = dia;
+  document.querySelectorAll('.ciclo-day-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.dia === dia);
+  });
+  render();
+}
+
+// ============================================================
+// DISTRIBUIÇÃO POR REFEIÇÃO (v3.1)
+// ============================================================
+function toggleDistribuicao() {
+  distribuicao.ativa = document.getElementById('distribuicaoAtiva').checked;
+  document.getElementById('distribuicaoBody').style.display = distribuicao.ativa ? 'block' : 'none';
+  if (distribuicao.ativa) recalcDistribuicao();
+  render();
+}
+
+function aplicarTemplate() {
+  const template = document.getElementById('templateRefeicoes').value;
+  if (template === 'custom') return;
+  
+  const cfg = TEMPLATES_DIST[template];
+  if (!cfg) return;
+  
+  Object.entries(cfg).forEach(([meal, pct]) => {
+    const input = document.querySelector(`.distrib-pct[data-meal="${meal}"]`);
+    if (input) input.value = pct;
+    distribuicao.pcts[meal] = pct;
+  });
+  
+  recalcDistribuicao();
+}
+
+function recalcDistribuicao() {
+  // Coleta % atualizados dos inputs
+  let soma = 0;
+  document.querySelectorAll('.distrib-pct').forEach(input => {
+    const meal = input.dataset.meal;
+    const pct = parseFloat(input.value) || 0;
+    distribuicao.pcts[meal] = pct;
+    soma += pct;
+  });
+  
+  // Pega kcal alvo (do dia ativo se ciclagem on, ou meta global)
+  let kcalAlvo;
+  if (ciclagem.ativa && ciclagem.metas[ciclagem.diaAtivo]) {
+    kcalAlvo = ciclagem.metas[ciclagem.diaAtivo].kcal;
+  } else {
+    kcalAlvo = parseFloat(document.getElementById('metaKcal')?.value) || metas.kcal || 0;
+  }
+  
+  // Atualiza kcal de cada refeição na UI
+  document.querySelectorAll('.distrib-row').forEach(row => {
+    const meal = row.dataset.meal;
+    const pct = distribuicao.pcts[meal] || 0;
+    const kcalRef = Math.round(kcalAlvo * pct / 100);
+    const kcalEl = row.querySelector('.distrib-kcal');
+    if (kcalEl) kcalEl.textContent = kcalRef > 0 ? `${kcalRef} kcal` : '— kcal';
+  });
+  
+  // Atualiza soma e cor
+  const somaEl = document.getElementById('distribSomaPct');
+  const totalEl = document.getElementById('distribTotal');
+  if (somaEl && totalEl) {
+    somaEl.textContent = Math.round(soma) + '%';
+    totalEl.classList.remove('warn', 'error');
+    if (soma === 100) {
+      // Verde - sem classe extra
+    } else if (Math.abs(soma - 100) <= 5) {
+      totalEl.classList.add('warn');
+    } else {
+      totalEl.classList.add('error');
+    }
+  }
+  
+  // Re-renderiza plano (pra atualizar indicadores de meta por refeição)
+  render();
+}
+
+// Retorna a meta de kcal de uma refeição específica
+function getMetaRefeicao(mealKey) {
+  if (!distribuicao.ativa) return null;
+  const pct = distribuicao.pcts[mealKey] || 0;
+  if (pct === 0) return null;
+  
+  let kcalAlvo;
+  if (ciclagem.ativa && ciclagem.metas[ciclagem.diaAtivo]) {
+    kcalAlvo = ciclagem.metas[ciclagem.diaAtivo].kcal;
+  } else {
+    kcalAlvo = parseFloat(document.getElementById('metaKcal')?.value) || metas.kcal || 0;
+  }
+  
+  return Math.round(kcalAlvo * pct / 100);
+}
+
+// ============================================================
 // RENDER PLANO
 // ============================================================
 function calcMacrosItem(item) {
@@ -2678,6 +3239,35 @@ function render() {
     
     if (itens.length === 0) return;
     
+    // Indicador de meta da refeição (se distribuição estiver ativa)
+    const metaRefKcal = getMetaRefeicao(key);
+    let mealMetaHtml = '';
+    if (metaRefKcal && metaRefKcal > 0) {
+      const diff = mKcal - metaRefKcal;
+      const pctDiff = Math.abs(diff / metaRefKcal * 100);
+      let statusClass = '';
+      let statusIcon = '';
+      let statusText = '';
+      if (pctDiff <= 5) {
+        statusClass = 'ok';
+        statusIcon = '✓';
+        statusText = 'Bateu a meta!';
+      } else if (diff > 0) {
+        statusClass = 'over';
+        statusIcon = '⚠️';
+        statusText = `+${Math.round(diff)} kcal acima`;
+      } else {
+        statusIcon = '↑';
+        statusText = `${Math.round(diff)} kcal restantes`;
+      }
+      mealMetaHtml = `
+        <div class="meal-meta-indicator ${statusClass}">
+          <span>Meta: <strong>${metaRefKcal} kcal</strong> · Atual: <strong>${Math.round(mKcal)} kcal</strong></span>
+          <span>${statusIcon} ${statusText}</span>
+        </div>
+      `;
+    }
+    
     const card = document.createElement('div');
     card.className = 'meal-card';
     card.innerHTML = `
@@ -2690,6 +3280,7 @@ function render() {
           <div class="meal-total-item"><span class="dot dot-fat"></span><span>G <strong>${mFat.toFixed(1)}g</strong></span></div>
         </div>
       </div>
+      ${mealMetaHtml}
       <div class="food-list">
         ${itens.map((item, i) => {
           const m = calcMacrosItem(item);
@@ -3434,11 +4025,717 @@ function imprimir() {
 }
 
 // ============================================================
+// ============================================================
+// EXPORTAR COMO HTML (v3.1 — Funciona no WhatsApp!)
+// CSS :target + animação CSS (sem onclick que iOS bloqueia)
+// ============================================================
+function escapeHtmlNutri(str) {
+  if (!str && str !== 0) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+async function exportarHTML() {
+  // Validações
+  let totalItens = 0;
+  Object.keys(REFEICOES).forEach(k => totalItens += plano[k].length);
+  if (totalItens === 0) {
+    alert('Adicione pelo menos um alimento ao plano antes de exportar.');
+    return;
+  }
+  
+  const c = coletarCliente();
+  if (!c.nome || c.nome === '—') {
+    if (!confirm('Nome do paciente não foi preenchido. Deseja continuar mesmo assim?')) return;
+  }
+  
+  const btn = event && event.target ? event.target : null;
+  let originalText = '';
+  if (btn) {
+    originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ Gerando...';
+  }
+  
+  try {
+    const dataF = c.planData || new Date().toLocaleDateString('pt-BR');
+    const tituloPaciente = c.nome || 'Paciente';
+    
+    // Decide quais dias gerar (ciclagem ativa = 3 dias; senão = 1)
+    const dias = ciclagem.ativa
+      ? [
+          { id: 'alto', nome: '🔥 DIA ALTO', cor1: '#ff6b1a', cor2: '#cc4f10', metas: ciclagem.metas.alto },
+          { id: 'medio', nome: '⚖️ DIA MÉDIO', cor1: '#f7a73a', cor2: '#d8830f', metas: ciclagem.metas.medio },
+          { id: 'baixo', nome: '💤 DIA BAIXO', cor1: '#5a7fc2', cor2: '#3958a0', metas: ciclagem.metas.baixo }
+        ]
+      : [
+          { id: 'unico', nome: 'PLANO ALIMENTAR', cor1: '#ff6b1a', cor2: '#cc4f10', metas: { 
+              kcal: metas.kcal || 0, ptn: metas.prot || 0, carbo: metas.carb || 0, fat: metas.fat || 0 
+          } }
+        ];
+    
+    // Função pra ajustar quantidades dos alimentos por dia (carbo varia, ptn/gord não)
+    function ajustarPlanoParaDia(diaId) {
+      if (diaId === 'unico' || diaId === 'alto') {
+        // Dia único OU dia ALTO: usa o plano original (que é o que o usuário montou)
+        return plano;
+      }
+      // Para médio/baixo: ajusta proporcionalmente os alimentos ricos em carboidrato
+      const carboAlvoDia = ciclagem.metas[diaId].carbo;
+      const carboAlvoAlto = ciclagem.metas.alto.carbo;
+      if (!carboAlvoAlto) return plano;
+      const fatorCarbo = carboAlvoDia / carboAlvoAlto;
+      
+      const novoPlano = {};
+      Object.keys(plano).forEach(meal => {
+        novoPlano[meal] = plano[meal].map(item => {
+          // Calcula contribuição do item em carbo vs outros macros
+          // Se o item é predominantemente carbo (>60% das kcal vem de carbo), ajusta
+          const m = calcMacrosItem(item);
+          const kcalCarbo = m.c * 4;
+          const totalKcal = m.k || 1;
+          const pctCarbo = kcalCarbo / totalKcal;
+          
+          if (pctCarbo > 0.5) {
+            // Item rico em carbo → ajusta proporcionalmente
+            return { ...item, q: item.q * fatorCarbo };
+          }
+          // Item proteico/gorduroso → mantém igual
+          return { ...item };
+        });
+      });
+      return novoPlano;
+    }
+    
+    // Construir HTML de cada dia
+    let exGlobal = 0;
+    let modaisHtml = ''; // modais de substituições (CSS :target)
+    
+    let diasHtml = '';
+    dias.forEach(dia => {
+      const planoAjustado = ajustarPlanoParaDia(dia.id);
+      
+      let totalKcal = 0, totalP = 0, totalC = 0, totalF = 0;
+      let refeicoesHtml = '';
+      
+      Object.keys(REFEICOES).forEach(mealKey => {
+        const itens = planoAjustado[mealKey];
+        if (!itens || itens.length === 0) return;
+        
+        let mKcal = 0, mP = 0, mC = 0, mF = 0;
+        let itensHtml = '';
+        
+        itens.forEach(item => {
+          exGlobal++;
+          const m = calcMacrosItem(item);
+          mKcal += m.k; mP += m.p; mC += m.c; mF += m.f;
+          
+          const unidadeLabel = item.modo === 'u' ? (item.uName || 'un') : 'g';
+          const qFmt = item.modo === 'u' 
+            ? `${item.q.toFixed(item.q % 1 === 0 ? 0 : 1)} ${unidadeLabel} <span style="color:#888; font-size:0.85em;">(${Math.round(m.gramas)}g)</span>` 
+            : `${Math.round(item.q)}g`;
+          
+          // Substituições (modal CSS :target)
+          let subsLink = '';
+          if (item.subs && item.subs.length > 0) {
+            const modalId = `modal-sub-${exGlobal}`;
+            subsLink = `<a href="#${modalId}" class="food-sub-link">⇄ ${item.subs.length} ${item.subs.length === 1 ? 'substituição' : 'substituições'}</a>`;
+            
+            // Constrói modal de subs
+            let subsListHtml = '';
+            item.subs.forEach(sub => {
+              const sm = calcMacrosItem(sub);
+              const subQFmt = sub.modo === 'u' 
+                ? `${sub.q.toFixed(sub.q % 1 === 0 ? 0 : 1)} ${sub.uName || 'un'} (${Math.round(sm.gramas)}g)`
+                : `${Math.round(sub.q)}g`;
+              subsListHtml += `
+                <div class="sub-item">
+                  <div class="sub-name">${escapeHtmlNutri(sub.n)}</div>
+                  <div class="sub-qty">${subQFmt}</div>
+                  <div class="sub-macros">
+                    <span><strong>${Math.round(sm.k)}</strong> kcal</span>
+                    <span>P ${sm.p.toFixed(1)}g</span>
+                    <span>C ${sm.c.toFixed(1)}g</span>
+                    <span>G ${sm.f.toFixed(1)}g</span>
+                  </div>
+                </div>
+              `;
+            });
+            
+            modaisHtml += `
+              <div class="sub-modal" id="${modalId}">
+                <a href="#voltar-${exGlobal}" class="sub-modal-bg"></a>
+                <div class="sub-modal-content">
+                  <div class="sub-modal-header">
+                    <div>⇄ Substituições</div>
+                    <div class="sub-modal-orig">${escapeHtmlNutri(item.n)}</div>
+                  </div>
+                  <div class="sub-modal-list">
+                    ${subsListHtml}
+                  </div>
+                  <a href="#voltar-${exGlobal}" class="sub-modal-close">FECHAR</a>
+                </div>
+              </div>
+            `;
+          }
+          
+          itensHtml += `
+            <div class="food-item" id="voltar-${exGlobal}">
+              <div class="food-line">
+                <div class="food-info">
+                  <div class="food-name">${escapeHtmlNutri(item.n)}</div>
+                  <div class="food-qty">${qFmt}</div>
+                  ${subsLink}
+                </div>
+                <div class="food-macros">
+                  <div class="food-kcal"><strong>${Math.round(m.k)}</strong> kcal</div>
+                  <div class="food-pcf">
+                    <span>P ${m.p.toFixed(1)}</span>
+                    <span>C ${m.c.toFixed(1)}</span>
+                    <span>G ${m.f.toFixed(1)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        
+        totalKcal += mKcal; totalP += mP; totalC += mC; totalF += mF;
+        
+        // Meta da refeição (se distribuição ativa)
+        let metaRefHtml = '';
+        if (distribuicao.ativa && distribuicao.pcts[mealKey] > 0) {
+          const pct = distribuicao.pcts[mealKey];
+          const metaKcal = Math.round(dia.metas.kcal * pct / 100);
+          metaRefHtml = `<span class="meal-meta-pct">Meta: ${metaKcal} kcal (${pct}%)</span>`;
+        }
+        
+        refeicoesHtml += `
+          <div class="meal-block">
+            <div class="meal-block-header">
+              <div class="meal-block-title">${REFEICOES[mealKey]}</div>
+              ${metaRefHtml}
+            </div>
+            <div class="meal-block-totals">
+              <span><strong>${Math.round(mKcal)}</strong> kcal</span>
+              <span>P <strong>${mP.toFixed(1)}g</strong></span>
+              <span>C <strong>${mC.toFixed(1)}g</strong></span>
+              <span>G <strong>${mF.toFixed(1)}g</strong></span>
+            </div>
+            <div class="meal-block-foods">
+              ${itensHtml}
+            </div>
+          </div>
+        `;
+      });
+      
+      // Card do dia completo
+      diasHtml += `
+        <div class="dia-card">
+          <div class="dia-header" style="background: linear-gradient(135deg, ${dia.cor1}, ${dia.cor2});">
+            <div class="dia-nome">${dia.nome}</div>
+            <div class="dia-totais">
+              <div><strong>${Math.round(totalKcal)}</strong> kcal</div>
+              <div>P <strong>${totalP.toFixed(0)}g</strong></div>
+              <div>C <strong>${totalC.toFixed(0)}g</strong></div>
+              <div>G <strong>${totalF.toFixed(0)}g</strong></div>
+            </div>
+          </div>
+          ${dia.metas && dia.metas.kcal ? `
+            <div class="dia-metas">
+              <div class="dia-meta-label">META DO DIA</div>
+              <div class="dia-meta-vals">
+                <span><strong>${dia.metas.kcal}</strong> kcal</span>
+                <span>P <strong>${dia.metas.ptn}g</strong></span>
+                <span>C <strong>${dia.metas.carbo}g</strong></span>
+                <span>G <strong>${dia.metas.fat}g</strong></span>
+              </div>
+            </div>
+          ` : ''}
+          <div class="dia-refeicoes">
+            ${refeicoesHtml || '<div style="padding: 24px; text-align: center; color: #888;">Nenhuma refeição cadastrada</div>'}
+          </div>
+        </div>
+      `;
+    });
+    
+    // Cabeçalho do paciente
+    const headerCli = `
+      <div class="header-card">
+        <div class="brand-row">
+          <div class="brand-logo">🥗</div>
+          <div class="brand-block">
+            <div class="brand-name">NUTRI<span>.FUEL</span></div>
+            <div class="brand-tag">PLANO ALIMENTAR · ${escapeHtmlNutri(dataF)}</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="paciente-card">
+        <div class="paciente-label">PACIENTE</div>
+        <div class="paciente-nome">${escapeHtmlNutri(tituloPaciente)}</div>
+        <div class="paciente-meta">
+          ${c.idade && c.idade !== '—' ? `<span><strong>${escapeHtmlNutri(c.idade)}</strong> anos</span>` : ''}
+          ${c.peso && c.peso !== '—' ? `<span><strong>${escapeHtmlNutri(c.peso)}</strong> kg</span>` : ''}
+          ${c.altura && c.altura !== '—' ? `<span><strong>${escapeHtmlNutri(c.altura)}</strong> cm</span>` : ''}
+          ${c.objetivo && c.objetivo !== '—' ? `<span>Obj: <strong>${escapeHtmlNutri(c.objetivo)}</strong></span>` : ''}
+          ${c.atividade && c.atividade !== '—' ? `<span>Ativ: <strong>${escapeHtmlNutri(c.atividade)}</strong></span>` : ''}
+        </div>
+        ${c.obs && c.obs !== '—' ? `
+          <div class="paciente-obs">
+            <strong>⚠️ Observações/Restrições:</strong> ${escapeHtmlNutri(c.obs)}
+          </div>
+        ` : ''}
+      </div>
+    `;
+    
+    // Disclaimer + footer
+    const footerHtml = `
+      <div class="disclaimer">
+        <strong>⚠️ Importante:</strong> Este plano alimentar é uma sugestão personalizada baseada nas informações fornecidas. 
+        Em caso de qualquer reação adversa, desconforto ou sintoma anormal, interrompa imediatamente e consulte seu profissional. 
+        As quantidades podem ser ajustadas conforme rotina, treinos e evolução individual.
+      </div>
+      <div class="footer">
+        <strong>NUTRI.FUEL</strong> · Plano gerado em ${escapeHtmlNutri(dataF)}
+        ${c.profNome && c.profNome !== '—' ? `<br>Profissional: ${escapeHtmlNutri(c.profNome)}` : ''}
+      </div>
+    `;
+    
+    // HTML completo standalone com CSS :target
+    const htmlCompleto = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plano — ${escapeHtmlNutri(tituloPaciente)} — ${escapeHtmlNutri(dataF)}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #f5f5f5;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: #1a1a1a;
+    padding: 16px;
+    line-height: 1.5;
+  }
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  /* HEADER */
+  .header-card {
+    background: #0a0a0a;
+    color: #fff;
+    padding: 20px 24px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+  }
+  .brand-row { display: flex; align-items: center; gap: 14px; }
+  .brand-logo {
+    width: 50px; height: 50px;
+    background: linear-gradient(135deg, #ff8c42, #cc4f10);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem;
+  }
+  .brand-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    letter-spacing: 0.05em;
+    line-height: 1;
+  }
+  .brand-name span { color: #ff6b1a; }
+  .brand-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: #a0a0a0;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 4px;
+  }
+  
+  /* PACIENTE */
+  .paciente-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 18px 22px;
+    margin-bottom: 18px;
+    border-left: 4px solid #ff6b1a;
+  }
+  .paciente-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+  .paciente-nome {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    color: #1a1a1a;
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
+  }
+  .paciente-meta {
+    display: flex; flex-wrap: wrap; gap: 14px;
+    font-size: 0.82rem;
+    color: #555;
+  }
+  .paciente-meta strong { color: #1a1a1a; font-weight: 700; }
+  .paciente-obs {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: #fff8f0;
+    border-left: 3px solid #ff6b1a;
+    border-radius: 4px;
+    font-size: 0.82rem;
+  }
+  .paciente-obs strong { color: #ff6b1a; }
+  
+  /* DIA CARD */
+  .dia-card {
+    background: #fff;
+    border-radius: 12px;
+    margin-bottom: 18px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .dia-header {
+    color: #1a1a1a;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .dia-nome {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.06em;
+  }
+  .dia-totais {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    color: #1a1a1a;
+  }
+  .dia-totais strong { font-size: 1rem; }
+  
+  .dia-metas {
+    padding: 12px 20px;
+    background: #fafafa;
+    border-bottom: 1px solid #eee;
+  }
+  .dia-meta-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+  .dia-meta-vals {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: #555;
+  }
+  .dia-meta-vals strong { color: #ff6b1a; font-size: 0.92rem; }
+  
+  /* REFEIÇÕES */
+  .meal-block {
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .meal-block:last-child { border-bottom: none; }
+  
+  .meal-block-header {
+    padding: 14px 20px 8px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .meal-block-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+    color: #1a1a1a;
+    letter-spacing: 0.04em;
+  }
+  .meal-meta-pct {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: #ff6b1a;
+    background: #fff8f0;
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-weight: 700;
+  }
+  
+  .meal-block-totals {
+    padding: 0 20px 10px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.74rem;
+    color: #666;
+  }
+  .meal-block-totals strong { color: #1a1a1a; }
+  
+  .meal-block-foods {
+    padding: 0 20px 14px 20px;
+  }
+  
+  .food-item {
+    background: #fafafa;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+  }
+  .food-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .food-info { flex: 1; min-width: 180px; }
+  .food-name {
+    font-weight: 700;
+    color: #1a1a1a;
+    font-size: 0.92rem;
+    line-height: 1.3;
+  }
+  .food-qty {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: #666;
+    margin-top: 2px;
+  }
+  .food-sub-link {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 0.72rem;
+    color: #ff6b1a;
+    text-decoration: none;
+    font-weight: 700;
+    background: #fff8f0;
+    padding: 4px 10px;
+    border-radius: 100px;
+    border: 1px solid rgba(255, 107, 26, 0.3);
+  }
+  .food-macros {
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .food-kcal {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: #ff6b1a;
+  }
+  .food-pcf {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: #888;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 2px;
+  }
+  
+  /* DISCLAIMER */
+  .disclaimer {
+    margin: 18px 0;
+    padding: 14px 18px;
+    background: #fff8f0;
+    border-left: 4px solid #ff6b1a;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    color: #555;
+    line-height: 1.5;
+  }
+  .disclaimer strong { color: #cc4f10; }
+  
+  .footer {
+    background: #0a0a0a;
+    color: #a0a0a0;
+    padding: 16px 24px;
+    text-align: center;
+    font-size: 0.72rem;
+    border-radius: 12px;
+    margin-bottom: 16px;
+  }
+  .footer strong { color: #ff6b1a; }
+  
+  /* MODAL DE SUBSTITUIÇÕES (CSS :target) */
+  .sub-modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.92);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .sub-modal:target { display: flex; }
+  .sub-modal-bg {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 0;
+  }
+  .sub-modal-content {
+    max-width: 600px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    background: #1a1a1a;
+    border-radius: 16px;
+    padding: 22px;
+    border: 2px solid #ff6b1a;
+    box-shadow: 0 0 40px rgba(255,107,26,0.3);
+    position: relative;
+    z-index: 1;
+  }
+  .sub-modal-header {
+    text-align: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #333;
+  }
+  .sub-modal-header > div:first-child {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+  .sub-modal-orig {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    color: #ff6b1a;
+    letter-spacing: 0.04em;
+  }
+  .sub-modal-list {
+    margin-bottom: 16px;
+  }
+  .sub-item {
+    background: #2a2a2a;
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    border-left: 3px solid #ff6b1a;
+  }
+  .sub-name {
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 3px;
+  }
+  .sub-qty {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: #888;
+    margin-bottom: 6px;
+  }
+  .sub-macros {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.74rem;
+    color: #aaa;
+  }
+  .sub-macros strong { color: #ff6b1a; }
+  .sub-modal-close {
+    display: block;
+    background: #ff6b1a;
+    color: #fff !important;
+    text-decoration: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 1rem;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  /* MOBILE */
+  @media (max-width: 600px) {
+    body { padding: 8px; }
+    .dia-totais { font-size: 0.74rem; }
+    .dia-totais strong { font-size: 0.92rem; }
+    .food-line { flex-direction: column; }
+    .food-macros { text-align: left; width: 100%; }
+    .food-pcf { justify-content: flex-start; }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    ${headerCli}
+    ${diasHtml}
+    ${footerHtml}
+  </div>
+  
+  <!-- Modais de substituições (CSS :target — funciona no WhatsApp!) -->
+  ${modaisHtml}
+</body>
+</html>`;
+    
+    // Download
+    const blob = new Blob([htmlCompleto], { type: 'text/html;charset=utf-8' });
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const filename = `Plano-${(c.nome || 'paciente').replace(/[^a-zA-Z0-9]/g, '_')}-${new Date().toISOString().split('T')[0]}.html`;
+    a.href = blobUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
+    
+    if (btn) {
+      btn.textContent = '✅ Salvo!';
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }, 2000);
+    }
+    
+  } catch (err) {
+    console.error('Erro ao exportar HTML:', err);
+    alert('Erro ao exportar: ' + (err.message || 'desconhecido'));
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  }
+}
+
+// ============================================================
 // EXPORT/IMPORT JSON E TEXTO
 // ============================================================
 function exportarJSON() {
   const data = {
-    versao: '3.0',
+    versao: '3.1',
     plano,
     metas,
     cliente: coletarCliente(),
