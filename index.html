@@ -2386,7 +2386,7 @@
   </div>
 
   <p class="footer-note">
-    <strong>NUTRI.FUEL · v3.1</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
+    <strong>NUTRI.FUEL · v3.2</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
   </p>
   
   <!-- ============== ÁREA DO PDF (oculta na tela, visível na impressão) ============== -->
@@ -2739,7 +2739,136 @@ const ALIMENTOS = [
   { n: "Mostarda amarela", k: 60, p: 4.0, c: 5.0, f: 3.0, cat: "Molhos", u: 5, uName: "colher de chá" },
   { n: "Molho de tomate pronto", k: 39, p: 1.8, c: 7.0, f: 0.5, cat: "Molhos", u: 30, uName: "colher de sopa" },
   { n: "Molho shoyu", k: 53, p: 8.1, c: 4.9, f: 0, cat: "Molhos", u: 5, uName: "colher de chá" },
-  { n: "Molho barbecue", k: 172, p: 0.8, c: 41.0, f: 0.6, cat: "Molhos", u: 17, uName: "colher de sopa" }
+  { n: "Molho barbecue", k: 172, p: 0.8, c: 41.0, f: 0.6, cat: "Molhos", u: 17, uName: "colher de sopa" },
+
+  // === PROCESSADOS / INDUSTRIALIZADOS (marcas brasileiras) ===
+  // CEREAIS MATINAIS / FARINHAS PRONTAS
+  { n: "Neston 3 Cereais (Nestlé)", k: 350, p: 13.0, c: 70.0, f: 4.0, cat: "Processados", u: 30, uName: "porção (4 colh sopa)" },
+  { n: "Mucilon Multicereais (Nestlé)", k: 380, p: 9.5, c: 76.0, f: 3.5, cat: "Processados", u: 20, uName: "colher de sopa" },
+  { n: "Cremogema (Nestlé)", k: 365, p: 5.0, c: 86.0, f: 0.5, cat: "Processados", u: 20, uName: "colher de sopa" },
+  { n: "Sustagen Kids (Mead Johnson)", k: 388, p: 13.5, c: 75.0, f: 3.0, cat: "Processados", u: 30, uName: "porção (3 colh sopa)" },
+  { n: "Corn Flakes Sucrilhos (Kellogg's)", k: 376, p: 5.5, c: 87.0, f: 0.5, cat: "Processados", u: 30, uName: "porção (1 xícara)" },
+  { n: "Corn Flakes sem açúcar", k: 369, p: 7.5, c: 84.0, f: 0.7, cat: "Processados", u: 30, uName: "porção" },
+  { n: "Nesfit Flocos (Nestlé)", k: 374, p: 9.0, c: 75.0, f: 4.0, cat: "Processados", u: 30, uName: "porção" },
+  { n: "All Bran Flakes (Kellogg's)", k: 333, p: 11.0, c: 70.0, f: 3.0, cat: "Processados", u: 30, uName: "porção" },
+  { n: "Granola Mãe Terra", k: 416, p: 8.7, c: 65.0, f: 13.0, cat: "Processados", u: 30, uName: "porção" },
+  { n: "Cereal Trakinas / Choco Krispies", k: 425, p: 6.0, c: 78.0, f: 9.0, cat: "Processados", u: 30, uName: "porção" },
+  
+  // ACHOCOLATADOS / BEBIDAS EM PÓ
+  { n: "Nescau 2.0 (Nestlé)", k: 390, p: 5.5, c: 85.0, f: 3.0, cat: "Processados", u: 20, uName: "porção (2 colh sopa)" },
+  { n: "Nescau 33% Menos Açúcar", k: 350, p: 6.5, c: 75.0, f: 3.0, cat: "Processados", u: 20, uName: "porção (2 colh sopa)" },
+  { n: "Toddy Original (Pepsico)", k: 383, p: 4.5, c: 87.0, f: 1.0, cat: "Processados", u: 20, uName: "porção (2 colh sopa)" },
+  { n: "Ovomaltine Crocante", k: 390, p: 6.0, c: 80.0, f: 3.5, cat: "Processados", u: 20, uName: "porção (2 colh sopa)" },
+  { n: "Nesquik morango (Nestlé)", k: 380, p: 1.0, c: 95.0, f: 0, cat: "Processados", u: 14, uName: "colher de sopa" },
+  { n: "Cappuccino Nescafé Tradicional", k: 408, p: 5.0, c: 80.0, f: 8.0, cat: "Processados", u: 12, uName: "colher de sopa" },
+  { n: "Café solúvel Nescafé", k: 360, p: 14.0, c: 41.0, f: 0, cat: "Processados", u: 2, uName: "colher de chá" },
+  
+  // BISCOITOS DOCES
+  { n: "Biscoito Maisena (Marilan/Bauducco)", k: 437, p: 7.0, c: 75.0, f: 11.0, cat: "Processados", u: 30, uName: "porção (6 unid)" },
+  { n: "Biscoito Maria (Adria/Vitarella)", k: 440, p: 6.5, c: 78.0, f: 10.0, cat: "Processados", u: 30, uName: "porção" },
+  { n: "Biscoito Recheado Trakinas (chocolate)", k: 491, p: 5.5, c: 70.0, f: 21.0, cat: "Processados", u: 30, uName: "porção (3 unid)" },
+  { n: "Biscoito Recheado Negresco (Nestlé)", k: 480, p: 5.0, c: 70.0, f: 20.0, cat: "Processados", u: 30, uName: "porção (3 unid)" },
+  { n: "Biscoito Oreo (Mondelez)", k: 480, p: 4.7, c: 73.0, f: 19.0, cat: "Processados", u: 30, uName: "porção (3 unid)" },
+  { n: "Biscoito Passatempo recheado", k: 470, p: 5.0, c: 71.0, f: 18.0, cat: "Processados", u: 30, uName: "porção" },
+  { n: "Wafer Bauducco recheio chocolate", k: 510, p: 5.5, c: 65.0, f: 26.0, cat: "Processados", u: 30, uName: "porção (4 unid)" },
+  { n: "Bolacha Cream Cracker", k: 433, p: 9.5, c: 69.0, f: 12.0, cat: "Processados", u: 30, uName: "porção (6 unid)" },
+  { n: "Bolacha Água e Sal", k: 433, p: 9.5, c: 71.0, f: 11.0, cat: "Processados", u: 30, uName: "porção (6 unid)" },
+  { n: "Bolacha de Polvilho doce", k: 470, p: 1.5, c: 78.0, f: 16.0, cat: "Processados", u: 25, uName: "porção" },
+  { n: "Biscoito de Polvilho salgado", k: 437, p: 2.5, c: 70.0, f: 17.0, cat: "Processados", u: 25, uName: "porção" },
+  { n: "Bolacha Club Social Original", k: 475, p: 8.5, c: 66.0, f: 19.0, cat: "Processados", u: 26, uName: "pacote (4 unid)" },
+  { n: "Cookies Bauducco Choco", k: 487, p: 6.0, c: 67.0, f: 22.0, cat: "Processados", u: 30, uName: "porção (3 unid)" },
+  
+  // BARRINHAS E SNACKS
+  { n: "Barra de Cereal Nutry", k: 380, p: 5.0, c: 70.0, f: 8.0, cat: "Processados", u: 22, uName: "unidade" },
+  { n: "Barra de Cereal Trio Light", k: 350, p: 6.0, c: 70.0, f: 4.5, cat: "Processados", u: 20, uName: "unidade" },
+  { n: "Barra de Proteína Whey (Probiótica/Integralmédica)", k: 385, p: 35.0, c: 33.0, f: 13.0, cat: "Processados", u: 30, uName: "unidade" },
+  { n: "Barra Bold Bar Rhino", k: 386, p: 27.0, c: 39.0, f: 11.0, cat: "Processados", u: 60, uName: "unidade" },
+  { n: "Pipoca de Microondas (sabor manteiga)", k: 480, p: 7.0, c: 60.0, f: 22.0, cat: "Processados", u: 25, uName: "porção" },
+  { n: "Salgadinho Doritos", k: 510, p: 6.5, c: 60.0, f: 27.0, cat: "Processados", u: 25, uName: "porção" },
+  { n: "Salgadinho Cebolitos / Fandangos", k: 525, p: 5.0, c: 58.0, f: 30.0, cat: "Processados", u: 30, uName: "porção" },
+  { n: "Batata Frita Pringles Original", k: 540, p: 4.0, c: 53.0, f: 33.0, cat: "Processados", u: 30, uName: "porção" },
+  { n: "Batata Ruffles Original", k: 533, p: 5.0, c: 56.0, f: 32.0, cat: "Processados", u: 25, uName: "porção" },
+  
+  // CHOCOLATES E DOCES
+  { n: "Chocolate ao Leite (Lacta/Nestlé)", k: 538, p: 6.5, c: 60.0, f: 30.0, cat: "Processados", u: 25, uName: "tablete" },
+  { n: "Chocolate Meio Amargo 50% cacau", k: 528, p: 7.0, c: 50.0, f: 32.0, cat: "Processados", u: 25, uName: "tablete" },
+  { n: "Chocolate Branco", k: 568, p: 5.5, c: 58.0, f: 35.0, cat: "Processados", u: 25, uName: "tablete" },
+  { n: "Bombom Sonho de Valsa / Ouro Branco", k: 510, p: 5.0, c: 62.0, f: 28.0, cat: "Processados", u: 21, uName: "unidade" },
+  { n: "Bombom Garoto Talento", k: 530, p: 6.0, c: 58.0, f: 30.0, cat: "Processados", u: 25, uName: "tablete" },
+  { n: "KitKat (Nestlé)", k: 525, p: 6.0, c: 60.0, f: 28.0, cat: "Processados", u: 41, uName: "barra (2 dedos)" },
+  { n: "Snickers", k: 484, p: 8.0, c: 60.0, f: 24.0, cat: "Processados", u: 50, uName: "unidade" },
+  { n: "Bis Lacta", k: 522, p: 5.0, c: 65.0, f: 27.0, cat: "Processados", u: 25, uName: "porção" },
+  { n: "Brigadeiro caseiro", k: 380, p: 4.5, c: 60.0, f: 14.0, cat: "Processados", u: 20, uName: "unidade" },
+  { n: "Beijinho de coco", k: 410, p: 4.0, c: 55.0, f: 19.0, cat: "Processados", u: 20, uName: "unidade" },
+  { n: "Pudim de leite condensado", k: 247, p: 5.5, c: 35.0, f: 9.0, cat: "Processados", u: 100, uName: "fatia" },
+  { n: "Sorvete de creme (cremosinho)", k: 207, p: 3.5, c: 24.0, f: 11.0, cat: "Processados", u: 100, uName: "bola média" },
+  { n: "Sorvete de chocolate", k: 220, p: 4.0, c: 26.0, f: 11.0, cat: "Processados", u: 100, uName: "bola média" },
+  { n: "Picolé de fruta", k: 100, p: 0.3, c: 25.0, f: 0, cat: "Processados", u: 60, uName: "unidade" },
+  
+  // PRODUTOS LÁCTEOS PROCESSADOS
+  { n: "Iogurte Grego Vigor", k: 100, p: 4.0, c: 14.0, f: 3.0, cat: "Processados", u: 100, uName: "pote" },
+  { n: "Iogurte Activia (Danone)", k: 80, p: 3.5, c: 13.0, f: 1.5, cat: "Processados", u: 170, uName: "pote" },
+  { n: "Iogurte Yopro 25g proteína (Danone)", k: 56, p: 10.0, c: 3.5, f: 0.2, cat: "Processados", u: 250, uName: "garrafinha" },
+  { n: "Iogurte Whey Verde Campo 25g", k: 60, p: 10.0, c: 4.0, f: 0.5, cat: "Processados", u: 250, uName: "garrafinha" },
+  { n: "Vitalin Itambé (zero gordura)", k: 50, p: 4.5, c: 7.5, f: 0, cat: "Processados", u: 200, uName: "pote" },
+  { n: "Iogurte Nestlé Molico Light", k: 49, p: 4.5, c: 7.0, f: 0, cat: "Processados", u: 170, uName: "pote" },
+  { n: "Petit Suisse Danoninho", k: 110, p: 6.0, c: 17.0, f: 2.0, cat: "Processados", u: 45, uName: "unidade" },
+  { n: "Leite UHT Integral (Itambé/Parmalat)", k: 61, p: 3.0, c: 4.7, f: 3.5, cat: "Processados", u: 200, uName: "copo" },
+  { n: "Leite UHT Desnatado", k: 35, p: 3.0, c: 4.8, f: 0.2, cat: "Processados", u: 200, uName: "copo" },
+  { n: "Leite Semidesnatado", k: 47, p: 3.1, c: 4.8, f: 1.5, cat: "Processados", u: 200, uName: "copo" },
+  { n: "Leite em Pó Integral Ninho", k: 499, p: 26.0, c: 38.0, f: 27.0, cat: "Processados", u: 26, uName: "porção (2 colh sopa)" },
+  { n: "Leite em Pó Desnatado Molico", k: 363, p: 36.0, c: 53.0, f: 1.0, cat: "Processados", u: 25, uName: "porção" },
+  { n: "Requeijão Cremoso Catupiry", k: 257, p: 9.0, c: 3.0, f: 23.0, cat: "Processados", u: 30, uName: "colher de sopa" },
+  { n: "Requeijão Light", k: 178, p: 11.0, c: 4.5, f: 13.0, cat: "Processados", u: 30, uName: "colher de sopa" },
+  { n: "Cream Cheese Polenghi/Philadelphia", k: 245, p: 5.0, c: 4.0, f: 23.0, cat: "Processados", u: 30, uName: "colher de sopa" },
+  { n: "Queijo Cottage", k: 98, p: 12.0, c: 3.5, f: 4.0, cat: "Processados", u: 50, uName: "porção" },
+  
+  // EMBUTIDOS / FRIOS
+  { n: "Presunto cozido (Sadia/Perdigão)", k: 145, p: 18.0, c: 1.5, f: 7.5, cat: "Processados", u: 15, uName: "fatia" },
+  { n: "Peito de Peru defumado (Sadia)", k: 110, p: 18.0, c: 2.0, f: 3.0, cat: "Processados", u: 15, uName: "fatia" },
+  { n: "Mortadela tradicional (Sadia/Perdigão)", k: 269, p: 12.0, c: 4.0, f: 23.0, cat: "Processados", u: 25, uName: "fatia" },
+  { n: "Salsicha de frango (Sadia/Perdigão)", k: 250, p: 14.0, c: 3.0, f: 20.0, cat: "Processados", u: 50, uName: "unidade" },
+  { n: "Linguiça toscana (Sadia/Perdigão)", k: 296, p: 14.0, c: 1.5, f: 26.0, cat: "Processados", u: 60, uName: "unidade" },
+  { n: "Bacon defumado (Sadia)", k: 541, p: 37.0, c: 1.5, f: 42.0, cat: "Processados", u: 25, uName: "porção (3 fatias)" },
+  { n: "Hambúrguer bovino congelado (Sadia/Seara)", k: 232, p: 14.0, c: 2.5, f: 18.0, cat: "Processados", u: 56, uName: "unidade" },
+  { n: "Nuggets de frango (Sadia/Perdigão)", k: 240, p: 13.0, c: 16.0, f: 14.0, cat: "Processados", u: 100, uName: "porção (6 unid)" },
+  { n: "Empanado de frango (Chicken)", k: 240, p: 14.0, c: 18.0, f: 12.0, cat: "Processados", u: 100, uName: "porção" },
+  { n: "Salame italiano fatiado", k: 380, p: 22.0, c: 1.0, f: 32.0, cat: "Processados", u: 20, uName: "porção" },
+  
+  // PÃES INDUSTRIALIZADOS / FAST FOOD
+  { n: "Pão de Forma Wickbold/Pullman", k: 269, p: 9.0, c: 51.0, f: 3.5, cat: "Processados", u: 25, uName: "fatia" },
+  { n: "Pão de Forma Integral 12 Grãos", k: 245, p: 11.0, c: 42.0, f: 4.5, cat: "Processados", u: 25, uName: "fatia" },
+  { n: "Pão Bisnaguinha (Visconti/Pullman)", k: 322, p: 8.5, c: 58.0, f: 6.0, cat: "Processados", u: 12, uName: "unidade" },
+  { n: "Pão Hambúrguer", k: 280, p: 9.0, c: 52.0, f: 4.5, cat: "Processados", u: 50, uName: "unidade" },
+  { n: "Pão Sírio (Wickbold)", k: 270, p: 9.5, c: 55.0, f: 1.5, cat: "Processados", u: 60, uName: "unidade" },
+  { n: "Tortilha de trigo (wrap)", k: 298, p: 8.0, c: 51.0, f: 7.0, cat: "Processados", u: 50, uName: "unidade" },
+  { n: "Crouton temperado", k: 432, p: 10.0, c: 65.0, f: 14.0, cat: "Processados", u: 15, uName: "porção" },
+  
+  // GELEIAS / DOCES PASSAR PÃO
+  { n: "Geleia de morango tradicional", k: 240, p: 0.5, c: 60.0, f: 0.1, cat: "Processados", u: 20, uName: "colher de sopa" },
+  { n: "Geleia diet/zero açúcar", k: 80, p: 0.5, c: 18.0, f: 0.1, cat: "Processados", u: 20, uName: "colher de sopa" },
+  { n: "Doce de leite pastoso", k: 315, p: 6.5, c: 55.0, f: 7.5, cat: "Processados", u: 20, uName: "colher de sopa" },
+  { n: "Manteiga de amendoim integral", k: 596, p: 24.0, c: 17.0, f: 50.0, cat: "Processados", u: 16, uName: "colher de sopa" },
+  { n: "Pasta de amendoim Power 1 (sem açúcar)", k: 567, p: 25.0, c: 18.0, f: 47.0, cat: "Processados", u: 16, uName: "colher de sopa" },
+  { n: "Nutella (Ferrero)", k: 539, p: 6.0, c: 58.0, f: 31.0, cat: "Processados", u: 15, uName: "colher de sopa" },
+  { n: "Mel puro", k: 309, p: 0.4, c: 84.0, f: 0, cat: "Processados", u: 20, uName: "colher de sopa" },
+  
+  // BEBIDAS
+  { n: "Coca-Cola tradicional", k: 42, p: 0, c: 10.5, f: 0, cat: "Processados", u: 350, uName: "lata" },
+  { n: "Coca-Cola Zero", k: 0, p: 0, c: 0, f: 0, cat: "Processados", u: 350, uName: "lata" },
+  { n: "Guaraná Antártica", k: 40, p: 0, c: 10.0, f: 0, cat: "Processados", u: 350, uName: "lata" },
+  { n: "Suco TANG (sachê preparado)", k: 32, p: 0, c: 8.0, f: 0, cat: "Processados", u: 200, uName: "copo" },
+  { n: "Suco Del Valle integral", k: 49, p: 0.4, c: 12.0, f: 0, cat: "Processados", u: 200, uName: "copo" },
+  { n: "Suco verde Natural One", k: 28, p: 0.5, c: 6.5, f: 0.1, cat: "Processados", u: 200, uName: "copo" },
+  { n: "Bebida isotônica Gatorade", k: 23, p: 0, c: 5.7, f: 0, cat: "Processados", u: 500, uName: "garrafa" },
+  { n: "Energético Red Bull", k: 45, p: 0.3, c: 11.0, f: 0, cat: "Processados", u: 250, uName: "lata" },
+  
+  // FAST FOOD / PRONTOS
+  { n: "Lasanha congelada (Sadia/Seara)", k: 159, p: 7.5, c: 18.0, f: 6.5, cat: "Processados", u: 350, uName: "porção" },
+  { n: "Pizza congelada Mozzarella (Sadia)", k: 245, p: 11.0, c: 30.0, f: 9.0, cat: "Processados", u: 100, uName: "fatia" },
+  { n: "Macarrão Instantâneo Nissin (Lámen)", k: 469, p: 9.0, c: 64.0, f: 19.0, cat: "Processados", u: 85, uName: "pacote" },
+  { n: "Sopão pronto (Knorr/Maggi)", k: 35, p: 1.5, c: 7.0, f: 0.5, cat: "Processados", u: 250, uName: "tigela" },
+  { n: "Pão de queijo congelado", k: 350, p: 5.5, c: 38.0, f: 19.0, cat: "Processados", u: 25, uName: "unidade" }
 ];
 
 
@@ -4735,7 +4864,7 @@ async function exportarHTML() {
 // ============================================================
 function exportarJSON() {
   const data = {
-    versao: '3.1',
+    versao: '3.2',
     plano,
     metas,
     cliente: coletarCliente(),
