@@ -2203,7 +2203,8 @@
         </div>
         
         <div style="margin-top: 14px; padding: 12px; background: var(--bg-input); border-radius: 8px; border-left: 3px solid var(--orange); font-size: 0.78rem; color: var(--text-muted); line-height: 1.5;">
-          ✓ <strong>Visualização do plano:</strong> Use o seletor abaixo (na seção "Adicionar Alimento") para alternar qual dia você está editando. Ao montar o plano para o <strong>dia ALTO</strong>, os outros dias serão recalculados automaticamente mantendo a estrutura de alimentos e ajustando proporcionalmente as quantidades de carboidrato.
+          ✓ <strong>Como funciona:</strong> Ao ativar a ciclagem, o plano que você já montou será automaticamente <strong>copiado para os 3 dias</strong> (Alto/Médio/Baixo), com os carboidratos já ajustados proporcionalmente. <br>
+          <strong>A partir daí, cada dia é independente</strong> — adicionar, remover ou alterar alimentos em um dia <strong>não afeta os outros</strong>. Use o seletor abaixo para alternar qual dia você está editando.
         </div>
       </div>
     </div>
@@ -2386,7 +2387,7 @@
   </div>
 
   <p class="footer-note">
-    <strong>NUTRI.FUEL · v3.2</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
+    <strong>NUTRI.FUEL · v3.3</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
   </p>
   
   <!-- ============== ÁREA DO PDF (oculta na tela, visível na impressão) ============== -->
@@ -2884,9 +2885,51 @@ const REFEICOES = {
   ceia: "🌜 Ceia"
 };
 
-let plano = {
-  cafe: [], lanche1: [], almoco: [], lanche2: [], jantar: [], ceia: []
+// ============================================================
+// PLANOS INDEPENDENTES POR DIA (v3.3)
+// Quando ciclagem está OFF: usa "unico"
+// Quando ciclagem ON: usa "alto"/"medio"/"baixo" — cada um INDEPENDENTE
+// ============================================================
+function novoPlanoVazio() {
+  return { cafe: [], lanche1: [], almoco: [], lanche2: [], jantar: [], ceia: [] };
+}
+
+let planos = {
+  unico: novoPlanoVazio(),
+  alto: novoPlanoVazio(),
+  medio: novoPlanoVazio(),
+  baixo: novoPlanoVazio()
 };
+
+// Getter: retorna o plano do dia ativo (referência viva)
+function getPlanoAtivo() {
+  if (!ciclagem.ativa) return planos.unico;
+  return planos[ciclagem.diaAtivo];
+}
+
+// Compatibilidade: redireciona TODA leitura/escrita em `plano` pra `getPlanoAtivo()`
+// Usando Proxy para que `plano[meal].push(...)`, `plano[meal][i]`, etc. funcionem
+// transparentemente mesmo nas funções antigas.
+const plano = new Proxy({}, {
+  get(_, key) {
+    if (key === Symbol.iterator) return undefined;
+    return getPlanoAtivo()[key];
+  },
+  set(_, key, value) {
+    getPlanoAtivo()[key] = value;
+    return true;
+  },
+  has(_, key) {
+    return key in getPlanoAtivo();
+  },
+  ownKeys() {
+    return Reflect.ownKeys(getPlanoAtivo());
+  },
+  getOwnPropertyDescriptor(_, key) {
+    return Object.getOwnPropertyDescriptor(getPlanoAtivo(), key);
+  }
+});
+
 let metas = { kcal: null, prot: null, carb: null, fat: null };
 let cliente = { nome: '', idade: '', tel: '', peso: '', altura: '', objetivo: '', atividade: '', obs: '', profNome: '', planData: '' };
 
@@ -3151,17 +3194,76 @@ document.getElementById('preset').addEventListener('change', (e) => {
 // CICLAGEM DE CARBOIDRATOS (v3.1)
 // ============================================================
 function toggleCiclagem() {
-  ciclagem.ativa = document.getElementById('ciclagemAtiva').checked;
-  document.getElementById('ciclagemBody').style.display = ciclagem.ativa ? 'block' : 'none';
+  const novoEstado = document.getElementById('ciclagemAtiva').checked;
+  const estadoAnterior = ciclagem.ativa;
+  ciclagem.ativa = novoEstado;
+  document.getElementById('ciclagemBody').style.display = novoEstado ? 'block' : 'none';
   
-  if (ciclagem.ativa) {
-    // Mostra seletor de dia ativo na seção de adicionar alimento
+  if (novoEstado && !estadoAnterior) {
+    // ATIVANDO: clona o plano único pros 3 dias
+    // Dia ALTO recebe cópia exata do plano único
+    planos.alto = clonarPlano(planos.unico);
+    
+    // Dias MÉDIO e BAIXO recebem cópia também — usuário pode editar depois
+    // Para os carbos serem proporcionais nas inicializações:
+    // OPÇÃO 1: copiar igual e deixar usuário ajustar (mais previsível)
+    // OPÇÃO 2: já ajustar quantidade de itens carbóicos proporcionalmente
+    // → vou pela OPÇÃO 2 (mais útil), mas só na hora de criar (não em edições futuras)
+    planos.medio = ajustarQuantidadesCarbo(clonarPlano(planos.unico), 'medio');
+    planos.baixo = ajustarQuantidadesCarbo(clonarPlano(planos.unico), 'baixo');
+    
     mostrarSeletorDia();
+    ciclagem.diaAtivo = 'alto'; // por padrão começa editando o ALTO
     recalcCiclagem();
-  } else {
+  } else if (!novoEstado && estadoAnterior) {
+    // DESATIVANDO: o plano único volta a ser o que estava no dia ALTO (mais editado)
+    planos.unico = clonarPlano(planos.alto);
     esconderSeletorDia();
   }
+  
+  if (distribuicao.ativa) recalcDistribuicao();
   render();
+}
+
+// Clona um plano (deep copy) — itens e subs
+function clonarPlano(p) {
+  const novo = {};
+  Object.keys(p).forEach(meal => {
+    novo[meal] = (p[meal] || []).map(item => ({
+      ...item,
+      subs: (item.subs || []).map(s => ({...s}))
+    }));
+  });
+  // Garante que todas as refeições existem
+  ['cafe', 'lanche1', 'almoco', 'lanche2', 'jantar', 'ceia'].forEach(m => {
+    if (!novo[m]) novo[m] = [];
+  });
+  return novo;
+}
+
+// Ajusta quantidades de itens "carbóicos" (>50% das kcal vem de carbo)
+// proporcionalmente entre dias ALTO e o dia destino (medio/baixo).
+// Usado APENAS na inicialização (quando ativa ciclagem) — depois cada dia é independente.
+function ajustarQuantidadesCarbo(p, diaDestino) {
+  const carboAlvoAlto = ciclagem.carbos.alto || 5.0;
+  const carboAlvoDest = ciclagem.carbos[diaDestino] || carboAlvoAlto;
+  if (carboAlvoAlto === 0) return p;
+  const fator = carboAlvoDest / carboAlvoAlto;
+  
+  Object.keys(p).forEach(meal => {
+    p[meal] = (p[meal] || []).map(item => {
+      const m = calcMacrosItem(item);
+      const kcalCarbo = (m.c || 0) * 4;
+      const totalKcal = m.k || 1;
+      const pctCarbo = kcalCarbo / totalKcal;
+      if (pctCarbo > 0.5) {
+        // Item rico em carbo → ajusta proporcionalmente
+        return { ...item, q: item.q * fator };
+      }
+      return item;
+    });
+  });
+  return p;
 }
 
 function recalcCiclagem() {
@@ -3628,8 +3730,23 @@ function remover(refeicao, idx) {
 }
 
 function limparTudo() {
-  if (confirm('Limpar todo o plano alimentar?')) {
-    plano = { cafe: [], lanche1: [], almoco: [], lanche2: [], jantar: [], ceia: [] };
+  const msg = ciclagem.ativa
+    ? 'Limpar TODOS os 3 dias de carbo (alto/médio/baixo)?'
+    : 'Limpar todo o plano alimentar?';
+  if (confirm(msg)) {
+    if (ciclagem.ativa) {
+      // Limpa só o dia ativo (mais comum)
+      const ehTodos = confirm('Apagar TODOS os 3 dias?\n\nOK = todos os 3 dias\nCancelar = só o dia ' + ciclagem.diaAtivo.toUpperCase());
+      if (ehTodos) {
+        planos.alto = novoPlanoVazio();
+        planos.medio = novoPlanoVazio();
+        planos.baixo = novoPlanoVazio();
+      } else {
+        planos[ciclagem.diaAtivo] = novoPlanoVazio();
+      }
+    } else {
+      planos.unico = novoPlanoVazio();
+    }
     render();
   }
 }
@@ -4207,46 +4324,14 @@ async function exportarHTML() {
           } }
         ];
     
-    // Função pra ajustar quantidades dos alimentos por dia (carbo varia, ptn/gord não)
-    function ajustarPlanoParaDia(diaId) {
-      if (diaId === 'unico' || diaId === 'alto') {
-        // Dia único OU dia ALTO: usa o plano original (que é o que o usuário montou)
-        return plano;
-      }
-      // Para médio/baixo: ajusta proporcionalmente os alimentos ricos em carboidrato
-      const carboAlvoDia = ciclagem.metas[diaId].carbo;
-      const carboAlvoAlto = ciclagem.metas.alto.carbo;
-      if (!carboAlvoAlto) return plano;
-      const fatorCarbo = carboAlvoDia / carboAlvoAlto;
-      
-      const novoPlano = {};
-      Object.keys(plano).forEach(meal => {
-        novoPlano[meal] = plano[meal].map(item => {
-          // Calcula contribuição do item em carbo vs outros macros
-          // Se o item é predominantemente carbo (>60% das kcal vem de carbo), ajusta
-          const m = calcMacrosItem(item);
-          const kcalCarbo = m.c * 4;
-          const totalKcal = m.k || 1;
-          const pctCarbo = kcalCarbo / totalKcal;
-          
-          if (pctCarbo > 0.5) {
-            // Item rico em carbo → ajusta proporcionalmente
-            return { ...item, q: item.q * fatorCarbo };
-          }
-          // Item proteico/gorduroso → mantém igual
-          return { ...item };
-        });
-      });
-      return novoPlano;
-    }
-    
+    // Cada dia tem seu plano INDEPENDENTE (v3.3) — basta ler diretamente
     // Construir HTML de cada dia
     let exGlobal = 0;
     let modaisHtml = ''; // modais de substituições (CSS :target)
     
     let diasHtml = '';
     dias.forEach(dia => {
-      const planoAjustado = ajustarPlanoParaDia(dia.id);
+      const planoAjustado = planos[dia.id] || novoPlanoVazio();
       
       let totalKcal = 0, totalP = 0, totalC = 0, totalF = 0;
       let refeicoesHtml = '';
@@ -4864,9 +4949,20 @@ async function exportarHTML() {
 // ============================================================
 function exportarJSON() {
   const data = {
-    versao: '3.2',
-    plano,
+    versao: '3.3',
+    planos: planos,                    // novo: salva todos os 4 planos
+    plano: getPlanoAtivo(),            // legacy: para compatibilidade com importações antigas
     metas,
+    ciclagem: {
+      ativa: ciclagem.ativa,
+      diaAtivo: ciclagem.diaAtivo,
+      carbos: ciclagem.carbos,
+      metas: ciclagem.metas
+    },
+    distribuicao: {
+      ativa: distribuicao.ativa,
+      pcts: distribuicao.pcts
+    },
     cliente: coletarCliente(),
     dadosTMB: {
       sexo: document.getElementById('sexo').value,
@@ -4897,14 +4993,71 @@ function importarJSON(e) {
   reader.onload = (evt) => {
     try {
       const data = JSON.parse(evt.target.result);
-      if (data.plano) {
-        // Garante compatibilidade — itens antigos sem "subs"
+      // === CARREGAR PLANOS (compatível v3.3 e versões antigas) ===
+      if (data.planos) {
+        // v3.3+: tem todos os 4 planos
+        ['unico', 'alto', 'medio', 'baixo'].forEach(diaKey => {
+          if (data.planos[diaKey]) {
+            // Garante compatibilidade — itens antigos sem "subs"
+            Object.keys(data.planos[diaKey]).forEach(meal => {
+              (data.planos[diaKey][meal] || []).forEach(item => {
+                if (!item.subs) item.subs = [];
+              });
+            });
+            planos[diaKey] = data.planos[diaKey];
+          } else {
+            planos[diaKey] = novoPlanoVazio();
+          }
+        });
+      } else if (data.plano) {
+        // Legacy (até v3.2): só tinha um plano — coloca no "unico"
         Object.keys(data.plano).forEach(k => {
-          data.plano[k].forEach(item => {
+          (data.plano[k] || []).forEach(item => {
             if (!item.subs) item.subs = [];
           });
         });
-        plano = data.plano;
+        planos.unico = data.plano;
+        planos.alto = clonarPlano(data.plano);
+        planos.medio = clonarPlano(data.plano);
+        planos.baixo = clonarPlano(data.plano);
+      }
+      
+      // === CARREGAR ESTADO CICLAGEM ===
+      if (data.ciclagem) {
+        ciclagem.ativa = !!data.ciclagem.ativa;
+        ciclagem.diaAtivo = data.ciclagem.diaAtivo || 'alto';
+        if (data.ciclagem.carbos) ciclagem.carbos = data.ciclagem.carbos;
+        if (data.ciclagem.metas) ciclagem.metas = data.ciclagem.metas;
+        // Sincroniza UI
+        const chk = document.getElementById('ciclagemAtiva');
+        if (chk) chk.checked = ciclagem.ativa;
+        document.getElementById('ciclagemBody').style.display = ciclagem.ativa ? 'block' : 'none';
+        // Atualiza inputs g/kg
+        document.querySelectorAll('.ciclo-carbo').forEach(input => {
+          const tipo = input.dataset.tipo;
+          if (ciclagem.carbos[tipo] != null) input.value = ciclagem.carbos[tipo];
+        });
+        if (ciclagem.ativa) {
+          mostrarSeletorDia();
+          // Marca o botão do dia ativo
+          document.querySelectorAll('.ciclo-day-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.dia === ciclagem.diaAtivo);
+          });
+        }
+      }
+      
+      // === CARREGAR ESTADO DISTRIBUIÇÃO ===
+      if (data.distribuicao) {
+        distribuicao.ativa = !!data.distribuicao.ativa;
+        if (data.distribuicao.pcts) distribuicao.pcts = data.distribuicao.pcts;
+        const chk = document.getElementById('distribuicaoAtiva');
+        if (chk) chk.checked = distribuicao.ativa;
+        document.getElementById('distribuicaoBody').style.display = distribuicao.ativa ? 'block' : 'none';
+        // Atualiza inputs %
+        Object.entries(distribuicao.pcts).forEach(([meal, pct]) => {
+          const inp = document.querySelector(`.distrib-pct[data-meal="${meal}"]`);
+          if (inp) inp.value = pct;
+        });
       }
       if (data.metas) {
         metas = data.metas;
