@@ -1,5 +1,5 @@
-// NutriFuel Service Worker - v3.6.0
-const CACHE_NAME = 'nutrifuel-v3-6-0';
+// NutriFuel Service Worker - v3.7.0
+const CACHE_NAME = 'nutrifuel-v3-7-0';
 const ASSETS = [
   './',
   './index.html',
