@@ -1970,6 +1970,20 @@
           <button class="obj-btn" data-ajuste="0.10">Bulking Lean<small>+10% kcal</small></button>
           <button class="obj-btn" data-ajuste="0.15">Hipertrofia<small>+15% kcal</small></button>
           <button class="obj-btn" data-ajuste="0.20">Bulking<small>+20% kcal</small></button>
+          <button class="obj-btn" data-ajuste="custom" id="btnObjCustom" style="background: linear-gradient(135deg, rgba(255,107,26,0.15), rgba(255,107,26,0.08)); border-color: var(--orange);">✏️ Personalizado<small>kcal manual</small></button>
+        </div>
+        
+        <!-- Input manual de kcal (aparece quando "Personalizado" selecionado) -->
+        <div id="kcalManualBox" style="display:none; margin-top: 14px; background: var(--bg-input); padding: 14px; border-radius: 10px; border-left: 3px solid var(--orange);">
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <label style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Kcal alvo personalizado:</label>
+            <input type="number" id="kcalManual" placeholder="ex: 2500" min="500" max="6000" step="50" 
+              style="width: 130px; padding: 10px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 1.05rem; font-family: 'JetBrains Mono', monospace; font-weight: 700; text-align: center;">
+            <span id="kcalManualGetRef" style="font-size: 0.78rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;"></span>
+          </div>
+          <div style="margin-top: 10px; font-size: 0.78rem; color: var(--text-muted); line-height: 1.5;">
+            💡 Você define o kcal total livremente. A proteína e gordura permanecem em g/kg, e o carboidrato preenche o restante automaticamente (ou usa o valor manual de carbo se preenchido).
+          </div>
         </div>
         
         <div class="macro-suggestion">
@@ -2399,7 +2413,7 @@
   </div>
 
   <p class="footer-note">
-    <strong>NUTRI.FUEL · v3.4</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
+    <strong>NUTRI.FUEL · v3.5</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
   </p>
   
   <!-- ============== ÁREA DO PDF (oculta na tela, visível na impressão) ============== -->
@@ -2977,6 +2991,7 @@ let highlightedIndex = -1;
 let inputMode = 'g';
 let formulaAtual = 'mifflin';
 let ajusteObjetivo = 0;
+let kcalManualOverride = null; // null = automático (usa GET ajustado), número = kcal personalizado
 let resultadoTMB = null;
 let resultadoGET = null;
 
@@ -3113,6 +3128,11 @@ function calcularMacros() {
     // MODO MANUAL ou CICLAGEM: carbo definido → kcal é a soma dos 3 macros
     carbG = peso * carbKgEfetivo;
     kcalAlvo = protKcal + (carbG * 4) + fatKcal;
+  } else if (kcalManualOverride != null && !ciclagem.ativa) {
+    // MODO PERSONALIZADO: usuário definiu kcal alvo livremente
+    kcalAlvo = kcalManualOverride;
+    const carbKcal = kcalAlvo - protKcal - fatKcal;
+    carbG = Math.max(0, carbKcal / 4);
   } else {
     // MODO AUTOMÁTICO: kcal alvo é o GET ajustado, carbo preenche o restante
     kcalAlvo = resultadoGET * (1 + ajusteObjetivo);
@@ -3164,6 +3184,10 @@ function aplicarMetas() {
     // MODO MANUAL ou CICLAGEM: carbo definido → kcal é a soma dos 3 macros
     carbG = peso * carbKgEfetivo;
     kcalAlvo = (protG * 4) + (carbG * 4) + (fatG * 9);
+  } else if (kcalManualOverride != null && !ciclagem.ativa) {
+    // MODO PERSONALIZADO: usuário definiu kcal alvo livremente
+    kcalAlvo = kcalManualOverride;
+    carbG = Math.max(0, (kcalAlvo - protG * 4 - fatG * 9) / 4);
   } else {
     // MODO AUTOMÁTICO: kcal alvo é o GET ajustado
     kcalAlvo = resultadoGET * (1 + ajusteObjetivo);
@@ -3235,9 +3259,43 @@ document.querySelectorAll('.obj-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.obj-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    ajusteObjetivo = parseFloat(btn.dataset.ajuste);
+    
+    const valor = btn.dataset.ajuste;
+    const kcalManualBox = document.getElementById('kcalManualBox');
+    
+    if (valor === 'custom') {
+      // Modo personalizado: mostra input de kcal manual
+      kcalManualBox.style.display = 'block';
+      // Pré-preenche com kcal atual (do GET ou da última seleção) se vazio
+      const kcalInput = document.getElementById('kcalManual');
+      if (!kcalInput.value && resultadoGET) {
+        kcalInput.value = Math.round(resultadoGET);
+      }
+      // Mostra referência do GET
+      const ref = document.getElementById('kcalManualGetRef');
+      if (resultadoGET) {
+        ref.textContent = `(GET ≈ ${Math.round(resultadoGET).toLocaleString('pt-BR')} kcal)`;
+      } else {
+        ref.textContent = '';
+      }
+      // Aplica imediatamente
+      kcalManualOverride = parseFloat(kcalInput.value) || null;
+      ajusteObjetivo = 0;
+    } else {
+      // Modo preset: esconde input manual e usa o ajuste %
+      kcalManualBox.style.display = 'none';
+      kcalManualOverride = null;
+      ajusteObjetivo = parseFloat(valor);
+    }
     calcularMacros();
   });
+});
+
+// Listener do input de kcal manual
+document.getElementById('kcalManual').addEventListener('input', (e) => {
+  const v = parseFloat(e.target.value);
+  kcalManualOverride = (!isNaN(v) && v > 0) ? v : null;
+  calcularMacros();
 });
 
 document.getElementById('preset').addEventListener('change', (e) => {
@@ -5024,7 +5082,7 @@ async function exportarHTML() {
 // ============================================================
 function exportarJSON() {
   const data = {
-    versao: '3.4',
+    versao: '3.5',
     planos: planos,                    // novo: salva todos os 4 planos
     plano: getPlanoAtivo(),            // legacy: para compatibilidade com importações antigas
     metas,
