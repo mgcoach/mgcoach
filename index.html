@@ -2169,6 +2169,56 @@
           As kcal de cada dia são calculadas automaticamente.
         </div>
         
+        <!-- ============ RESUMO SEMANAL (v3.6) ============ -->
+        <div id="resumoSemanalBox" style="margin-bottom: 16px; padding: 16px; background: linear-gradient(135deg, rgba(255,107,26,0.08), rgba(204,79,16,0.04)); border: 1px solid rgba(255,107,26,0.3); border-radius: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <div style="font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 0.06em; color: var(--orange);">📅 META SEMANAL DE KCAL</div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--text-muted);">
+              <input type="checkbox" id="autoBalancearMedio" checked onchange="ciclagem.autoBalancearMedio = this.checked; recalcCiclagem();" style="width: 16px; height: 16px; accent-color: var(--orange);">
+              <label for="autoBalancearMedio" style="cursor: pointer; user-select: none;">Auto-balancear MÉDIO pra bater meta</label>
+            </div>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px;">
+            <div style="background: var(--bg-input); padding: 10px 12px; border-radius: 8px;">
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em;">Meta diária</div>
+              <div id="semanalMetaDiaria" style="font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; color: var(--text); font-weight: 700; margin-top: 2px;">— kcal</div>
+            </div>
+            <div style="background: var(--bg-input); padding: 10px 12px; border-radius: 8px; border-left: 3px solid var(--orange);">
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em;">Meta semanal (×7)</div>
+              <div id="semanalMetaTotal" style="font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; color: var(--orange); font-weight: 700; margin-top: 2px;">— kcal</div>
+            </div>
+            <div style="background: var(--bg-input); padding: 10px 12px; border-radius: 8px;">
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em;">Calculado</div>
+              <div id="semanalCalculado" style="font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; color: var(--text); font-weight: 700; margin-top: 2px;">— kcal</div>
+            </div>
+            <div style="background: var(--bg-input); padding: 10px 12px; border-radius: 8px;">
+              <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em;">Diferença</div>
+              <div id="semanalDiferenca" style="font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 700; margin-top: 2px;">—</div>
+            </div>
+          </div>
+          
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;">Quantos dias por semana de cada tipo (total = 7):</div>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="color: #ff6b1a; font-size: 0.85rem;">🔥</span>
+              <input type="number" id="diasAlto" min="0" max="7" value="2" oninput="onChangeDias()" style="flex: 1; padding: 6px 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.92rem; text-align: center; font-family: 'JetBrains Mono', monospace; font-weight: 700;">
+              <span style="font-size: 0.78rem; color: var(--text-muted);">dias</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="color: #f7a73a; font-size: 0.85rem;">⚖️</span>
+              <input type="number" id="diasMedio" min="0" max="7" value="3" oninput="onChangeDias()" style="flex: 1; padding: 6px 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.92rem; text-align: center; font-family: 'JetBrains Mono', monospace; font-weight: 700;">
+              <span style="font-size: 0.78rem; color: var(--text-muted);">dias</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="color: #5a7fc2; font-size: 0.85rem;">💤</span>
+              <input type="number" id="diasBaixo" min="0" max="7" value="2" oninput="onChangeDias()" style="flex: 1; padding: 6px 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.92rem; text-align: center; font-family: 'JetBrains Mono', monospace; font-weight: 700;">
+              <span style="font-size: 0.78rem; color: var(--text-muted);">dias</span>
+            </div>
+          </div>
+          <div id="diasTotalAviso" style="margin-top: 8px; font-size: 0.75rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">Soma: <strong id="diasSoma">7</strong>/7 dias ✓</div>
+        </div>
+        
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;" id="ciclagemGrid">
           <!-- Card ALTO -->
           <div class="ciclo-card" data-tipo="alto">
@@ -2413,7 +2463,7 @@
   </div>
 
   <p class="footer-note">
-    <strong>NUTRI.FUEL · v3.5</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
+    <strong>NUTRI.FUEL · v3.6</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
   </p>
   
   <!-- ============== ÁREA DO PDF (oculta na tela, visível na impressão) ============== -->
@@ -2967,7 +3017,12 @@ let ciclagem = {
   diaAtivo: 'alto', // qual dia está sendo editado/visualizado
   carbos: { alto: 5.0, medio: 3.5, baixo: 2.0 }, // g/kg de cada dia
   // Calculado automaticamente: { alto: {carbo, ptn, fat, kcal}, medio: {...}, baixo: {...} }
-  metas: { alto: null, medio: null, baixo: null }
+  metas: { alto: null, medio: null, baixo: null },
+  // === MODO SEMANAL (v3.6) ===
+  // Quantos dias da semana são de cada tipo (soma deve ser 7)
+  diasPorTipo: { alto: 2, medio: 3, baixo: 2 },
+  // Modo "auto-balancear": ajusta g/kg do MÉDIO automático pra bater meta semanal exata
+  autoBalancearMedio: true
 };
 
 // Distribuição por refeição (% das kcal totais)
@@ -3392,6 +3447,34 @@ function ajustarQuantidadesCarbo(p, diaDestino) {
   return p;
 }
 
+// === FUNÇÃO PARA ATUALIZAR DIAS POR TIPO (v3.6) ===
+function onChangeDias() {
+  const alto = parseInt(document.getElementById('diasAlto').value) || 0;
+  const medio = parseInt(document.getElementById('diasMedio').value) || 0;
+  const baixo = parseInt(document.getElementById('diasBaixo').value) || 0;
+  
+  ciclagem.diasPorTipo.alto = alto;
+  ciclagem.diasPorTipo.medio = medio;
+  ciclagem.diasPorTipo.baixo = baixo;
+  
+  // Atualiza aviso da soma
+  const soma = alto + medio + baixo;
+  const somaEl = document.getElementById('diasSoma');
+  const avisoEl = document.getElementById('diasTotalAviso');
+  if (somaEl) somaEl.textContent = soma;
+  if (avisoEl) {
+    if (soma === 7) {
+      avisoEl.innerHTML = `Soma: <strong id="diasSoma">${soma}</strong>/7 dias ✓`;
+      avisoEl.style.color = 'var(--text-muted)';
+    } else {
+      avisoEl.innerHTML = `Soma: <strong id="diasSoma" style="color:#ef4444;">${soma}</strong>/7 dias ⚠️ Ajuste para somar 7`;
+      avisoEl.style.color = '#ef4444';
+    }
+  }
+  
+  recalcCiclagem();
+}
+
 function recalcCiclagem() {
   // Pega peso do cliente da aba paciente
   const peso = parseFloat(document.getElementById('cliPeso')?.value || cliente.peso || 0);
@@ -3399,6 +3482,9 @@ function recalcCiclagem() {
   // Pega proteína e gordura das metas (constantes em todos os dias)
   const ptnG = parseFloat(document.getElementById('metaProt')?.value || metas.prot || 0);
   const fatG = parseFloat(document.getElementById('metaFat')?.value || metas.fat || 0);
+  
+  // Pega kcal alvo diária (do GET ou personalizado)
+  const kcalDiaria = parseFloat(document.getElementById('metaKcal')?.value || metas.kcal || 0);
   
   if (!peso || !ptnG || !fatG) {
     // Limpa cards se faltam dados
@@ -3420,6 +3506,48 @@ function recalcCiclagem() {
     ciclagem.carbos[tipo] = parseFloat(input.value) || 0;
   });
   
+  // === MODO SEMANAL (v3.6) ===
+  // Se auto-balancear ativo: calcula carbo do MÉDIO automático pra bater meta semanal
+  // Equação: 
+  //   metaSemanal = (kcalAlto × diasAlto) + (kcalMedio × diasMedio) + (kcalBaixo × diasBaixo)
+  //   onde kcalX = (carboX × peso × 4) + (ptnG × 4) + (fatG × 9)
+  // Resolvendo pra carboMedio:
+  //   carboMedio = (metaSemanal/peso/4 - ptnG×4×7/peso/4 - fatG×9×7/peso/4 - carboAlto×diasAlto - carboBaixo×diasBaixo) / diasMedio
+  
+  const dAlto = ciclagem.diasPorTipo.alto;
+  const dMedio = ciclagem.diasPorTipo.medio;
+  const dBaixo = ciclagem.diasPorTipo.baixo;
+  const totalDias = dAlto + dMedio + dBaixo;
+  
+  if (ciclagem.autoBalancearMedio && kcalDiaria > 0 && totalDias === 7 && dMedio > 0) {
+    const metaSemanalKcal = kcalDiaria * 7;
+    
+    // kcal fixos da semana de proteína e gordura (todos os dias)
+    const kcalFixosSemanais = (ptnG * 4 + fatG * 9) * 7;
+    
+    // kcal de carbo necessários na semana
+    const kcalCarboSemanais = metaSemanalKcal - kcalFixosSemanais;
+    const gCarboSemanais = kcalCarboSemanais / 4;
+    
+    // Carbo já comprometido com dias ALTO e BAIXO
+    const carboAlto = ciclagem.carbos.alto * peso;
+    const carboBaixo = ciclagem.carbos.baixo * peso;
+    const gCarboFixos = (carboAlto * dAlto) + (carboBaixo * dBaixo);
+    
+    // Carbo que sobra para os dias MÉDIO
+    const gCarboMedios = gCarboSemanais - gCarboFixos;
+    const carboMedioPorDia = gCarboMedios / dMedio;
+    const carboMedioGkg = carboMedioPorDia / peso;
+    
+    // Atualiza estado e UI (input do médio)
+    ciclagem.carbos.medio = Math.max(0, carboMedioGkg);
+    const inputMedio = document.querySelector('.ciclo-carbo[data-tipo="medio"]');
+    if (inputMedio && document.activeElement !== inputMedio) {
+      // Não sobrescreve se o usuário está digitando
+      inputMedio.value = ciclagem.carbos.medio.toFixed(2);
+    }
+  }
+  
   // Calcula macros de cada dia
   ['alto', 'medio', 'baixo'].forEach(tipo => {
     const carboG = ciclagem.carbos[tipo] * peso;
@@ -3432,13 +3560,62 @@ function recalcCiclagem() {
       kcal: Math.round(kcal)
     };
     
-    // Atualiza UI
+    // Atualiza UI do card
     const card = document.querySelector(`.ciclo-card[data-tipo="${tipo}"]`);
     if (card) {
       card.querySelector('.c-carbo').textContent = Math.round(carboG) + 'g';
       card.querySelector('.c-ptn').textContent = Math.round(ptnG) + 'g';
       card.querySelector('.c-fat').textContent = Math.round(fatG) + 'g';
       card.querySelector('.c-kcal').textContent = Math.round(kcal) + ' kcal';
+    }
+  });
+  
+  // === ATUALIZAR RESUMO SEMANAL ===
+  if (kcalDiaria > 0) {
+    const metaDiariaEl = document.getElementById('semanalMetaDiaria');
+    const metaTotalEl = document.getElementById('semanalMetaTotal');
+    const calculadoEl = document.getElementById('semanalCalculado');
+    const difEl = document.getElementById('semanalDiferenca');
+    
+    if (metaDiariaEl) metaDiariaEl.textContent = Math.round(kcalDiaria).toLocaleString('pt-BR') + ' kcal';
+    if (metaTotalEl) metaTotalEl.textContent = Math.round(kcalDiaria * 7).toLocaleString('pt-BR') + ' kcal';
+    
+    // Calcular soma real
+    const somaSemanal = (ciclagem.metas.alto.kcal * dAlto) + 
+                       (ciclagem.metas.medio.kcal * dMedio) + 
+                       (ciclagem.metas.baixo.kcal * dBaixo);
+    const meta = kcalDiaria * 7;
+    const dif = somaSemanal - meta;
+    const pctDif = meta > 0 ? Math.abs(dif / meta * 100) : 0;
+    
+    if (calculadoEl) calculadoEl.textContent = Math.round(somaSemanal).toLocaleString('pt-BR') + ' kcal';
+    if (difEl) {
+      const sinal = dif > 0 ? '+' : '';
+      const cor = pctDif <= 1 ? '#22c55e' : pctDif <= 3 ? '#f7a73a' : '#ef4444';
+      const icone = pctDif <= 1 ? '✓' : pctDif <= 3 ? '⚠' : '❌';
+      difEl.innerHTML = `<span style="color:${cor};">${sinal}${Math.round(dif).toLocaleString('pt-BR')} ${icone}</span>`;
+    }
+  }
+  
+  // === ATUALIZAR INDICADORES "× N dias" NOS CARDS ===
+  ['alto', 'medio', 'baixo'].forEach(tipo => {
+    const card = document.querySelector(`.ciclo-card[data-tipo="${tipo}"]`);
+    if (!card) return;
+    let badge = card.querySelector('.ciclo-card-badge');
+    if (!badge) {
+      // Adiciona o badge dinamicamente
+      const header = card.querySelector('.ciclo-card-header');
+      if (header) {
+        badge = document.createElement('div');
+        badge.className = 'ciclo-card-badge';
+        badge.style.cssText = 'font-family: "JetBrains Mono", monospace; font-size: 0.62rem; color: rgba(0,0,0,0.6); margin-top: 2px; font-weight: 600;';
+        header.appendChild(badge);
+      }
+    }
+    if (badge) {
+      const dias = ciclagem.diasPorTipo[tipo];
+      const kcalDia = ciclagem.metas[tipo].kcal;
+      badge.textContent = dias > 0 ? `× ${dias} ${dias === 1 ? 'dia' : 'dias'} = ${(kcalDia * dias).toLocaleString('pt-BR')} kcal` : '× 0 dias';
     }
   });
   
@@ -5082,7 +5259,7 @@ async function exportarHTML() {
 // ============================================================
 function exportarJSON() {
   const data = {
-    versao: '3.5',
+    versao: '3.6',
     planos: planos,                    // novo: salva todos os 4 planos
     plano: getPlanoAtivo(),            // legacy: para compatibilidade com importações antigas
     metas,
