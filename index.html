@@ -1862,8 +1862,12 @@
           <strong id="metaTotalAlimentos">—</strong>
         </div>
         <div class="brand-meta-item">
+          <span>Pacientes</span>
+          <strong id="metaTotalPacientes">0</strong>
+        </div>
+        <div class="brand-meta-item">
           <span>Versão</span>
-          <strong>3.0</strong>
+          <strong>3.8</strong>
         </div>
       </div>
     </div>
@@ -1871,14 +1875,40 @@
 
   <!-- ============== NAVEGAÇÃO ============== -->
   <div class="nav-tabs">
-    <button class="nav-tab active" data-panel="metabolismo">⚡ TMB · GET</button>
-    <button class="nav-tab" data-panel="cliente">👤 Paciente</button>
+    <button class="nav-tab active" data-panel="pacientes">👥 Pacientes</button>
+    <button class="nav-tab" data-panel="metabolismo">⚡ TMB · GET</button>
+    <button class="nav-tab" data-panel="cliente">👤 Ficha</button>
     <button class="nav-tab" data-panel="plano">🍽️ Plano</button>
+    <button class="nav-tab" data-panel="avaliacoes">📊 Avaliações</button>
     <button class="nav-tab" data-panel="export">📄 Exportar</button>
   </div>
 
+  <!-- ============== PAINEL PACIENTES (v3.8) ============== -->
+  <div class="panel active" id="panel-pacientes">
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+      <button onclick="novoPaciente()" class="btn-export" style="background: var(--orange); color:#fff; border:none; padding: 10px 16px; font-weight: 700;">➕ Novo Paciente</button>
+      <button onclick="document.getElementById('importPacientesFile').click()" class="btn-export" style="background: var(--bg-2); color: var(--text); border: 1px solid var(--border); padding: 10px 16px;">📤 Importar JSON</button>
+      <button onclick="exportarTodosPacientes()" class="btn-export" style="background: var(--bg-2); color: var(--text); border: 1px solid var(--border); padding: 10px 16px;">📥 Backup Completo</button>
+      <input type="file" id="importPacientesFile" accept=".json" style="display:none" onchange="importarPacientes(event)">
+    </div>
+    
+    <div class="info-card" style="margin-bottom: 16px;">
+      💡 <strong>Como funciona:</strong> Cada paciente guarda ficha completa, plano alimentar (todos os dias da ciclagem), avaliações físicas com histórico, e histórico de versões do plano. Tudo offline no seu dispositivo. Use <strong>📤 Importar JSON</strong> pra trazer pacientes de outro dispositivo — aceita backup novo, ficha individual, ou JSON antigo da aba "📄 Exportar".
+    </div>
+    
+    <div style="margin-bottom: 12px;">
+      <input type="text" id="buscaPaciente" placeholder="🔍 Buscar paciente..." oninput="filtrarPacientes()" style="width: 100%; padding: 10px 14px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 0.95rem;">
+    </div>
+    
+    <div id="listaPacientes" style="display: grid; gap: 12px;">
+      <div style="text-align: center; padding: 40px 20px; color: var(--text-3);">
+        Carregando pacientes...
+      </div>
+    </div>
+  </div>
+
   <!-- ============== PAINEL TMB/GET ============== -->
-  <div class="panel active" id="panel-metabolismo">
+  <div class="panel" id="panel-metabolismo">
     
     <div class="section">
       <div class="section-title">Cálculo Metabólico</div>
@@ -2051,12 +2081,61 @@
   <!-- ============== PAINEL CLIENTE ============== -->
   <div class="panel" id="panel-cliente">
     
+    <!-- Barra de paciente ativo SEMPRE visível (v3.8) -->
+    <div style="background: linear-gradient(135deg, rgba(255,107,26,.15), rgba(255,140,66,.05)); border: 1px solid rgba(255,107,26,.4); border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+        <div id="pacAtivoFoto" style="width: 48px; height: 48px; border-radius: 50%; background: var(--bg-2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 1.5rem;">👤</div>
+        <div style="flex: 1; min-width: 0;">
+          <div id="pacAtivoLabel" style="font-size: 0.7rem; color: var(--orange); text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Novo paciente</div>
+          <div id="pacAtivoNome" style="font-size: 1.1rem; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Preencha os dados e clique em Salvar</div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px; flex-shrink: 0;">
+        <button onclick="salvarPacienteAtivo()" class="btn-export" style="background: var(--orange); color:#fff; border: none; padding: 10px 18px; font-size: 0.9rem; font-weight: 700;">💾 Salvar Paciente</button>
+        <button id="btnFecharPac" onclick="fecharPacienteAtivo()" style="display:none; background: var(--bg-2); color: var(--text-2); border: 1px solid var(--border); padding: 8px 14px; font-size: 0.85rem; border-radius: 8px; cursor: pointer;">✕ Fechar</button>
+      </div>
+    </div>
+    
     <div class="client-form">
       <div style="margin-top: 8px;">
-        <div class="field-grid" style="grid-template-columns: 2fr 1fr 1fr;">
+        
+        <!-- Fotos do paciente (v3.8) -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+          <div class="field" style="text-align: center;">
+            <label>Foto Atual</label>
+            <div onclick="document.getElementById('cliFotoInput').click()" id="cliFotoPreview" style="width: 100%; height: 110px; border-radius: 12px; background: var(--bg-2); border: 2px dashed var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; font-size: 1.8rem; color: var(--text-3);">📷</div>
+            <input type="file" id="cliFotoInput" accept="image/*" style="display:none" onchange="lerFotoNutri(event, 'cliFoto')">
+            <input type="hidden" id="cliFoto">
+            <button onclick="limparFotoNutri('cliFoto')" type="button" style="margin-top: 4px; font-size: 0.7rem; background: transparent; border: none; color: var(--text-3); cursor: pointer;">Limpar</button>
+          </div>
+          <div class="field" style="text-align: center;">
+            <label>Foto Antes</label>
+            <div onclick="document.getElementById('cliFotoAntesInput').click()" id="cliFotoAntesPreview" style="width: 100%; height: 110px; border-radius: 12px; background: var(--bg-2); border: 2px dashed var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; font-size: 1.8rem; color: var(--text-3);">📷</div>
+            <input type="file" id="cliFotoAntesInput" accept="image/*" style="display:none" onchange="lerFotoNutri(event, 'cliFotoAntes')">
+            <input type="hidden" id="cliFotoAntes">
+            <button onclick="limparFotoNutri('cliFotoAntes')" type="button" style="margin-top: 4px; font-size: 0.7rem; background: transparent; border: none; color: var(--text-3); cursor: pointer;">Limpar</button>
+          </div>
+          <div class="field" style="text-align: center;">
+            <label>Foto Depois</label>
+            <div onclick="document.getElementById('cliFotoDepoisInput').click()" id="cliFotoDepoisPreview" style="width: 100%; height: 110px; border-radius: 12px; background: var(--bg-2); border: 2px dashed var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; font-size: 1.8rem; color: var(--text-3);">📷</div>
+            <input type="file" id="cliFotoDepoisInput" accept="image/*" style="display:none" onchange="lerFotoNutri(event, 'cliFotoDepois')">
+            <input type="hidden" id="cliFotoDepois">
+            <button onclick="limparFotoNutri('cliFotoDepois')" type="button" style="margin-top: 4px; font-size: 0.7rem; background: transparent; border: none; color: var(--text-3); cursor: pointer;">Limpar</button>
+          </div>
+        </div>
+        
+        <div class="field-grid" style="grid-template-columns: 2fr 1fr 1fr 1fr;">
           <div class="field">
-            <label>Nome do Paciente</label>
+            <label>Nome do Paciente *</label>
             <input type="text" id="cliNome" placeholder="ex: Maria da Silva">
+          </div>
+          <div class="field">
+            <label>Sexo</label>
+            <select id="cliSexo">
+              <option value="">—</option>
+              <option>Masculino</option>
+              <option>Feminino</option>
+            </select>
           </div>
           <div class="field">
             <label>Idade</label>
@@ -2068,7 +2147,7 @@
           </div>
         </div>
         
-        <div class="field-grid" style="margin-top: 12px; grid-template-columns: 1fr 1fr 1fr 1fr;">
+        <div class="field-grid" style="margin-top: 12px; grid-template-columns: 1fr 1fr 1fr 1fr 1fr;">
           <div class="field">
             <label>Peso (kg)</label>
             <input type="number" id="cliPeso" placeholder="kg" step="0.1">
@@ -2076,6 +2155,10 @@
           <div class="field">
             <label>Altura (cm)</label>
             <input type="number" id="cliAltura" placeholder="cm">
+          </div>
+          <div class="field">
+            <label>% Gordura</label>
+            <input type="number" id="cliBF" placeholder="%" step="0.1" min="0" max="60">
           </div>
           <div class="field">
             <label>Objetivo</label>
@@ -2122,7 +2205,7 @@
     </div>
     
     <div class="info-card">
-      Esses dados aparecerão no PDF do plano alimentar enviado ao paciente. Preencha com cuidado para passar credibilidade.
+      Esses dados aparecerão no PDF do plano alimentar enviado ao paciente. Para salvar o paciente, clique em <strong>💾 Salvar Paciente</strong> no topo desta aba — vai criar ficha completa com plano + avaliações.
     </div>
   </div>
 
@@ -2440,6 +2523,103 @@
     </div>
   </div>
 
+  <!-- ============== PAINEL AVALIAÇÕES (v3.8) ============== -->
+  <div class="panel" id="panel-avaliacoes">
+    
+    <!-- Barra de paciente ativo (replicada) -->
+    <div id="avalPacBar" style="display:none; background: linear-gradient(135deg, rgba(255,107,26,.15), rgba(255,140,66,.05)); border: 1px solid rgba(255,107,26,.4); border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; align-items: center; gap: 12px;">
+      <div id="avalPacFoto" style="width: 40px; height: 40px; border-radius: 50%; background: var(--bg-2); display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 1.3rem;">👤</div>
+      <div style="flex: 1;">
+        <div style="font-size: 0.7rem; color: var(--orange); text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Avaliações de</div>
+        <div id="avalPacNome" style="font-size: 1.05rem; font-weight: 700; color: var(--text);">—</div>
+      </div>
+    </div>
+    
+    <div id="avalSemPaciente" class="info-card" style="text-align: center; padding: 30px 20px;">
+      ⚠️ <strong>Nenhum paciente ativo.</strong><br>
+      Vá em <strong>👥 Pacientes</strong> e selecione um paciente para registrar avaliações físicas.
+    </div>
+    
+    <div id="avalConteudo" style="display:none;">
+      <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+        <button onclick="abrirFormAvaliacao()" class="btn-export" style="background: var(--orange); color:#fff; border:none; padding: 10px 16px; font-weight: 700;">➕ Nova Avaliação</button>
+        <button onclick="toggleGraficosAval()" class="btn-export" style="background: var(--bg-2); color: var(--text); border: 1px solid var(--border); padding: 10px 16px;">📈 Ver Evolução</button>
+      </div>
+      
+      <!-- Form de nova avaliação (oculto) -->
+      <div id="formAvaliacao" style="display:none; background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+        <h3 style="margin: 0 0 12px 0; font-size: 1.05rem; color: var(--orange);">Nova Avaliação</h3>
+        <div class="field-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+          <div class="field">
+            <label>Data</label>
+            <input type="date" id="avalData">
+          </div>
+          <div class="field">
+            <label>Peso (kg)</label>
+            <input type="number" id="avalPeso" step="0.1" placeholder="kg">
+          </div>
+          <div class="field">
+            <label>% Gordura</label>
+            <input type="number" id="avalBF" step="0.1" placeholder="%">
+          </div>
+        </div>
+        <div class="field-grid" style="margin-top: 12px; grid-template-columns: 1fr 1fr;">
+          <div class="field">
+            <label>Massa Magra (kg)</label>
+            <input type="number" id="avalMM" step="0.1">
+          </div>
+          <div class="field">
+            <label>Massa Gorda (kg)</label>
+            <input type="number" id="avalMG" step="0.1">
+          </div>
+        </div>
+        
+        <h4 style="margin: 16px 0 8px; font-size: 0.85rem; color: var(--text-2); text-transform: uppercase; letter-spacing: 1px;">📏 Circunferências (cm)</h4>
+        <div class="field-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+          <div class="field"><label>Peito</label><input type="number" id="avalCircPeito" step="0.1"></div>
+          <div class="field"><label>Cintura</label><input type="number" id="avalCircCintura" step="0.1"></div>
+          <div class="field"><label>Abdômen</label><input type="number" id="avalCircAbd" step="0.1"></div>
+          <div class="field"><label>Quadril</label><input type="number" id="avalCircQuadril" step="0.1"></div>
+          <div class="field"><label>Braço D</label><input type="number" id="avalCircBracoD" step="0.1"></div>
+          <div class="field"><label>Braço E</label><input type="number" id="avalCircBracoE" step="0.1"></div>
+          <div class="field"><label>Coxa D</label><input type="number" id="avalCircCoxaD" step="0.1"></div>
+          <div class="field"><label>Coxa E</label><input type="number" id="avalCircCoxaE" step="0.1"></div>
+          <div class="field"><label>Pant. D</label><input type="number" id="avalCircPantD" step="0.1"></div>
+          <div class="field"><label>Pant. E</label><input type="number" id="avalCircPantE" step="0.1"></div>
+        </div>
+        
+        <h4 style="margin: 16px 0 8px; font-size: 0.85rem; color: var(--text-2); text-transform: uppercase; letter-spacing: 1px;">📐 Dobras Cutâneas (mm)</h4>
+        <div class="field-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+          <div class="field"><label>Tríceps</label><input type="number" id="avalDobTriceps" step="0.1"></div>
+          <div class="field"><label>Subescap.</label><input type="number" id="avalDobSubesc" step="0.1"></div>
+          <div class="field"><label>Suprailíaca</label><input type="number" id="avalDobSupra" step="0.1"></div>
+          <div class="field"><label>Abdominal</label><input type="number" id="avalDobAbd" step="0.1"></div>
+          <div class="field"><label>Coxa</label><input type="number" id="avalDobCoxa" step="0.1"></div>
+          <div class="field"><label>Peitoral</label><input type="number" id="avalDobPeit" step="0.1"></div>
+          <div class="field"><label>Axilar méd.</label><input type="number" id="avalDobAxilar" step="0.1"></div>
+          <div class="field"><label>Bíceps</label><input type="number" id="avalDobBiceps" step="0.1"></div>
+        </div>
+        
+        <div class="field" style="margin-top: 12px;">
+          <label>Observações</label>
+          <textarea id="avalObs" rows="2" placeholder="ex: paciente relatou melhor disposição; reduziu medicação..."></textarea>
+        </div>
+        
+        <div style="display: flex; gap: 8px; margin-top: 12px;">
+          <button onclick="salvarAvaliacao()" class="btn-export" style="background: var(--orange); color:#fff; border:none; padding: 10px 16px; font-weight: 700;">💾 Salvar Avaliação</button>
+          <button onclick="cancelarAvaliacao()" class="btn-export" style="background: transparent; color: var(--text-2); border: 1px solid var(--border); padding: 10px 16px;">Cancelar</button>
+        </div>
+        <input type="hidden" id="avalEditId">
+      </div>
+      
+      <!-- Gráficos de evolução (oculto por padrão) -->
+      <div id="graficosAval" style="display:none; margin-bottom: 16px;"></div>
+      
+      <!-- Lista de avaliações -->
+      <div id="listaAvaliacoes" style="display: grid; gap: 12px;"></div>
+    </div>
+  </div>
+
   <!-- ============== PAINEL EXPORT ============== -->
   <div class="panel" id="panel-export">
     
@@ -2473,7 +2653,7 @@
   </div>
 
   <p class="footer-note">
-    <strong>NUTRI.FUEL · v3.7</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
+    <strong>NUTRI.FUEL · v3.8</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
   </p>
   
   <!-- ============== ÁREA DO PDF (oculta na tela, visível na impressão) ============== -->
@@ -3078,6 +3258,20 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
     tab.classList.add('active');
     document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Hook v3.8: re-renderizar painéis dinâmicos
+    const pid = tab.dataset.panel;
+    try {
+      if (pid === 'pacientes' && typeof renderListaPacientes === 'function') {
+        renderListaPacientes();
+      } else if (pid === 'avaliacoes' && typeof atualizarBarraAvalPac === 'function') {
+        if (typeof pacienteAtivoId !== 'undefined' && pacienteAtivoId) {
+          buscarPaciente(pacienteAtivoId).then(p => atualizarBarraAvalPac(p));
+        } else {
+          atualizarBarraAvalPac(null);
+        }
+      }
+    } catch(e) { console.warn('hook nav:', e); }
   });
 });
 
@@ -4325,15 +4519,20 @@ document.addEventListener('click', (e) => {
 function coletarCliente() {
   return {
     nome: document.getElementById('cliNome').value || '—',
+    sexo: document.getElementById('cliSexo')?.value || '',
     idade: document.getElementById('cliIdade').value,
     tel: document.getElementById('cliTel').value,
     peso: document.getElementById('cliPeso').value,
     altura: document.getElementById('cliAltura').value,
+    bf: document.getElementById('cliBF')?.value || '',
     objetivo: document.getElementById('cliObjetivo').value,
     atividade: document.getElementById('cliAtividade').value,
     obs: document.getElementById('cliObs').value,
     profNome: document.getElementById('profNome').value,
-    planData: document.getElementById('planData').value
+    planData: document.getElementById('planData').value,
+    foto: document.getElementById('cliFoto')?.value || '',
+    fotoAntes: document.getElementById('cliFotoAntes')?.value || '',
+    fotoDepois: document.getElementById('cliFotoDepois')?.value || ''
   };
 }
 
@@ -5295,7 +5494,7 @@ async function exportarHTML() {
 // ============================================================
 function exportarJSON() {
   const data = {
-    versao: '3.7',
+    versao: '3.8',
     planos: planos,                    // novo: salva todos os 4 planos
     plano: getPlanoAtivo(),            // legacy: para compatibilidade com importações antigas
     metas,
@@ -5504,7 +5703,1081 @@ function exportarTexto() {
 // INIT
 // ============================================================
 render();
-console.log(`✅ NUTRI.FUEL v3.0 carregado · ${ALIMENTOS.length} alimentos · ${ALIMENTOS.filter(a => a.u).length} com unidade definida`);
+console.log(`✅ NUTRI.FUEL v3.8 carregado · ${ALIMENTOS.length} alimentos · ${ALIMENTOS.filter(a => a.u).length} com unidade definida`);
+
+// ============================================================
+// MÓDULO PACIENTES v3.8 — IndexedDB, CRUD, Avaliações, Import/Export
+// ============================================================
+
+const NUTRI_DB_NAME = 'nutrifuel_db';
+const NUTRI_DB_VERSION = 1;
+const STORE_PACIENTES = 'pacientes';
+const STORE_VERSOES_PLANO = 'versoes_plano';
+const STORE_AVALIACOES = 'avaliacoes';
+
+let _nutriDB = null;
+let pacienteAtivoId = null;
+
+function nutriDB() {
+  if (_nutriDB) return Promise.resolve(_nutriDB);
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(NUTRI_DB_NAME, NUTRI_DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_PACIENTES)) {
+        const s = db.createObjectStore(STORE_PACIENTES, { keyPath: 'id' });
+        s.createIndex('nome', 'dados.nome', { unique: false });
+        s.createIndex('atualizadoEm', 'atualizadoEm', { unique: false });
+      }
+      if (!db.objectStoreNames.contains(STORE_VERSOES_PLANO)) {
+        const s = db.createObjectStore(STORE_VERSOES_PLANO, { keyPath: 'id', autoIncrement: true });
+        s.createIndex('pacienteId', 'pacienteId', { unique: false });
+        s.createIndex('criadoEm', 'criadoEm', { unique: false });
+      }
+      if (!db.objectStoreNames.contains(STORE_AVALIACOES)) {
+        const s = db.createObjectStore(STORE_AVALIACOES, { keyPath: 'id', autoIncrement: true });
+        s.createIndex('pacienteId', 'pacienteId', { unique: false });
+        s.createIndex('data', 'data', { unique: false });
+      }
+    };
+    req.onsuccess = () => { _nutriDB = req.result; resolve(_nutriDB); };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function nutriDBOp(storeName, mode, fn) {
+  const db = await nutriDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, mode);
+    const store = tx.objectStore(storeName);
+    let result;
+    Promise.resolve(fn(store)).then(r => { result = r; }).catch(reject);
+    tx.oncomplete = () => resolve(result);
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error);
+  });
+}
+
+function reqToPromise(req) {
+  return new Promise((resolve, reject) => {
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function dbGet(store, key) { return nutriDBOp(store, 'readonly', s => reqToPromise(s.get(key))); }
+async function dbPut(store, val) { return nutriDBOp(store, 'readwrite', s => reqToPromise(s.put(val))); }
+async function dbAdd(store, val) { return nutriDBOp(store, 'readwrite', s => reqToPromise(s.add(val))); }
+async function dbDel(store, key) { return nutriDBOp(store, 'readwrite', s => reqToPromise(s.delete(key))); }
+async function dbAll(store) { return nutriDBOp(store, 'readonly', s => reqToPromise(s.getAll())); }
+async function dbByIndex(store, indexName, value) {
+  return nutriDBOp(store, 'readonly', s => reqToPromise(s.index(indexName).getAll(value)));
+}
+
+function gerarIdPac() {
+  return 'pac_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 6);
+}
+
+function toastNutri(msg, tipo = 'ok') {
+  let el = document.getElementById('nutriToast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'nutriToast';
+    el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg-2);color:var(--text);padding:12px 20px;border-radius:10px;border:1px solid var(--border);box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:9999;font-weight:600;max-width:90%;font-size:0.9rem;';
+    document.body.appendChild(el);
+  }
+  const cor = tipo === 'erro' ? '#ef4444' : (tipo === 'aviso' ? '#f59e0b' : 'var(--orange)');
+  el.style.borderColor = cor;
+  el.textContent = msg;
+  el.style.display = 'block';
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => { el.style.display = 'none'; }, 3500);
+}
+
+// ============================================================
+// FOTOS — Leitor com compressão
+// ============================================================
+function lerFotoNutri(event, targetId) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxDim = 600;
+      let w = img.width, h = img.height;
+      if (w > h && w > maxDim) { h = (h * maxDim) / w; w = maxDim; }
+      else if (h > maxDim) { w = (w * maxDim) / h; h = maxDim; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      document.getElementById(targetId).value = dataUrl;
+      const previewEl = document.getElementById(targetId + 'Preview');
+      if (previewEl) {
+        previewEl.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover;">`;
+        previewEl.style.border = '2px solid var(--orange)';
+      }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+
+function limparFotoNutri(targetId) {
+  document.getElementById(targetId).value = '';
+  const previewEl = document.getElementById(targetId + 'Preview');
+  if (previewEl) {
+    previewEl.innerHTML = '📷';
+    previewEl.style.border = '2px dashed var(--border)';
+  }
+}
+
+function setarFotoPreview(targetId, dataUrl) {
+  document.getElementById(targetId).value = dataUrl || '';
+  const previewEl = document.getElementById(targetId + 'Preview');
+  if (!previewEl) return;
+  if (dataUrl) {
+    previewEl.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover;">`;
+    previewEl.style.border = '2px solid var(--orange)';
+  } else {
+    previewEl.innerHTML = '📷';
+    previewEl.style.border = '2px dashed var(--border)';
+  }
+}
+
+// ============================================================
+// SNAPSHOT do estado atual do app (plano completo + cálculos)
+// ============================================================
+function coletarSnapshotCompleto() {
+  return {
+    dados: coletarCliente(),
+    planos: JSON.parse(JSON.stringify(planos)),
+    metas: JSON.parse(JSON.stringify(metas)),
+    ciclagem: {
+      ativa: ciclagem.ativa,
+      diaAtivo: ciclagem.diaAtivo,
+      carbos: { ...ciclagem.carbos },
+      metas: JSON.parse(JSON.stringify(ciclagem.metas)),
+      diasPorTipo: { ...(ciclagem.diasPorTipo || {}) }
+    },
+    distribuicao: {
+      ativa: distribuicao.ativa,
+      pcts: { ...distribuicao.pcts }
+    },
+    dadosTMB: {
+      sexo: document.getElementById('sexo')?.value || '',
+      idade: document.getElementById('idade')?.value || '',
+      peso: document.getElementById('peso')?.value || '',
+      altura: document.getElementById('altura')?.value || '',
+      bodyfat: document.getElementById('bodyfat')?.value || '',
+      fator: document.getElementById('fator')?.value || '',
+      formula: formulaAtual,
+      ajuste: ajusteObjetivo,
+      kcalManual: kcalManualOverride
+    }
+  };
+}
+
+function aplicarSnapshot(snap) {
+  if (!snap) return;
+  const d = snap.dados || {};
+  const setVal = (id, v) => { const el = document.getElementById(id); if (el != null) el.value = (v ?? ''); };
+  setVal('cliNome', d.nome === '—' ? '' : d.nome);
+  setVal('cliSexo', d.sexo);
+  setVal('cliIdade', d.idade);
+  setVal('cliTel', d.tel);
+  setVal('cliPeso', d.peso);
+  setVal('cliAltura', d.altura);
+  setVal('cliBF', d.bf);
+  setVal('cliObjetivo', d.objetivo);
+  setVal('cliAtividade', d.atividade);
+  setVal('cliObs', d.obs);
+  setVal('profNome', d.profNome);
+  setVal('planData', d.planData);
+  setarFotoPreview('cliFoto', d.foto);
+  setarFotoPreview('cliFotoAntes', d.fotoAntes);
+  setarFotoPreview('cliFotoDepois', d.fotoDepois);
+  
+  // Planos
+  if (snap.planos) {
+    ['unico','alto','medio','baixo'].forEach(k => {
+      if (snap.planos[k]) planos[k] = JSON.parse(JSON.stringify(snap.planos[k]));
+    });
+  }
+  
+  // Metas
+  if (snap.metas) Object.assign(metas, snap.metas);
+  
+  // Ciclagem
+  if (snap.ciclagem) {
+    ciclagem.ativa = !!snap.ciclagem.ativa;
+    ciclagem.diaAtivo = snap.ciclagem.diaAtivo || 'alto';
+    if (snap.ciclagem.carbos) Object.assign(ciclagem.carbos, snap.ciclagem.carbos);
+    if (snap.ciclagem.metas) Object.assign(ciclagem.metas, snap.ciclagem.metas);
+    if (snap.ciclagem.diasPorTipo) Object.assign(ciclagem.diasPorTipo, snap.ciclagem.diasPorTipo);
+  }
+  
+  // Distribuição
+  if (snap.distribuicao) {
+    distribuicao.ativa = !!snap.distribuicao.ativa;
+    if (snap.distribuicao.pcts) Object.assign(distribuicao.pcts, snap.distribuicao.pcts);
+  }
+  
+  // Dados TMB
+  if (snap.dadosTMB) {
+    setVal('sexo', snap.dadosTMB.sexo);
+    setVal('idade', snap.dadosTMB.idade);
+    setVal('peso', snap.dadosTMB.peso);
+    setVal('altura', snap.dadosTMB.altura);
+    setVal('bodyfat', snap.dadosTMB.bodyfat);
+    setVal('fator', snap.dadosTMB.fator);
+    if (snap.dadosTMB.formula) formulaAtual = snap.dadosTMB.formula;
+    if (snap.dadosTMB.ajuste != null) ajusteObjetivo = snap.dadosTMB.ajuste;
+    if (snap.dadosTMB.kcalManual !== undefined) kcalManualOverride = snap.dadosTMB.kcalManual;
+  }
+  
+  // Re-renderiza
+  try { if (typeof calcularTMB === 'function') calcularTMB(); } catch(e) {}
+  try { if (typeof renderRefeicao === 'function') renderRefeicao(); } catch(e) {}
+  try { if (typeof atualizarTotais === 'function') atualizarTotais(); } catch(e) {}
+  try { if (typeof render === 'function') render(); } catch(e) {}
+}
+
+function limparTudo() {
+  // Limpa form cliente
+  ['cliNome','cliSexo','cliIdade','cliTel','cliPeso','cliAltura','cliBF','cliObjetivo','cliAtividade','cliObs','profNome','planData'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  ['cliFoto','cliFotoAntes','cliFotoDepois'].forEach(id => limparFotoNutri(id));
+  
+  // Limpa planos
+  planos.unico = novoPlanoVazio();
+  planos.alto = novoPlanoVazio();
+  planos.medio = novoPlanoVazio();
+  planos.baixo = novoPlanoVazio();
+  
+  metas.kcal = null; metas.prot = null; metas.carb = null; metas.fat = null;
+  ciclagem.ativa = false;
+  distribuicao.ativa = false;
+  
+  try { if (typeof render === 'function') render(); } catch(e) {}
+  try { if (typeof atualizarTotais === 'function') atualizarTotais(); } catch(e) {}
+}
+
+// ============================================================
+// CRUD PACIENTES
+// ============================================================
+async function listarPacientes() {
+  const todos = await dbAll(STORE_PACIENTES);
+  return todos.sort((a, b) => (b.atualizadoEm || 0) - (a.atualizadoEm || 0));
+}
+
+async function buscarPaciente(id) {
+  return dbGet(STORE_PACIENTES, id);
+}
+
+async function salvarPacienteRaw(p, criarVersao = true) {
+  const agora = Date.now();
+  if (!p.criadoEm) p.criadoEm = agora;
+  p.atualizadoEm = agora;
+  await dbPut(STORE_PACIENTES, p);
+  if (criarVersao) {
+    await dbAdd(STORE_VERSOES_PLANO, {
+      pacienteId: p.id,
+      criadoEm: agora,
+      snapshot: JSON.parse(JSON.stringify(p.snapshot || {}))
+    });
+  }
+  await atualizarContadorPacientes();
+  return p;
+}
+
+async function listarVersoesPaciente(pacienteId) {
+  const todas = await dbByIndex(STORE_VERSOES_PLANO, 'pacienteId', pacienteId);
+  return todas.sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
+}
+
+async function atualizarContadorPacientes() {
+  const lista = await dbAll(STORE_PACIENTES);
+  const el = document.getElementById('metaTotalPacientes');
+  if (el) el.textContent = lista.length;
+}
+
+// ============================================================
+// UI — Lista de Pacientes
+// ============================================================
+async function renderListaPacientes() {
+  const lista = await listarPacientes();
+  const cont = document.getElementById('listaPacientes');
+  if (!cont) return;
+  
+  const busca = (document.getElementById('buscaPaciente')?.value || '').toLowerCase().trim();
+  const filtrados = busca ? lista.filter(p => (p.dados?.nome || '').toLowerCase().includes(busca)) : lista;
+  
+  if (filtrados.length === 0) {
+    if (lista.length === 0) {
+      cont.innerHTML = `
+        <div style="text-align: center; padding: 50px 20px; color: var(--text-3); background: var(--bg-2); border-radius: 12px; border: 1px dashed var(--border);">
+          <div style="font-size: 3rem; margin-bottom: 12px;">👥</div>
+          <h3 style="margin: 0 0 8px; color: var(--text);">Nenhum paciente cadastrado</h3>
+          <p style="margin: 0 0 16px;">Clique em <strong>➕ Novo Paciente</strong> para começar.</p>
+          <button onclick="novoPaciente()" class="btn-export" style="background: var(--orange); color:#fff; border:none; padding: 10px 20px;">➕ Cadastrar Primeiro Paciente</button>
+        </div>
+      `;
+    } else {
+      cont.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-3);">Nenhum paciente encontrado para "${busca}"</div>`;
+    }
+    return;
+  }
+  
+  cont.innerHTML = filtrados.map(p => cardPaciente(p)).join('');
+}
+
+function cardPaciente(p) {
+  const d = p.dados || {};
+  const nome = d.nome && d.nome !== '—' ? d.nome : 'Sem nome';
+  const iniciais = nome.split(' ').slice(0, 2).map(s => s[0] || '').join('').toUpperCase();
+  const fotoHTML = d.foto
+    ? `<img src="${d.foto}" style="width:100%;height:100%;object-fit:cover;">`
+    : `<span style="font-size: 1.05rem; font-weight: 700; color: var(--orange);">${iniciais || '👤'}</span>`;
+  
+  const peso = d.peso ? `${d.peso} kg` : '';
+  const obj = d.objetivo || '';
+  const idade = d.idade ? `${d.idade}a` : '';
+  const subtitulo = [idade, peso, obj].filter(x => x).join(' · ') || 'Sem dados';
+  
+  const dataAtual = p.atualizadoEm ? new Date(p.atualizadoEm).toLocaleDateString('pt-BR') : '';
+  const ativo = p.id === pacienteAtivoId;
+  
+  return `
+    <div onclick="abrirPaciente('${p.id}')" style="background: var(--bg-2); border: 1px solid ${ativo ? 'var(--orange)' : 'var(--border)'}; border-radius: 12px; padding: 14px; cursor: pointer; display: flex; align-items: center; gap: 14px; transition: all .15s;${ativo ? 'box-shadow: 0 0 0 2px rgba(255,107,26,.3);' : ''}" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='${ativo ? 'var(--orange)' : 'var(--border)'}'">
+      <div style="width:54px;height:54px;border-radius:50%;background:var(--bg);flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;">${fotoHTML}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;color:var(--text);font-size:1.05rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${nome}${ativo ? ' <span style="font-size:0.7rem;color:var(--orange);">● ATIVO</span>' : ''}</div>
+        <div style="font-size:0.85rem;color:var(--text-2);margin-top:2px;">${subtitulo}</div>
+        <div style="font-size:0.7rem;color:var(--text-3);margin-top:4px;">Atualizado ${dataAtual}</div>
+      </div>
+      <button onclick="event.stopPropagation(); menuPaciente('${p.id}', event)" style="background:transparent;border:none;color:var(--text-2);font-size:1.3rem;cursor:pointer;padding:8px;">⋮</button>
+    </div>
+  `;
+}
+
+function filtrarPacientes() {
+  renderListaPacientes();
+}
+
+// ============================================================
+// AÇÕES — Novo, Abrir, Salvar, Excluir
+// ============================================================
+function novoPaciente() {
+  pacienteAtivoId = null;
+  limparTudo();
+  atualizarBarraPacAtivo(null);
+  navegarPara('cliente');
+  setTimeout(() => document.getElementById('cliNome')?.focus(), 100);
+}
+
+async function abrirPaciente(id) {
+  const p = await buscarPaciente(id);
+  if (!p) { toastNutri('Paciente não encontrado', 'erro'); return; }
+  pacienteAtivoId = id;
+  aplicarSnapshot(p.snapshot);
+  atualizarBarraPacAtivo(p);
+  navegarPara('cliente');
+  toastNutri(`✅ ${p.dados?.nome || 'Paciente'} aberto`);
+}
+
+async function salvarPacienteAtivo() {
+  const dados = coletarCliente();
+  if (!dados.nome || dados.nome === '—') {
+    toastNutri('⚠️ Nome do paciente é obrigatório', 'aviso');
+    document.getElementById('cliNome')?.focus();
+    return;
+  }
+  
+  const snap = coletarSnapshotCompleto();
+  
+  let pac;
+  if (pacienteAtivoId) {
+    pac = await buscarPaciente(pacienteAtivoId);
+    if (!pac) {
+      pacienteAtivoId = gerarIdPac();
+      pac = { id: pacienteAtivoId, criadoEm: Date.now() };
+    }
+  } else {
+    pacienteAtivoId = gerarIdPac();
+    pac = { id: pacienteAtivoId, criadoEm: Date.now() };
+  }
+  
+  pac.dados = dados;
+  pac.snapshot = snap;
+  
+  await salvarPacienteRaw(pac, true);
+  atualizarBarraPacAtivo(pac);
+  await renderListaPacientes();
+  
+  const totalKcal = (pac.snapshot?.metas?.kcal || 0);
+  const versoes = await listarVersoesPaciente(pac.id);
+  toastNutri(`✅ ${dados.nome} salvo${totalKcal ? ' · ' + Math.round(totalKcal) + ' kcal' : ''} — versão #${versoes.length}`);
+}
+
+function fecharPacienteAtivo() {
+  if (!confirm('Fechar este paciente? Mudanças não salvas serão perdidas.')) return;
+  pacienteAtivoId = null;
+  limparTudo();
+  atualizarBarraPacAtivo(null);
+  navegarPara('pacientes');
+}
+
+function atualizarBarraPacAtivo(p) {
+  const label = document.getElementById('pacAtivoLabel');
+  const nomeEl = document.getElementById('pacAtivoNome');
+  const fotoEl = document.getElementById('pacAtivoFoto');
+  const btnFechar = document.getElementById('btnFecharPac');
+  if (!nomeEl) return;
+  
+  if (!p) {
+    if (label) label.textContent = 'Novo paciente';
+    nomeEl.textContent = 'Preencha os dados e clique em Salvar';
+    if (fotoEl) fotoEl.innerHTML = '👤';
+    if (btnFechar) btnFechar.style.display = 'none';
+    atualizarBarraAvalPac(null);
+    return;
+  }
+  
+  if (label) label.textContent = 'Editando paciente';
+  nomeEl.textContent = p.dados?.nome || 'Sem nome';
+  if (btnFechar) btnFechar.style.display = 'inline-block';
+  
+  if (fotoEl) {
+    if (p.dados?.foto) {
+      fotoEl.innerHTML = `<img src="${p.dados.foto}" style="width:100%;height:100%;object-fit:cover;">`;
+    } else {
+      const ini = (p.dados?.nome || '').split(' ').slice(0,2).map(s=>s[0]||'').join('').toUpperCase();
+      fotoEl.innerHTML = ini ? `<span style="font-size:0.95rem;font-weight:700;color:var(--orange);">${ini}</span>` : '👤';
+    }
+  }
+  atualizarBarraAvalPac(p);
+}
+
+async function menuPaciente(id, evt) {
+  evt && evt.stopPropagation();
+  const p = await buscarPaciente(id);
+  if (!p) return;
+  const nome = p.dados?.nome || 'Paciente';
+  
+  const acao = prompt(
+    `Ações para "${nome}":\n\n` +
+    `1 - Abrir / Editar\n` +
+    `2 - Ver Histórico de versões\n` +
+    `3 - Exportar Ficha (JSON)\n` +
+    `4 - Duplicar\n` +
+    `5 - Excluir\n\n` +
+    `Digite o número:`
+  );
+  if (!acao) return;
+  
+  switch (acao.trim()) {
+    case '1': abrirPaciente(id); break;
+    case '2': verHistoricoPaciente(id); break;
+    case '3': exportarPaciente(id); break;
+    case '4': duplicarPaciente(id); break;
+    case '5': excluirPaciente(id); break;
+    default: toastNutri('Opção inválida', 'aviso');
+  }
+}
+
+async function verHistoricoPaciente(id) {
+  const versoes = await listarVersoesPaciente(id);
+  const p = await buscarPaciente(id);
+  if (versoes.length === 0) {
+    alert('Este paciente ainda não tem histórico de versões.');
+    return;
+  }
+  const linhas = versoes.map((v, i) => {
+    const data = new Date(v.criadoEm).toLocaleString('pt-BR');
+    const kcal = v.snapshot?.metas?.kcal ? Math.round(v.snapshot.metas.kcal) + ' kcal' : '—';
+    const peso = v.snapshot?.dados?.peso ? v.snapshot.dados.peso + 'kg' : '—';
+    return `${i+1}) ${data} · ${kcal} · ${peso}`;
+  }).join('\n');
+  
+  const escolha = prompt(
+    `📜 Histórico de "${p.dados?.nome || 'paciente'}" (${versoes.length} versões):\n\n${linhas}\n\nDigite o número da versão para RESTAURAR (ou cancele):`
+  );
+  if (!escolha) return;
+  const idx = parseInt(escolha) - 1;
+  if (idx < 0 || idx >= versoes.length) { toastNutri('Versão inválida', 'aviso'); return; }
+  
+  if (!confirm(`Restaurar versão de ${new Date(versoes[idx].criadoEm).toLocaleString('pt-BR')}? A versão atual ficará salva como nova entrada no histórico.`)) return;
+  
+  pacienteAtivoId = id;
+  aplicarSnapshot(versoes[idx].snapshot);
+  // Cria nova versão (snapshot atual continua sendo o ativo)
+  const novo = await buscarPaciente(id);
+  novo.snapshot = versoes[idx].snapshot;
+  novo.dados = versoes[idx].snapshot?.dados || novo.dados;
+  await salvarPacienteRaw(novo, true);
+  atualizarBarraPacAtivo(novo);
+  await renderListaPacientes();
+  navegarPara('cliente');
+  toastNutri('✅ Versão restaurada');
+}
+
+async function duplicarPaciente(id) {
+  const p = await buscarPaciente(id);
+  if (!p) return;
+  const novoNome = prompt('Nome do paciente duplicado:', (p.dados?.nome || 'Paciente') + ' (cópia)');
+  if (!novoNome) return;
+  const copia = JSON.parse(JSON.stringify(p));
+  copia.id = gerarIdPac();
+  copia.criadoEm = Date.now();
+  copia.atualizadoEm = Date.now();
+  copia.dados.nome = novoNome;
+  if (copia.snapshot?.dados) copia.snapshot.dados.nome = novoNome;
+  await salvarPacienteRaw(copia, true);
+  await renderListaPacientes();
+  toastNutri(`✅ ${novoNome} criado`);
+}
+
+async function excluirPaciente(id) {
+  const p = await buscarPaciente(id);
+  if (!p) return;
+  const nome = p.dados?.nome || 'Paciente';
+  if (!confirm(`⚠️ Excluir "${nome}" permanentemente?\n\nIsso vai apagar todas as versões e avaliações deste paciente. Não tem volta — faça backup antes se quiser preservar.`)) return;
+  
+  // Apaga versões
+  const versoes = await listarVersoesPaciente(id);
+  for (const v of versoes) await dbDel(STORE_VERSOES_PLANO, v.id);
+  
+  // Apaga avaliações
+  const avals = await listarAvaliacoes(id);
+  for (const a of avals) await dbDel(STORE_AVALIACOES, a.id);
+  
+  // Apaga paciente
+  await dbDel(STORE_PACIENTES, id);
+  
+  if (pacienteAtivoId === id) {
+    pacienteAtivoId = null;
+    limparTudo();
+    atualizarBarraPacAtivo(null);
+  }
+  await renderListaPacientes();
+  toastNutri(`🗑️ ${nome} excluído`);
+}
+
+// ============================================================
+// EXPORT / IMPORT INTELIGENTE
+// ============================================================
+function baixarJSONPac(obj, filename) {
+  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 100);
+}
+
+async function exportarPaciente(id) {
+  const p = await buscarPaciente(id);
+  if (!p) return;
+  const versoes = await listarVersoesPaciente(id);
+  const avaliacoes = await listarAvaliacoes(id);
+  const pacote = {
+    tipo: 'nutrifuel_paciente',
+    versao_app: '3.8',
+    paciente: p,
+    versoes,
+    avaliacoes,
+    exportadoEm: new Date().toISOString()
+  };
+  const nomeSafe = (p.dados?.nome || 'paciente').replace(/[^a-zA-Z0-9]/g, '_');
+  baixarJSONPac(pacote, `nutrifuel_${nomeSafe}_${new Date().toISOString().split('T')[0]}.json`);
+  toastNutri(`📤 ${p.dados?.nome || 'Paciente'} exportado`);
+}
+
+async function exportarTodosPacientes() {
+  const pacientes = await dbAll(STORE_PACIENTES);
+  const versoes = await dbAll(STORE_VERSOES_PLANO);
+  const avaliacoes = await dbAll(STORE_AVALIACOES);
+  if (pacientes.length === 0) { toastNutri('Nenhum paciente para exportar', 'aviso'); return; }
+  const pacote = {
+    tipo: 'nutrifuel_backup_completo',
+    versao_app: '3.8',
+    pacientes, versoes, avaliacoes,
+    exportadoEm: new Date().toISOString()
+  };
+  baixarJSONPac(pacote, `nutrifuel_backup_${new Date().toISOString().split('T')[0]}.json`);
+  toastNutri(`📥 Backup com ${pacientes.length} paciente(s) exportado`);
+}
+
+async function importarPacientes(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  try {
+    const text = await file.text();
+    const pacote = JSON.parse(text);
+    
+    let pacImp = [];
+    let versoesImp = [];
+    let avalsImp = [];
+    let formato = '';
+    
+    if (pacote.tipo === 'nutrifuel_paciente' && pacote.paciente) {
+      pacImp = [pacote.paciente];
+      versoesImp = pacote.versoes || [];
+      avalsImp = pacote.avaliacoes || [];
+      formato = 'ficha';
+    } else if (pacote.tipo === 'nutrifuel_backup_completo') {
+      pacImp = pacote.pacientes || [];
+      versoesImp = pacote.versoes || [];
+      avalsImp = pacote.avaliacoes || [];
+      formato = 'backup';
+    } else if (pacote.planos || pacote.plano || pacote.cliente || pacote.dadosTMB) {
+      // Formato ANTIGO: JSON da aba 📄 Exportar (v3.7 ou anteriores)
+      const cli = pacote.cliente || {};
+      const nome = (cli.nome && cli.nome !== '—') ? cli.nome : prompt('Este arquivo não tem nome do paciente. Digite um nome para criar a ficha:', 'Paciente importado');
+      if (!nome) {
+        toastNutri('Importação cancelada', 'aviso');
+        event.target.value = '';
+        return;
+      }
+      const agora = Date.now();
+      const snap = {
+        dados: { ...cli, nome },
+        planos: pacote.planos || { unico: pacote.plano || novoPlanoVazio(), alto: novoPlanoVazio(), medio: novoPlanoVazio(), baixo: novoPlanoVazio() },
+        metas: pacote.metas || {},
+        ciclagem: pacote.ciclagem || {},
+        distribuicao: pacote.distribuicao || {},
+        dadosTMB: pacote.dadosTMB || {}
+      };
+      pacImp = [{
+        id: gerarIdPac(),
+        dados: { ...cli, nome },
+        snapshot: snap,
+        criadoEm: agora,
+        atualizadoEm: agora
+      }];
+      formato = 'antigo';
+    } else {
+      toastNutri('❌ Arquivo não reconhecido — não é um JSON do NUTRI.FUEL', 'erro');
+      event.target.value = '';
+      return;
+    }
+    
+    if (pacImp.length === 0) {
+      toastNutri('Nenhum paciente encontrado no arquivo', 'aviso');
+      event.target.value = '';
+      return;
+    }
+    
+    let msg = '';
+    if (formato === 'ficha') {
+      msg = `Importar a ficha de "${pacImp[0].dados?.nome || 'Paciente'}"?\n\n• ${versoesImp.length} versão(ões) de plano\n• ${avalsImp.length} avaliação(ões) física(s)`;
+    } else if (formato === 'backup') {
+      msg = `Importar backup completo?\n\n• ${pacImp.length} paciente(s)\n• ${versoesImp.length} versão(ões)\n• ${avalsImp.length} avaliação(ões)\n\nPacientes com mesmo ID serão substituídos pelos mais recentes.`;
+    } else {
+      msg = `Criar novo paciente "${pacImp[0].dados?.nome}" a partir deste arquivo de plano?`;
+    }
+    if (!confirm(msg)) { event.target.value = ''; return; }
+    
+    let imp = 0;
+    for (const p of pacImp) {
+      const existente = await dbGet(STORE_PACIENTES, p.id);
+      if (existente) {
+        if ((p.atualizadoEm || 0) >= (existente.atualizadoEm || 0)) {
+          await dbPut(STORE_PACIENTES, p);
+          imp++;
+        }
+      } else {
+        await dbPut(STORE_PACIENTES, p);
+        imp++;
+      }
+    }
+    
+    let vImp = 0;
+    for (const v of versoesImp) {
+      try {
+        const v2 = { ...v }; delete v2.id;
+        await dbAdd(STORE_VERSOES_PLANO, v2);
+        vImp++;
+      } catch (e) { /* duplicata, ignora */ }
+    }
+    
+    let aImp = 0;
+    for (const a of avalsImp) {
+      try {
+        const a2 = { ...a }; delete a2.id;
+        await dbAdd(STORE_AVALIACOES, a2);
+        aImp++;
+      } catch (e) {}
+    }
+    
+    await renderListaPacientes();
+    await atualizarContadorPacientes();
+    
+    if (formato === 'antigo') {
+      toastNutri(`✅ Paciente "${pacImp[0].dados?.nome}" criado a partir do JSON de plano`);
+    } else {
+      toastNutri(`✅ ${imp} paciente(s)${vImp ? ', ' + vImp + ' versão(ões)' : ''}${aImp ? ' e ' + aImp + ' avaliação(ões)' : ''} importados`);
+    }
+    event.target.value = '';
+  } catch (e) {
+    console.error(e);
+    toastNutri('Erro ao importar: ' + e.message, 'erro');
+    event.target.value = '';
+  }
+}
+
+// ============================================================
+// AVALIAÇÕES FÍSICAS
+// ============================================================
+async function listarAvaliacoes(pacienteId) {
+  const lista = await dbByIndex(STORE_AVALIACOES, 'pacienteId', pacienteId);
+  return lista.sort((a, b) => (new Date(b.data) - new Date(a.data)));
+}
+
+function atualizarBarraAvalPac(p) {
+  const bar = document.getElementById('avalPacBar');
+  const semPac = document.getElementById('avalSemPaciente');
+  const conteudo = document.getElementById('avalConteudo');
+  if (!bar) return;
+  
+  if (!p) {
+    bar.style.display = 'none';
+    if (semPac) semPac.style.display = 'block';
+    if (conteudo) conteudo.style.display = 'none';
+    return;
+  }
+  
+  bar.style.display = 'flex';
+  if (semPac) semPac.style.display = 'none';
+  if (conteudo) conteudo.style.display = 'block';
+  
+  document.getElementById('avalPacNome').textContent = p.dados?.nome || 'Sem nome';
+  const fotoEl = document.getElementById('avalPacFoto');
+  if (fotoEl) {
+    if (p.dados?.foto) {
+      fotoEl.innerHTML = `<img src="${p.dados.foto}" style="width:100%;height:100%;object-fit:cover;">`;
+    } else {
+      const ini = (p.dados?.nome || '').split(' ').slice(0,2).map(s=>s[0]||'').join('').toUpperCase();
+      fotoEl.innerHTML = ini ? `<span style="font-size:0.85rem;font-weight:700;color:var(--orange);">${ini}</span>` : '👤';
+    }
+  }
+  
+  renderListaAvaliacoes();
+}
+
+function abrirFormAvaliacao() {
+  const form = document.getElementById('formAvaliacao');
+  if (!form) return;
+  form.style.display = 'block';
+  document.getElementById('avalData').value = new Date().toISOString().split('T')[0];
+  // Limpar todos os campos
+  const ids = ['avalPeso','avalBF','avalMM','avalMG','avalCircPeito','avalCircCintura','avalCircAbd','avalCircQuadril','avalCircBracoD','avalCircBracoE','avalCircCoxaD','avalCircCoxaE','avalCircPantD','avalCircPantE','avalDobTriceps','avalDobSubesc','avalDobSupra','avalDobAbd','avalDobCoxa','avalDobPeit','avalDobAxilar','avalDobBiceps','avalObs'];
+  ids.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('avalEditId').value = '';
+  
+  // Pré-preenche peso e %BF do paciente atual se houver
+  if (pacienteAtivoId) {
+    const peso = document.getElementById('cliPeso')?.value;
+    const bf = document.getElementById('cliBF')?.value;
+    if (peso) document.getElementById('avalPeso').value = peso;
+    if (bf) document.getElementById('avalBF').value = bf;
+  }
+}
+
+function cancelarAvaliacao() {
+  document.getElementById('formAvaliacao').style.display = 'none';
+}
+
+async function salvarAvaliacao() {
+  if (!pacienteAtivoId) { toastNutri('Selecione um paciente primeiro', 'aviso'); return; }
+  
+  const data = document.getElementById('avalData').value;
+  if (!data) { toastNutri('Data é obrigatória', 'aviso'); return; }
+  
+  const getNum = (id) => {
+    const v = document.getElementById(id)?.value;
+    return v ? parseFloat(v) : null;
+  };
+  
+  const aval = {
+    pacienteId: pacienteAtivoId,
+    data,
+    criadoEm: Date.now(),
+    peso: getNum('avalPeso'),
+    bf: getNum('avalBF'),
+    mm: getNum('avalMM'),
+    mg: getNum('avalMG'),
+    circunferencias: {
+      peito: getNum('avalCircPeito'),
+      cintura: getNum('avalCircCintura'),
+      abdomen: getNum('avalCircAbd'),
+      quadril: getNum('avalCircQuadril'),
+      bracoD: getNum('avalCircBracoD'),
+      bracoE: getNum('avalCircBracoE'),
+      coxaD: getNum('avalCircCoxaD'),
+      coxaE: getNum('avalCircCoxaE'),
+      pantD: getNum('avalCircPantD'),
+      pantE: getNum('avalCircPantE')
+    },
+    dobras: {
+      triceps: getNum('avalDobTriceps'),
+      subescapular: getNum('avalDobSubesc'),
+      suprailiaca: getNum('avalDobSupra'),
+      abdominal: getNum('avalDobAbd'),
+      coxa: getNum('avalDobCoxa'),
+      peitoral: getNum('avalDobPeit'),
+      axilarMedia: getNum('avalDobAxilar'),
+      biceps: getNum('avalDobBiceps')
+    },
+    obs: document.getElementById('avalObs').value || ''
+  };
+  
+  const editId = document.getElementById('avalEditId').value;
+  if (editId) {
+    aval.id = parseInt(editId);
+    await dbPut(STORE_AVALIACOES, aval);
+    toastNutri('✅ Avaliação atualizada');
+  } else {
+    await dbAdd(STORE_AVALIACOES, aval);
+    toastNutri('✅ Avaliação registrada');
+  }
+  
+  document.getElementById('formAvaliacao').style.display = 'none';
+  await renderListaAvaliacoes();
+}
+
+async function editarAvaliacao(id) {
+  const lista = await listarAvaliacoes(pacienteAtivoId);
+  const a = lista.find(x => x.id === id);
+  if (!a) return;
+  abrirFormAvaliacao();
+  document.getElementById('avalEditId').value = id;
+  document.getElementById('avalData').value = a.data;
+  const setN = (id, v) => { const el = document.getElementById(id); if (el) el.value = (v ?? ''); };
+  setN('avalPeso', a.peso); setN('avalBF', a.bf); setN('avalMM', a.mm); setN('avalMG', a.mg);
+  const c = a.circunferencias || {};
+  setN('avalCircPeito', c.peito); setN('avalCircCintura', c.cintura); setN('avalCircAbd', c.abdomen); setN('avalCircQuadril', c.quadril);
+  setN('avalCircBracoD', c.bracoD); setN('avalCircBracoE', c.bracoE);
+  setN('avalCircCoxaD', c.coxaD); setN('avalCircCoxaE', c.coxaE);
+  setN('avalCircPantD', c.pantD); setN('avalCircPantE', c.pantE);
+  const d = a.dobras || {};
+  setN('avalDobTriceps', d.triceps); setN('avalDobSubesc', d.subescapular);
+  setN('avalDobSupra', d.suprailiaca); setN('avalDobAbd', d.abdominal);
+  setN('avalDobCoxa', d.coxa); setN('avalDobPeit', d.peitoral);
+  setN('avalDobAxilar', d.axilarMedia); setN('avalDobBiceps', d.biceps);
+  document.getElementById('avalObs').value = a.obs || '';
+}
+
+async function excluirAvaliacao(id) {
+  if (!confirm('Excluir esta avaliação?')) return;
+  await dbDel(STORE_AVALIACOES, id);
+  await renderListaAvaliacoes();
+  toastNutri('🗑️ Avaliação excluída');
+}
+
+async function renderListaAvaliacoes() {
+  if (!pacienteAtivoId) return;
+  const lista = await listarAvaliacoes(pacienteAtivoId);
+  const cont = document.getElementById('listaAvaliacoes');
+  if (!cont) return;
+  
+  if (lista.length === 0) {
+    cont.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-3);background:var(--bg-2);border-radius:12px;border:1px dashed var(--border);">📊 Nenhuma avaliação registrada. Clique em <strong>➕ Nova Avaliação</strong> para começar.</div>`;
+    return;
+  }
+  
+  // Comparativo se houver +1 avaliação
+  let topo = '';
+  if (lista.length >= 2) {
+    const ult = lista[0];
+    const prim = lista[lista.length - 1];
+    const dias = Math.round((new Date(ult.data) - new Date(prim.data)) / (1000 * 60 * 60 * 24));
+    
+    const delta = (a, b, suf = '') => {
+      if (a == null || b == null) return '—';
+      const diff = a - b;
+      const sinal = diff > 0 ? '+' : '';
+      const cor = diff === 0 ? 'var(--text-2)' : (diff > 0 ? '#10b981' : '#ef4444');
+      return `<span style="color:${cor}">${sinal}${diff.toFixed(1)}${suf}</span>`;
+    };
+    
+    topo = `
+      <div style="background: linear-gradient(135deg, rgba(255,107,26,.12), rgba(255,140,66,.04)); border: 1px solid rgba(255,107,26,.3); border-radius: 12px; padding: 14px; margin-bottom: 14px;">
+        <div style="font-size:0.75rem;color:var(--orange);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:8px;">📈 Comparativo · ${dias} dias</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;">
+          <div><div style="font-size:0.7rem;color:var(--text-3);">Peso</div><div style="font-weight:700;">${delta(ult.peso, prim.peso, 'kg')}</div></div>
+          <div><div style="font-size:0.7rem;color:var(--text-3);">% Gordura</div><div style="font-weight:700;">${delta(ult.bf, prim.bf, '%')}</div></div>
+          <div><div style="font-size:0.7rem;color:var(--text-3);">M. Magra</div><div style="font-weight:700;">${delta(ult.mm, prim.mm, 'kg')}</div></div>
+          <div><div style="font-size:0.7rem;color:var(--text-3);">Cintura</div><div style="font-weight:700;">${delta(ult.circunferencias?.cintura, prim.circunferencias?.cintura, 'cm')}</div></div>
+          <div><div style="font-size:0.7rem;color:var(--text-3);">Quadril</div><div style="font-weight:700;">${delta(ult.circunferencias?.quadril, prim.circunferencias?.quadril, 'cm')}</div></div>
+          <div><div style="font-size:0.7rem;color:var(--text-3);">Abdômen</div><div style="font-weight:700;">${delta(ult.circunferencias?.abdomen, prim.circunferencias?.abdomen, 'cm')}</div></div>
+        </div>
+      </div>
+    `;
+  }
+  
+  cont.innerHTML = topo + lista.map(a => cardAvaliacao(a)).join('');
+}
+
+function cardAvaliacao(a) {
+  const data = new Date(a.data + 'T12:00:00').toLocaleDateString('pt-BR');
+  const linha = (label, v, suf = '') => v != null ? `<span style="margin-right:14px;"><strong>${label}:</strong> ${v}${suf}</span>` : '';
+  const c = a.circunferencias || {};
+  const d = a.dobras || {};
+  const somaDobras = ['triceps','subescapular','suprailiaca','abdominal','coxa','peitoral','axilarMedia','biceps'].reduce((s,k) => s + (d[k] || 0), 0);
+  
+  return `
+    <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:12px;padding:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+        <div style="font-weight:700;font-size:1.05rem;color:var(--orange);">📅 ${data}</div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="editarAvaliacao(${a.id})" style="background:transparent;border:1px solid var(--border);color:var(--text-2);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:0.8rem;">✏️ Editar</button>
+          <button onclick="excluirAvaliacao(${a.id})" style="background:transparent;border:1px solid var(--border);color:#ef4444;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:0.8rem;">🗑️</button>
+        </div>
+      </div>
+      <div style="font-size:0.9rem;color:var(--text);line-height:1.8;">
+        ${linha('Peso', a.peso, 'kg')}${linha('%BF', a.bf, '%')}${linha('M. Magra', a.mm, 'kg')}${linha('M. Gorda', a.mg, 'kg')}
+      </div>
+      ${Object.values(c).some(v => v != null) ? `
+        <div style="font-size:0.85rem;color:var(--text-2);margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">
+          <strong style="color:var(--text-3);font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;">Circunferências:</strong><br>
+          ${linha('Peito', c.peito, 'cm')}${linha('Cintura', c.cintura, 'cm')}${linha('Abd.', c.abdomen, 'cm')}${linha('Quadril', c.quadril, 'cm')}${linha('Br.D', c.bracoD, 'cm')}${linha('Br.E', c.bracoE, 'cm')}${linha('Cx.D', c.coxaD, 'cm')}${linha('Cx.E', c.coxaE, 'cm')}${linha('P.D', c.pantD, 'cm')}${linha('P.E', c.pantE, 'cm')}
+        </div>
+      ` : ''}
+      ${somaDobras > 0 ? `
+        <div style="font-size:0.85rem;color:var(--text-2);margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">
+          <strong style="color:var(--text-3);font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;">Dobras (${somaDobras.toFixed(1)}mm total):</strong><br>
+          ${linha('Tri', d.triceps, 'mm')}${linha('Sub', d.subescapular, 'mm')}${linha('Supra', d.suprailiaca, 'mm')}${linha('Abd', d.abdominal, 'mm')}${linha('Cx', d.coxa, 'mm')}${linha('Pei', d.peitoral, 'mm')}${linha('Axi', d.axilarMedia, 'mm')}${linha('Bíc', d.biceps, 'mm')}
+        </div>
+      ` : ''}
+      ${a.obs ? `<div style="font-size:0.85rem;color:var(--text-2);margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);font-style:italic;">💬 ${a.obs}</div>` : ''}
+    </div>
+  `;
+}
+
+// ============================================================
+// GRÁFICOS DE EVOLUÇÃO (SVG simples, sem dependências)
+// ============================================================
+async function toggleGraficosAval() {
+  const cont = document.getElementById('graficosAval');
+  if (!cont) return;
+  if (cont.style.display === 'none' || !cont.style.display) {
+    await renderGraficosAval();
+    cont.style.display = 'block';
+  } else {
+    cont.style.display = 'none';
+  }
+}
+
+async function renderGraficosAval() {
+  if (!pacienteAtivoId) return;
+  const lista = (await listarAvaliacoes(pacienteAtivoId)).slice().reverse(); // cronológico
+  const cont = document.getElementById('graficosAval');
+  if (!cont) return;
+  
+  if (lista.length < 2) {
+    cont.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-3);background:var(--bg-2);border-radius:12px;">📊 Cadastre pelo menos 2 avaliações para ver gráficos de evolução.</div>`;
+    return;
+  }
+  
+  const metricas = [
+    { label: 'Peso (kg)', key: 'peso', cor: '#ff6b1a' },
+    { label: '% Gordura', key: 'bf', cor: '#3b82f6' },
+    { label: 'Massa Magra (kg)', key: 'mm', cor: '#10b981' },
+    { label: 'Cintura (cm)', getter: a => a.circunferencias?.cintura, cor: '#f59e0b' },
+    { label: 'Quadril (cm)', getter: a => a.circunferencias?.quadril, cor: '#8b5cf6' },
+    { label: 'Abdômen (cm)', getter: a => a.circunferencias?.abdomen, cor: '#ec4899' }
+  ];
+  
+  cont.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;">` +
+    metricas.map(m => grafico(m, lista)).filter(Boolean).join('') +
+    `</div>`;
+}
+
+function grafico(metrica, avals) {
+  const pts = avals.map(a => {
+    const v = metrica.getter ? metrica.getter(a) : a[metrica.key];
+    return { x: new Date(a.data + 'T12:00:00'), y: v, data: a.data };
+  }).filter(p => p.y != null);
+  
+  if (pts.length < 2) return '';
+  
+  const W = 280, H = 160, P = 30;
+  const xs = pts.map(p => p.x.getTime());
+  const ys = pts.map(p => p.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const rangeY = (maxY - minY) || 1;
+  const padY = rangeY * 0.15;
+  const yMin = minY - padY, yMax = maxY + padY;
+  const rangeYAdj = yMax - yMin || 1;
+  
+  const fx = x => P + ((x - minX) / ((maxX - minX) || 1)) * (W - 2 * P);
+  const fy = y => H - P - ((y - yMin) / rangeYAdj) * (H - 2 * P);
+  
+  const path = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${fx(p.x.getTime()).toFixed(1)} ${fy(p.y).toFixed(1)}`).join(' ');
+  const dots = pts.map(p => `<circle cx="${fx(p.x.getTime()).toFixed(1)}" cy="${fy(p.y).toFixed(1)}" r="3.5" fill="${metrica.cor}"/>`).join('');
+  
+  const delta = pts[pts.length - 1].y - pts[0].y;
+  const sinal = delta > 0 ? '+' : '';
+  const corDelta = Math.abs(delta) < 0.05 ? 'var(--text-2)' : (delta > 0 ? '#10b981' : '#ef4444');
+  
+  return `
+    <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:12px;padding:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div style="font-weight:700;font-size:0.85rem;color:var(--text);">${metrica.label}</div>
+        <div style="font-size:0.85rem;font-weight:700;color:${corDelta};">${sinal}${delta.toFixed(1)}</div>
+      </div>
+      <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;">
+        <line x1="${P}" y1="${H-P}" x2="${W-P}" y2="${H-P}" stroke="var(--border)" stroke-width="1"/>
+        <line x1="${P}" y1="${P}" x2="${P}" y2="${H-P}" stroke="var(--border)" stroke-width="1"/>
+        <text x="${P-4}" y="${P+4}" text-anchor="end" font-size="10" fill="var(--text-3)">${yMax.toFixed(1)}</text>
+        <text x="${P-4}" y="${H-P+4}" text-anchor="end" font-size="10" fill="var(--text-3)">${yMin.toFixed(1)}</text>
+        <path d="${path}" fill="none" stroke="${metrica.cor}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+        ${dots}
+        <text x="${P}" y="${H-8}" font-size="10" fill="var(--text-3)">${pts[0].data}</text>
+        <text x="${W-P}" y="${H-8}" text-anchor="end" font-size="10" fill="var(--text-3)">${pts[pts.length-1].data}</text>
+      </svg>
+    </div>
+  `;
+}
+
+// ============================================================
+// NAVEGAÇÃO
+// ============================================================
+function navegarPara(panelId) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  const tab = document.querySelector(`[data-panel="${panelId}"]`);
+  if (tab) tab.classList.add('active');
+  const panel = document.getElementById(`panel-${panelId}`);
+  if (panel) panel.classList.add('active');
+  
+  // Atualiza painel Avaliações se for o caso
+  if (panelId === 'avaliacoes' && pacienteAtivoId) {
+    buscarPaciente(pacienteAtivoId).then(p => atualizarBarraAvalPac(p));
+  }
+}
+
+// ============================================================
+// INICIALIZAÇÃO
+// ============================================================
+(async function inicializarPacientes() {
+  try {
+    await nutriDB();
+    await atualizarContadorPacientes();
+    await renderListaPacientes();
+    atualizarBarraPacAtivo(null);
+    console.log('✅ Módulo Pacientes v3.8 inicializado');
+  } catch (e) {
+    console.error('Erro ao inicializar pacientes:', e);
+  }
+})();
 
 // ============================================================
 // PWA — Registro do Service Worker
