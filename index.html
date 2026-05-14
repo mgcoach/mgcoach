@@ -1867,7 +1867,7 @@
         </div>
         <div class="brand-meta-item">
           <span>Versão</span>
-          <strong>3.8</strong>
+          <strong>3.8.1</strong>
         </div>
       </div>
     </div>
@@ -2653,7 +2653,7 @@
   </div>
 
   <p class="footer-note">
-    <strong>NUTRI.FUEL · v3.8</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
+    <strong>NUTRI.FUEL · v3.8.1</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
   </p>
   
   <!-- ============== ÁREA DO PDF (oculta na tela, visível na impressão) ============== -->
@@ -4245,6 +4245,7 @@ function adicionar() {
     uName: alimentoSelecionado.uName,
     subs: []
   });
+  if (typeof _markPacDirty === 'function') _markPacDirty();
   
   document.getElementById('foodSearch').value = '';
   document.getElementById('foodQty').value = 100;
@@ -4261,12 +4262,17 @@ function adicionar() {
 
 function atualizarQtd(refeicao, idx, novaQtd) {
   const q = parseFloat(novaQtd);
-  if (q && q > 0) { plano[refeicao][idx].q = q; render(); }
+  if (q && q > 0) { 
+    plano[refeicao][idx].q = q; 
+    render();
+    if (typeof _markPacDirty === 'function') _markPacDirty();
+  }
 }
 
 function remover(refeicao, idx) {
   plano[refeicao].splice(idx, 1);
   render();
+  if (typeof _markPacDirty === 'function') _markPacDirty();
 }
 
 function limparTudo() {
@@ -5494,7 +5500,7 @@ async function exportarHTML() {
 // ============================================================
 function exportarJSON() {
   const data = {
-    versao: '3.8',
+    versao: '3.8.1',
     planos: planos,                    // novo: salva todos os 4 planos
     plano: getPlanoAtivo(),            // legacy: para compatibilidade com importações antigas
     metas,
@@ -5703,7 +5709,7 @@ function exportarTexto() {
 // INIT
 // ============================================================
 render();
-console.log(`✅ NUTRI.FUEL v3.8 carregado · ${ALIMENTOS.length} alimentos · ${ALIMENTOS.filter(a => a.u).length} com unidade definida`);
+console.log(`✅ NUTRI.FUEL v3.8.1 carregado · ${ALIMENTOS.length} alimentos · ${ALIMENTOS.filter(a => a.u).length} com unidade definida`);
 
 // ============================================================
 // MÓDULO PACIENTES v3.8 — IndexedDB, CRUD, Avaliações, Import/Export
@@ -5850,6 +5856,76 @@ function setarFotoPreview(targetId, dataUrl) {
 // ============================================================
 // SNAPSHOT do estado atual do app (plano completo + cálculos)
 // ============================================================
+// ============================================================
+// AUTO-SAVE EM BACKGROUND (v3.8.1 — fix bug do plano não persistir)
+// ============================================================
+let _autoSaveTimer = null;
+let _autoSaveStatus = 'salvo'; // 'salvo' | 'salvando' | 'pendente' | 'erro' | 'novo'
+
+function marcarPacComoPendente() {
+  if (!pacienteAtivoId) {
+    atualizarIndicadorSavePac('novo');
+    return;
+  }
+  _autoSaveStatus = 'pendente';
+  atualizarIndicadorSavePac('pendente');
+  clearTimeout(_autoSaveTimer);
+  _autoSaveTimer = setTimeout(executarAutoSavePac, 1200);
+}
+
+async function executarAutoSavePac() {
+  if (!pacienteAtivoId) return;
+  try {
+    _autoSaveStatus = 'salvando';
+    atualizarIndicadorSavePac('salvando');
+    
+    const pac = await buscarPaciente(pacienteAtivoId);
+    if (!pac) return; // paciente foi excluído
+    
+    pac.dados = coletarCliente();
+    pac.snapshot = coletarSnapshotCompleto();
+    
+    // Salva SEM criar nova versão (autosave não polui histórico)
+    await salvarPacienteRaw(pac, false);
+    
+    _autoSaveStatus = 'salvo';
+    atualizarIndicadorSavePac('salvo');
+  } catch (e) {
+    console.error('Auto-save falhou:', e);
+    _autoSaveStatus = 'erro';
+    atualizarIndicadorSavePac('erro');
+  }
+}
+
+function atualizarIndicadorSavePac(status) {
+  let el = document.getElementById('autoSaveIndicadorPac');
+  if (!el) {
+    el = document.createElement('span');
+    el.id = 'autoSaveIndicadorPac';
+    el.style.cssText = 'display:inline-flex;align-items:center;gap:4px;font-size:0.72rem;font-weight:600;margin-right:8px;transition:all 0.2s;white-space:nowrap;';
+    // Insere ao lado do botão Salvar Paciente
+    const btnSalvar = document.querySelector('[onclick*="salvarPacienteAtivo"]');
+    if (btnSalvar && btnSalvar.parentElement) {
+      btnSalvar.parentElement.insertBefore(el, btnSalvar);
+    }
+  }
+  if (!el) return;
+  
+  const cfg = {
+    novo:     { txt: '',                       cor: 'transparent', dot: '' },
+    pendente: { txt: 'mudanças não salvas',    cor: '#f59e0b',     dot: '●' },
+    salvando: { txt: 'salvando...',            cor: '#3b82f6',     dot: '●' },
+    salvo:    { txt: 'tudo salvo',             cor: '#10b981',     dot: '●' },
+    erro:     { txt: 'erro ao salvar',         cor: '#ef4444',     dot: '⚠' }
+  };
+  const c = cfg[status] || cfg.novo;
+  el.innerHTML = c.dot ? `<span style="color:${c.cor};font-size:0.9rem;">${c.dot}</span><span style="color:${c.cor};">${c.txt}</span>` : '';
+}
+
+// Expor pro escopo global
+window._markPacDirty = marcarPacComoPendente;
+
+// ============================================================
 function coletarSnapshotCompleto() {
   return {
     dados: coletarCliente(),
@@ -5882,6 +5958,8 @@ function coletarSnapshotCompleto() {
 
 function aplicarSnapshot(snap) {
   if (!snap) return;
+  
+  // ========= FICHA =========
   const d = snap.dados || {};
   const setVal = (id, v) => { const el = document.getElementById(id); if (el != null) el.value = (v ?? ''); };
   setVal('cliNome', d.nome === '—' ? '' : d.nome);
@@ -5900,17 +5978,26 @@ function aplicarSnapshot(snap) {
   setarFotoPreview('cliFotoAntes', d.fotoAntes);
   setarFotoPreview('cliFotoDepois', d.fotoDepois);
   
-  // Planos
+  // ========= PLANOS (todos os 4 dias) =========
+  // PRIMEIRO: limpa todos os planos pra evitar resíduo do paciente anterior
+  ['unico','alto','medio','baixo'].forEach(k => {
+    planos[k] = novoPlanoVazio();
+  });
+  // DEPOIS: carrega do snapshot
   if (snap.planos) {
     ['unico','alto','medio','baixo'].forEach(k => {
-      if (snap.planos[k]) planos[k] = JSON.parse(JSON.stringify(snap.planos[k]));
+      if (snap.planos[k]) {
+        planos[k] = JSON.parse(JSON.stringify(snap.planos[k]));
+      }
     });
   }
   
-  // Metas
+  // ========= METAS =========
+  metas.kcal = null; metas.prot = null; metas.carb = null; metas.fat = null;
   if (snap.metas) Object.assign(metas, snap.metas);
   
-  // Ciclagem
+  // ========= CICLAGEM =========
+  ciclagem.ativa = false;
   if (snap.ciclagem) {
     ciclagem.ativa = !!snap.ciclagem.ativa;
     ciclagem.diaAtivo = snap.ciclagem.diaAtivo || 'alto';
@@ -5919,13 +6006,14 @@ function aplicarSnapshot(snap) {
     if (snap.ciclagem.diasPorTipo) Object.assign(ciclagem.diasPorTipo, snap.ciclagem.diasPorTipo);
   }
   
-  // Distribuição
+  // ========= DISTRIBUIÇÃO =========
+  distribuicao.ativa = false;
   if (snap.distribuicao) {
     distribuicao.ativa = !!snap.distribuicao.ativa;
     if (snap.distribuicao.pcts) Object.assign(distribuicao.pcts, snap.distribuicao.pcts);
   }
   
-  // Dados TMB
+  // ========= DADOS TMB =========
   if (snap.dadosTMB) {
     setVal('sexo', snap.dadosTMB.sexo);
     setVal('idade', snap.dadosTMB.idade);
@@ -5938,14 +6026,26 @@ function aplicarSnapshot(snap) {
     if (snap.dadosTMB.kcalManual !== undefined) kcalManualOverride = snap.dadosTMB.kcalManual;
   }
   
-  // Re-renderiza
-  try { if (typeof calcularTMB === 'function') calcularTMB(); } catch(e) {}
-  try { if (typeof renderRefeicao === 'function') renderRefeicao(); } catch(e) {}
+  // ========= UI: reflete ciclagem nos toggles/botões =========
+  // Garante que a aba do dia ativo da ciclagem fique selecionada visualmente
+  try {
+    const togCic = document.getElementById('togCiclagem');
+    if (togCic) togCic.checked = ciclagem.ativa;
+    const blocoCic = document.getElementById('blocoCiclagem');
+    if (blocoCic) blocoCic.style.display = ciclagem.ativa ? '' : 'none';
+  } catch(e) {}
+  
+  // ========= RE-RENDER COMPLETO =========
+  // Order matters: TMB primeiro pra recalcular metas, depois render do plano
+  try { if (typeof calcularTMB === 'function') calcularTMB(); } catch(e) { console.warn('calcularTMB:', e); }
+  try { if (typeof atualizarCiclagemUI === 'function') atualizarCiclagemUI(); } catch(e) {}
+  try { if (typeof atualizarDistribuicaoUI === 'function') atualizarDistribuicaoUI(); } catch(e) {}
+  try { if (typeof renderRefeicao === 'function') renderRefeicao(); } catch(e) { console.warn('renderRefeicao:', e); }
   try { if (typeof atualizarTotais === 'function') atualizarTotais(); } catch(e) {}
-  try { if (typeof render === 'function') render(); } catch(e) {}
+  try { if (typeof render === 'function') render(); } catch(e) { console.warn('render:', e); }
 }
 
-function limparTudo() {
+function limparEstadoPaciente() {
   // Limpa form cliente
   ['cliNome','cliSexo','cliIdade','cliTel','cliPeso','cliAltura','cliBF','cliObjetivo','cliAtividade','cliObs','profNome','planData'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
@@ -6073,7 +6173,7 @@ function filtrarPacientes() {
 // ============================================================
 function novoPaciente() {
   pacienteAtivoId = null;
-  limparTudo();
+  limparEstadoPaciente();
   atualizarBarraPacAtivo(null);
   navegarPara('cliente');
   setTimeout(() => document.getElementById('cliNome')?.focus(), 100);
@@ -6126,7 +6226,7 @@ async function salvarPacienteAtivo() {
 function fecharPacienteAtivo() {
   if (!confirm('Fechar este paciente? Mudanças não salvas serão perdidas.')) return;
   pacienteAtivoId = null;
-  limparTudo();
+  limparEstadoPaciente();
   atualizarBarraPacAtivo(null);
   navegarPara('pacientes');
 }
@@ -6260,7 +6360,7 @@ async function excluirPaciente(id) {
   
   if (pacienteAtivoId === id) {
     pacienteAtivoId = null;
-    limparTudo();
+    limparEstadoPaciente();
     atualizarBarraPacAtivo(null);
   }
   await renderListaPacientes();
@@ -6773,7 +6873,34 @@ function navegarPara(panelId) {
     await atualizarContadorPacientes();
     await renderListaPacientes();
     atualizarBarraPacAtivo(null);
-    console.log('✅ Módulo Pacientes v3.8 inicializado');
+    
+    // Auto-save: listeners para campos da ficha + TMB
+    const camposParaMonitorar = [
+      // Ficha do paciente (cliente)
+      'cliNome','cliSexo','cliIdade','cliTel','cliPeso','cliAltura',
+      'cliBF','cliObjetivo','cliAtividade','cliObs','profNome','planData',
+      // Dados TMB (cálculo metabólico)
+      'sexo','idade','peso','altura','bodyfat','fator'
+    ];
+    camposParaMonitorar.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', () => { if (typeof _markPacDirty === 'function') _markPacDirty(); });
+        el.addEventListener('change', () => { if (typeof _markPacDirty === 'function') _markPacDirty(); });
+      }
+    });
+    
+    // Save de emergência ao fechar a aba
+    window.addEventListener('beforeunload', () => {
+      if ((_autoSaveStatus === 'pendente' || _autoSaveStatus === 'salvando') && pacienteAtivoId) {
+        try {
+          const dadosEmerg = { id: pacienteAtivoId, dados: coletarCliente(), snapshot: coletarSnapshotCompleto(), timestamp: Date.now() };
+          localStorage.setItem('nutrifuel_emergency_save', JSON.stringify(dadosEmerg));
+        } catch(e) {}
+      }
+    });
+    
+    console.log('✅ Módulo Pacientes v3.8.1 inicializado (com auto-save)');
   } catch (e) {
     console.error('Erro ao inicializar pacientes:', e);
   }

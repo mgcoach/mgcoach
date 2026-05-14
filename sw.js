@@ -1,5 +1,5 @@
-// NUTRI.FUEL Service Worker v3.8
-const CACHE_NAME = 'nutrifuel-v3-8-0';
+// NUTRI.FUEL Service Worker v3.8.1
+const CACHE_NAME = 'nutrifuel-v3-8-1-0';
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', (event) => {
@@ -8,11 +8,6 @@ self.addEventListener('install', (event) => {
       .then(() => self.skipWaiting())
   );
 });
-
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.action === 'skipWaiting') self.skipWaiting();
-});
-
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -20,7 +15,6 @@ self.addEventListener('activate', (event) => {
     ).then(() => self.clients.claim())
   );
 });
-
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   event.respondWith(
@@ -29,7 +23,7 @@ self.addEventListener('fetch', (event) => {
       return fetch(event.request).then((resp) => {
         if (!resp || resp.status !== 200 || resp.type !== 'basic') return resp;
         const respClone = resp.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, respClone));
+        caches.open(CACHE_NAME).then((c) => c.put(event.request, respClone));
         return resp;
       }).catch(() => cached);
     })
