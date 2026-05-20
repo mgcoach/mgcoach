@@ -1763,6 +1763,25 @@
   
   .pdf-food-macros strong { color: #1a1a1a; }
   
+  /* Ingredientes de receita no PDF */
+  .pdf-recipe-ings {
+    font-size: 0.7rem;
+    color: #777;
+    margin-top: 4px;
+    padding-left: 2px;
+    line-height: 1.6;
+  }
+  .pdf-recipe-ings .pdf-recipe-ings-label {
+    font-size: 0.6rem;
+    color: #d94e00 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 800;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .pdf-recipe-ing-line { color: #666; }
+  
   /* Substituições no PDF */
   .pdf-subs {
     background: #fff8f3 !important;
@@ -1837,6 +1856,152 @@
     border-radius: 14px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.4);
   }
+
+  /* === CONSTRUTOR DE RECEITAS (Feature 1) === */
+  .recipe-create-btn {
+    padding: 7px 13px;
+    background: var(--orange-soft);
+    color: var(--orange-bright);
+    border: 1px solid var(--orange);
+    border-radius: 7px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: var(--font-body);
+    transition: background .15s ease;
+  }
+  .recipe-create-btn:hover { background: var(--orange); color: var(--bg); }
+
+  .recipe-badge {
+    display: inline-block;
+    margin-left: 7px;
+    padding: 1px 7px;
+    background: var(--orange);
+    color: var(--bg);
+    border-radius: 4px;
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    vertical-align: middle;
+  }
+
+  #receitaModal .rec-fields { margin-bottom: 14px; }
+  #receitaModal .rec-fields-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .rec-label {
+    font-size: 0.66rem;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    font-weight: 700;
+    display: block;
+  }
+  #receitaModal .rec-fields input {
+    width: 100%;
+    padding: 9px 11px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--text);
+    font-size: 0.88rem;
+    font-family: var(--font-body);
+  }
+  #receitaModal .rec-fields input:focus { outline: none; border-color: var(--orange); }
+
+  .rec-section-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    margin: 4px 0 4px;
+  }
+  #receitaModal .add-sub-form { grid-template-columns: 1fr 90px auto; }
+
+  .rec-ing-list { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .rec-ing-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    font-size: 0.82rem;
+  }
+  .rec-ing-row .rec-ing-name { flex: 1; font-weight: 600; }
+  .rec-ing-row .rec-ing-qty { color: var(--text-muted); white-space: nowrap; }
+  .rec-ing-row .rec-ing-kcal { color: var(--orange-bright); font-weight: 700; white-space: nowrap; }
+  .rec-ing-row button {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 1.1rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 2px;
+  }
+  .rec-ing-row button:hover { color: #ef4444; }
+  .rec-ing-empty {
+    padding: 14px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.82rem;
+    font-style: italic;
+  }
+
+  .rec-totais {
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: var(--orange-soft);
+    border: 1px solid var(--orange);
+    border-radius: 9px;
+    display: none;
+  }
+  .rec-totais.active { display: block; }
+  .rec-totais .rec-tot-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+  .rec-totais .rec-tot-kcal { font-size: 1.4rem; font-weight: 800; color: var(--orange-bright); }
+  .rec-totais .rec-tot-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); font-weight: 700; }
+  .rec-totais .rec-tot-macros {
+    display: flex;
+    gap: 14px;
+    font-size: 0.8rem;
+    flex-wrap: wrap;
+  }
+  .rec-totais .rec-tot-per100 {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--orange);
+    font-size: 0.74rem;
+    color: var(--text-muted);
+  }
+
+  .rec-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .rec-actions .action-btn { flex: 1; }
+  .rec-actions .rec-save { background: var(--orange); color: var(--bg); border-color: var(--orange); font-weight: 700; }
+  .rec-actions #recBtnExcluir { color: #ef4444; border-color: rgba(239,68,68,0.4); flex: 0 0 auto; }
+
+  .recipe-ing-inline {
+    margin-top: 3px;
+    padding-left: 4px;
+    font-size: 0.74rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
 </style>
 </head>
 <body>
@@ -1867,7 +2032,7 @@
         </div>
         <div class="brand-meta-item">
           <span>Versão</span>
-          <strong>3.8.1</strong>
+          <strong>3.8.2</strong>
         </div>
       </div>
     </div>
@@ -2462,7 +2627,10 @@
     </div>
 
     <div class="section">
-      <div class="section-title">Adicionar Alimento</div>
+      <div class="section-title" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <span>Adicionar Alimento</span>
+        <button type="button" id="btnCriarReceita" class="recipe-create-btn">🍳 Criar receita</button>
+      </div>
       
       <div class="meal-tabs" id="mealTabs">
         <div class="meal-tab active" data-meal="cafe">☕ Café</div>
@@ -2653,7 +2821,7 @@
   </div>
 
   <p class="footer-note">
-    <strong>NUTRI.FUEL · v3.8.1</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
+    <strong>NUTRI.FUEL · v3.8.2</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
   </p>
   
   <!-- ============== ÁREA DO PDF (oculta na tela, visível na impressão) ============== -->
@@ -2690,6 +2858,60 @@
       
       <div class="field-hint" style="margin-top: 8px;">💡 Sugestão: quando adicionar a primeira substituição, clique em "Equivalente" para calcular automaticamente uma porção que iguale as kcal do alimento principal.</div>
       <button class="action-btn" style="margin-top: 8px; width: 100%;" onclick="sugerirEquivalente()">⚖️ Calcular Quantidade Equivalente</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============== MODAL CONSTRUTOR DE RECEITAS (Feature 1) ============== -->
+<div class="modal-overlay" id="receitaModal">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModalReceita()">×</button>
+    <div class="modal-title" id="receitaModalTitulo">🍳 Criar Receita</div>
+    <div class="modal-subtitle">Monte uma preparação com vários ingredientes. Ela vira um item único na base, reutilizável em qualquer paciente.</div>
+
+    <div class="rec-fields">
+      <div>
+        <label class="rec-label">Nome da receita</label>
+        <input type="text" id="recNome" placeholder="Ex.: Panqueca de banana" autocomplete="off">
+      </div>
+      <div class="rec-fields-row">
+        <div>
+          <label class="rec-label">Porção padrão (g)</label>
+          <input type="number" id="recPorcao" placeholder="100" value="100" min="1" step="1">
+        </div>
+        <div>
+          <label class="rec-label">Categoria</label>
+          <input type="text" id="recCategoria" placeholder="Ex.: Lanche" autocomplete="off" list="recCatList">
+          <datalist id="recCatList">
+            <option value="Receita"></option>
+            <option value="Café da manhã"></option>
+            <option value="Lanche"></option>
+            <option value="Almoço/Jantar"></option>
+            <option value="Sobremesa"></option>
+            <option value="Shake/Bebida"></option>
+          </datalist>
+        </div>
+      </div>
+    </div>
+
+    <div class="rec-section-label">Ingredientes</div>
+    <div class="add-sub-form">
+      <div class="sub-search-wrapper">
+        <input type="text" id="recIngSearch" placeholder="Buscar alimento da base..." autocomplete="off">
+        <div class="sub-suggestions" id="recIngSuggestions"></div>
+      </div>
+      <input type="number" id="recIngQty" placeholder="Gramas" step="1" min="0">
+      <button type="button" onclick="adicionarIngredienteReceita()">Add</button>
+    </div>
+    <div class="field-hint" style="margin-top:8px;">💡 As quantidades dos ingredientes são sempre em gramas. O app soma kcal e macros automaticamente.</div>
+
+    <div id="recIngList" class="rec-ing-list"><!-- preenchido via JS --></div>
+
+    <div id="recTotais" class="rec-totais"><!-- preenchido via JS --></div>
+
+    <div class="rec-actions">
+      <button class="action-btn" id="recBtnExcluir" style="display:none;" onclick="excluirReceitaAtual()">🗑️ Excluir receita</button>
+      <button class="action-btn rec-save" onclick="salvarReceitaDoModal()">💾 Salvar receita</button>
     </div>
   </div>
 </div>
@@ -3243,7 +3465,7 @@ let subsContext = { mealKey: null, foodIdx: null };
 let subAlimentoSelecionado = null;
 
 // Atualiza badge total alimentos
-document.getElementById('metaTotalAlimentos').textContent = ALIMENTOS.length + '+';
+document.getElementById('metaTotalAlimentos').textContent = (ALIMENTOS.length + RECEITAS.length) + '+';
 
 // Data padrão = hoje
 document.getElementById('planData').valueAsDate = new Date();
@@ -4061,10 +4283,21 @@ function render() {
           const subsBadge = subsCount > 0 
             ? `<span class="has-subs" onclick="abrirModalSubs('${key}', ${i})">⇄ ${subsCount} ${subsCount === 1 ? 'sub' : 'subs'}</span>`
             : '';
+          const ehReceita = item.tipo === 'receita';
+          const recBadge = ehReceita ? `<span class="recipe-badge">🍳 RECEITA</span>` : '';
+          let recIngsHtml = '';
+          if (ehReceita && item.ingredientes && item.ingredientes.length > 0) {
+            const baseGramas = item.ingredientes.reduce((s, ing) => s + (parseFloat(ing.g) || 0), 0);
+            const fator = baseGramas > 0 ? (m.gramas / baseGramas) : 1;
+            recIngsHtml = `<div class="recipe-ing-inline">` +
+              item.ingredientes.map(ing => `↳ ${ing.n} ${Math.round((parseFloat(ing.g)||0) * fator)}g`).join(' · ') +
+              `</div>`;
+          }
           return `
             <div class="food-row">
               <div class="food-info">
-                <div class="food-name">${item.n}${detalheGramas}${subsBadge}</div>
+                <div class="food-name">${item.n}${recBadge}${detalheGramas}${subsBadge}</div>
+                ${recIngsHtml}
                 <div class="food-macros">
                   <span><strong>${Math.round(m.k)}</strong> kcal</span>
                   <span>P <strong>${m.p.toFixed(1)}g</strong></span>
@@ -4120,15 +4353,20 @@ function normalizar(s) {
   return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
+// Lista combinada: alimentos da TACO + receitas globais
+function baseDeBusca() {
+  return ALIMENTOS.concat(RECEITAS);
+}
+
 function buscar(termo) {
   if (!termo || termo.length < 1) return [];
   const t = normalizar(termo);
   const palavras = t.split(/\s+/).filter(p => p);
   
-  return ALIMENTOS
+  return baseDeBusca()
     .map(a => {
       const nome = normalizar(a.n);
-      const cat = normalizar(a.cat);
+      const cat = normalizar(a.cat || '');
       let score = 0;
       palavras.forEach(p => {
         if (nome.startsWith(p)) score += 100;
@@ -4137,6 +4375,8 @@ function buscar(termo) {
         else if (cat.includes(p)) score += 5;
         else score -= 999;
       });
+      // Receitas ganham um leve boost para aparecerem no topo quando empatam
+      if (a.tipo === 'receita' && score > 0) score += 3;
       return { ...a, score };
     })
     .filter(a => a.score > 0)
@@ -4144,25 +4384,42 @@ function buscar(termo) {
     .slice(0, 12);
 }
 
+// Guarda a última lista de sugestões exibida em cada campo,
+// para resolver o clique por índice sem passar nomes crus no HTML.
+let _ultSugestoes = { suggestions: [], subSuggestions: [] };
+
+// Acha um item (alimento OU receita) pelo nome na base combinada
+function itemPorNome(nome) {
+  return baseDeBusca().find(x => x.n === nome) || null;
+}
+
 function mostrarSugestoes(lista, divId, onClickFn) {
   const div = document.getElementById(divId);
+  _ultSugestoes[divId] = lista;
   if (lista.length === 0) { div.classList.remove('active'); return; }
   div.innerHTML = lista.map((a, i) => {
-    const idx = ALIMENTOS.indexOf(ALIMENTOS.find(x => x.n === a.n));
-    const badge = a.u ? `<span class="has-unit-badge">UN</span>` : '';
-    const unidadeInfo = a.u ? ` · 1 ${a.uName} ≈ ${a.u}g` : '';
+    const ehReceita = a.tipo === 'receita';
+    const badge = ehReceita
+      ? `<span class="recipe-badge">🍳 RECEITA</span>`
+      : (a.u ? `<span class="has-unit-badge">UN</span>` : '');
+    const unidadeInfo = a.u
+      ? ` · 1 ${a.uName} ≈ ${a.u}g`
+      : (ehReceita ? ` · porção ${a.porcaoPadrao || a.u || 100}g` : '');
+    const catLabel = a.cat || (ehReceita ? 'Receita' : '');
     return `
-      <div class="suggestion-item" data-index="${i}" onclick="${onClickFn}(${idx})">
+      <div class="suggestion-item" data-index="${i}" onclick="${onClickFn}(${i})">
         <div>${a.n}${badge}</div>
-        <div class="suggestion-meta">${a.cat} · ${a.k} kcal · P${a.p}g · C${a.c}g · G${a.f}g · /100g${unidadeInfo}</div>
+        <div class="suggestion-meta">${catLabel} · ${Math.round(a.k)} kcal · P${a.p.toFixed(1)}g · C${a.c.toFixed(1)}g · G${a.f.toFixed(1)}g · /100g${unidadeInfo}</div>
       </div>
     `;
   }).join('');
   div.classList.add('active');
 }
 
-function selecionar(idx) {
-  alimentoSelecionado = ALIMENTOS[idx];
+function selecionar(i) {
+  const lista = _ultSugestoes['suggestions'] || [];
+  alimentoSelecionado = itemPorNome((lista[i] || {}).n);
+  if (!alimentoSelecionado) return;
   document.getElementById('foodSearch').value = alimentoSelecionado.n;
   document.getElementById('suggestions').classList.remove('active');
   
@@ -4222,7 +4479,7 @@ function adicionar() {
     const termo = document.getElementById('foodSearch').value;
     const sugs = buscar(termo);
     if (sugs.length > 0) {
-      alimentoSelecionado = ALIMENTOS.find(x => x.n === sugs[0].n);
+      alimentoSelecionado = itemPorNome(sugs[0].n);
     } else {
       alert('Selecione um alimento da lista.');
       return;
@@ -4233,7 +4490,7 @@ function adicionar() {
   const customUnit = parseFloat(document.getElementById('foodUnit').value);
   const pesoUnit = (inputMode === 'u' && customUnit > 0) ? customUnit : alimentoSelecionado.u;
   
-  plano[refeicaoAtiva].push({
+  const novoItem = {
     n: alimentoSelecionado.n,
     k: alimentoSelecionado.k,
     p: alimentoSelecionado.p,
@@ -4244,7 +4501,14 @@ function adicionar() {
     u: pesoUnit,
     uName: alimentoSelecionado.uName,
     subs: []
-  });
+  };
+  // Receita: congela tipo + ingredientes no item do plano (não muda se a receita global for editada/apagada)
+  if (alimentoSelecionado.tipo === 'receita') {
+    novoItem.tipo = 'receita';
+    novoItem.receitaId = alimentoSelecionado.id;
+    novoItem.ingredientes = JSON.parse(JSON.stringify(alimentoSelecionado.ingredientes || []));
+  }
+  plano[refeicaoAtiva].push(novoItem);
   if (typeof _markPacDirty === 'function') _markPacDirty();
   
   document.getElementById('foodSearch').value = '';
@@ -4360,8 +4624,10 @@ document.getElementById('subSearch').addEventListener('input', (e) => {
   mostrarSugestoes(sugs, 'subSuggestions', 'selecionarSub');
 });
 
-function selecionarSub(idx) {
-  subAlimentoSelecionado = ALIMENTOS[idx];
+function selecionarSub(i) {
+  const lista = _ultSugestoes['subSuggestions'] || [];
+  subAlimentoSelecionado = itemPorNome((lista[i] || {}).n);
+  if (!subAlimentoSelecionado) return;
   document.getElementById('subSearch').value = subAlimentoSelecionado.n;
   document.getElementById('subSuggestions').classList.remove('active');
   
@@ -4380,7 +4646,7 @@ function adicionarSub() {
   if (!subAlimentoSelecionado) {
     const termo = document.getElementById('subSearch').value;
     const sugs = buscar(termo);
-    if (sugs.length > 0) subAlimentoSelecionado = ALIMENTOS.find(x => x.n === sugs[0].n);
+    if (sugs.length > 0) subAlimentoSelecionado = itemPorNome(sugs[0].n);
     else { alert('Selecione um alimento.'); return; }
   }
   const qty = parseFloat(document.getElementById('subQty').value);
@@ -4493,6 +4759,38 @@ function atualizarHighlight(items) {
 document.getElementById('foodQty').addEventListener('keydown', (e) => { if (e.key === 'Enter') adicionar(); });
 document.getElementById('foodUnit').addEventListener('keydown', (e) => { if (e.key === 'Enter') adicionar(); });
 document.getElementById('addBtn').addEventListener('click', adicionar);
+
+// ----- Listeners do construtor de receitas (Feature 1) -----
+document.getElementById('btnCriarReceita').addEventListener('click', () => abrirModalReceita());
+
+document.getElementById('recIngSearch').addEventListener('input', (e) => {
+  _recIngSelecionado = null;
+  // só alimentos da TACO — receita não leva outra receita dentro
+  const sugs = buscar(e.target.value).filter(a => a.tipo !== 'receita');
+  mostrarSugestoes(sugs, 'recIngSuggestions', 'selecionarIngReceita');
+});
+
+document.getElementById('recIngSearch').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const sugs = buscar(e.target.value).filter(a => a.tipo !== 'receita');
+    if (sugs.length > 0 && !_recIngSelecionado) {
+      _recIngSelecionado = ALIMENTOS.find(x => x.n === sugs[0].n);
+      e.target.value = _recIngSelecionado ? _recIngSelecionado.n : e.target.value;
+      document.getElementById('recIngSuggestions').classList.remove('active');
+      document.getElementById('recIngQty').focus();
+    }
+  }
+});
+
+document.getElementById('recIngQty').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); adicionarIngredienteReceita(); }
+});
+
+// Fecha o modal de receita ao clicar fora
+document.getElementById('receitaModal').addEventListener('click', (e) => {
+  if (e.target.id === 'receitaModal') fecharModalReceita();
+});
 
 document.querySelectorAll('.meal-tab').forEach(tab => {
   tab.addEventListener('click', () => {
@@ -4646,11 +4944,30 @@ function buildPDFContent() {
       const m = calcMacrosItem(item);
       const qtyLabel = item.modo === 'u' ? `${item.q} ${item.uName || 'un'} (${Math.round(m.gramas)}g)` : `${item.q}g`;
       
+      // Receita: monta a lista de ingredientes proporcionada à quantidade usada
+      let ingsHtml = '';
+      if (item.tipo === 'receita' && item.ingredientes && item.ingredientes.length > 0) {
+        // gramas totais da receita-base e fator de escala para a porção no plano
+        const baseGramas = item.ingredientes.reduce((s, ing) => s + (parseFloat(ing.g) || 0), 0);
+        const fator = baseGramas > 0 ? (m.gramas / baseGramas) : 1;
+        const linhas = item.ingredientes.map(ing => {
+          const gEscala = (parseFloat(ing.g) || 0) * fator;
+          return `<div class="pdf-recipe-ing-line">↳ ${ing.n} — ${Math.round(gEscala)}g</div>`;
+        }).join('');
+        ingsHtml = `
+          <div class="pdf-recipe-ings">
+            <span class="pdf-recipe-ings-label">🍳 Ingredientes da receita</span>
+            ${linhas}
+          </div>
+        `;
+      }
+      
       html += `
         <div class="pdf-food">
           <div>
             <div class="pdf-food-name">${item.n}</div>
             <div class="pdf-food-qty">${qtyLabel}</div>
+            ${ingsHtml}
           </div>
           <div class="pdf-food-macros">
             <div><strong>${Math.round(m.k)}</strong> kcal</div>
@@ -5500,7 +5817,7 @@ async function exportarHTML() {
 // ============================================================
 function exportarJSON() {
   const data = {
-    versao: '3.8.1',
+    versao: '3.8.2',
     planos: planos,                    // novo: salva todos os 4 planos
     plano: getPlanoAtivo(),            // legacy: para compatibilidade com importações antigas
     metas,
@@ -5709,17 +6026,18 @@ function exportarTexto() {
 // INIT
 // ============================================================
 render();
-console.log(`✅ NUTRI.FUEL v3.8.1 carregado · ${ALIMENTOS.length} alimentos · ${ALIMENTOS.filter(a => a.u).length} com unidade definida`);
+console.log(`✅ NUTRI.FUEL v3.8.2 carregado · ${ALIMENTOS.length} alimentos · ${ALIMENTOS.filter(a => a.u).length} com unidade definida`);
 
 // ============================================================
 // MÓDULO PACIENTES v3.8 — IndexedDB, CRUD, Avaliações, Import/Export
 // ============================================================
 
 const NUTRI_DB_NAME = 'nutrifuel_db';
-const NUTRI_DB_VERSION = 1;
+const NUTRI_DB_VERSION = 2;
 const STORE_PACIENTES = 'pacientes';
 const STORE_VERSOES_PLANO = 'versoes_plano';
 const STORE_AVALIACOES = 'avaliacoes';
+const STORE_RECEITAS = 'receitas';
 
 let _nutriDB = null;
 let pacienteAtivoId = null;
@@ -5744,6 +6062,11 @@ function nutriDB() {
         const s = db.createObjectStore(STORE_AVALIACOES, { keyPath: 'id', autoIncrement: true });
         s.createIndex('pacienteId', 'pacienteId', { unique: false });
         s.createIndex('data', 'data', { unique: false });
+      }
+      // v3.8.2 — store de receitas globais (construtor de receitas)
+      if (!db.objectStoreNames.contains(STORE_RECEITAS)) {
+        const s = db.createObjectStore(STORE_RECEITAS, { keyPath: 'id' });
+        s.createIndex('nome', 'n', { unique: false });
       }
     };
     req.onsuccess = () => { _nutriDB = req.result; resolve(_nutriDB); };
@@ -5782,6 +6105,256 @@ async function dbByIndex(store, indexName, value) {
 
 function gerarIdPac() {
   return 'pac_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 6);
+}
+
+// ============================================================
+// RECEITAS GLOBAIS — construtor de receitas (Feature 1)
+// ============================================================
+// Estrutura de uma receita:
+// { id, n, cat, tipo:"receita", porcaoPadrao, ingredientes:[{n,g,k,p,c,f}],
+//   k, p, c, f  (macros POR 100g do total da receita) }
+// k/p/c/f por 100g => compatível com a estrutura de ALIMENTOS,
+// permite usar a receita em gramas ou em "unidade" (porção).
+
+let RECEITAS = [];
+
+function gerarIdReceita() {
+  return 'rec_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 6);
+}
+
+async function carregarReceitas() {
+  try {
+    RECEITAS = await dbAll(STORE_RECEITAS) || [];
+  } catch (e) {
+    console.error('Erro ao carregar receitas:', e);
+    RECEITAS = [];
+  }
+  // atualiza o contador da brand-meta (alimentos + receitas)
+  const badge = document.getElementById('metaTotalAlimentos');
+  if (badge) badge.textContent = (ALIMENTOS.length + RECEITAS.length) + '+';
+}
+
+// Calcula os macros totais (somatório) e por 100g de uma lista de ingredientes
+function calcularReceita(ingredientes) {
+  let tK = 0, tP = 0, tC = 0, tF = 0, tG = 0;
+  ingredientes.forEach(ing => {
+    const g = parseFloat(ing.g) || 0;
+    tK += (ing.k || 0) * g / 100;
+    tP += (ing.p || 0) * g / 100;
+    tC += (ing.c || 0) * g / 100;
+    tF += (ing.f || 0) * g / 100;
+    tG += g;
+  });
+  const por100 = tG > 0
+    ? { k: tK * 100 / tG, p: tP * 100 / tG, c: tC * 100 / tG, f: tF * 100 / tG }
+    : { k: 0, p: 0, c: 0, f: 0 };
+  return { totalGramas: tG, total: { k: tK, p: tP, c: tC, f: tF }, por100 };
+}
+
+async function salvarReceita(receita) {
+  await dbPut(STORE_RECEITAS, receita);
+  await carregarReceitas();
+}
+
+async function excluirReceita(id) {
+  await dbDel(STORE_RECEITAS, id);
+  await carregarReceitas();
+}
+
+// ----- Estado do modal de receitas -----
+let _recIngredientes = [];        // ingredientes em edição: {n,g,k,p,c,f,cat}
+let _recIngSelecionado = null;    // alimento escolhido na busca de ingrediente
+let _recEditandoId = null;        // id da receita em edição (null = nova)
+
+function abrirModalReceita(receitaId = null) {
+  _recEditandoId = receitaId;
+  _recIngredientes = [];
+  _recIngSelecionado = null;
+
+  const tituloEl = document.getElementById('receitaModalTitulo');
+  const btnExcluir = document.getElementById('recBtnExcluir');
+
+  if (receitaId) {
+    const r = RECEITAS.find(x => x.id === receitaId);
+    if (r) {
+      tituloEl.textContent = '🍳 Editar Receita';
+      document.getElementById('recNome').value = r.n || '';
+      document.getElementById('recPorcao').value = r.porcaoPadrao || 100;
+      document.getElementById('recCategoria').value = r.cat || 'Receita';
+      _recIngredientes = JSON.parse(JSON.stringify(r.ingredientes || []));
+      btnExcluir.style.display = '';
+    }
+  } else {
+    tituloEl.textContent = '🍳 Criar Receita';
+    document.getElementById('recNome').value = '';
+    document.getElementById('recPorcao').value = 100;
+    document.getElementById('recCategoria').value = 'Receita';
+    btnExcluir.style.display = 'none';
+  }
+
+  document.getElementById('recIngSearch').value = '';
+  document.getElementById('recIngQty').value = '';
+  document.getElementById('recIngSuggestions').classList.remove('active');
+  renderIngredientesReceita();
+  document.getElementById('receitaModal').classList.add('active');
+}
+
+function fecharModalReceita() {
+  document.getElementById('receitaModal').classList.remove('active');
+}
+
+// Busca de ingrediente — usa SÓ a base TACO (uma receita não leva outra receita dentro)
+function selecionarIngReceita(i) {
+  const lista = _ultSugestoes['recIngSuggestions'] || [];
+  const escolhido = lista[i];
+  if (!escolhido) return;
+  _recIngSelecionado = ALIMENTOS.find(x => x.n === escolhido.n) || null;
+  if (!_recIngSelecionado) return;
+  document.getElementById('recIngSearch').value = _recIngSelecionado.n;
+  document.getElementById('recIngSuggestions').classList.remove('active');
+  const qtdEl = document.getElementById('recIngQty');
+  if (!qtdEl.value) qtdEl.value = _recIngSelecionado.u || 100;
+  qtdEl.focus();
+  qtdEl.select();
+}
+
+function adicionarIngredienteReceita() {
+  const g = parseFloat(document.getElementById('recIngQty').value);
+  if (!_recIngSelecionado) {
+    // fallback: tenta a primeira sugestão
+    const sugs = buscar(document.getElementById('recIngSearch').value).filter(a => a.tipo !== 'receita');
+    if (sugs.length > 0) _recIngSelecionado = ALIMENTOS.find(x => x.n === sugs[0].n);
+    if (!_recIngSelecionado) { alert('Selecione um alimento da lista.'); return; }
+  }
+  if (!g || g <= 0) { alert('Informe a quantidade em gramas do ingrediente.'); return; }
+
+  _recIngredientes.push({
+    n: _recIngSelecionado.n,
+    g: g,
+    k: _recIngSelecionado.k,
+    p: _recIngSelecionado.p,
+    c: _recIngSelecionado.c,
+    f: _recIngSelecionado.f,
+    cat: _recIngSelecionado.cat || ''
+  });
+  _recIngSelecionado = null;
+  document.getElementById('recIngSearch').value = '';
+  document.getElementById('recIngQty').value = '';
+  document.getElementById('recIngSuggestions').classList.remove('active');
+  document.getElementById('recIngSearch').focus();
+  renderIngredientesReceita();
+}
+
+function removerIngredienteReceita(i) {
+  _recIngredientes.splice(i, 1);
+  renderIngredientesReceita();
+}
+
+function renderIngredientesReceita() {
+  const lista = document.getElementById('recIngList');
+  const totaisEl = document.getElementById('recTotais');
+
+  if (_recIngredientes.length === 0) {
+    lista.innerHTML = '<div class="rec-ing-empty">Nenhum ingrediente ainda. Busque e adicione acima.</div>';
+    totaisEl.classList.remove('active');
+    totaisEl.innerHTML = '';
+    return;
+  }
+
+  lista.innerHTML = _recIngredientes.map((ing, i) => {
+    const kcal = (ing.k || 0) * (ing.g || 0) / 100;
+    return `
+      <div class="rec-ing-row">
+        <span class="rec-ing-name">${ing.n}</span>
+        <span class="rec-ing-qty">${ing.g}g</span>
+        <span class="rec-ing-kcal">${Math.round(kcal)} kcal</span>
+        <button type="button" onclick="removerIngredienteReceita(${i})" title="Remover">×</button>
+      </div>
+    `;
+  }).join('');
+
+  const calc = calcularReceita(_recIngredientes);
+  totaisEl.classList.add('active');
+  totaisEl.innerHTML = `
+    <div class="rec-tot-head">
+      <div>
+        <div class="rec-tot-kcal">${Math.round(calc.total.k)} kcal</div>
+        <div class="rec-tot-label">Receita inteira · ${Math.round(calc.totalGramas)}g</div>
+      </div>
+    </div>
+    <div class="rec-tot-macros">
+      <span>P <strong>${calc.total.p.toFixed(1)}g</strong></span>
+      <span>C <strong>${calc.total.c.toFixed(1)}g</strong></span>
+      <span>G <strong>${calc.total.f.toFixed(1)}g</strong></span>
+    </div>
+    <div class="rec-tot-per100">
+      Por 100g: ${Math.round(calc.por100.k)} kcal ·
+      P ${calc.por100.p.toFixed(1)}g · C ${calc.por100.c.toFixed(1)}g · G ${calc.por100.f.toFixed(1)}g
+    </div>
+  `;
+}
+
+async function salvarReceitaDoModal() {
+  const nome = document.getElementById('recNome').value.trim();
+  const porcao = parseFloat(document.getElementById('recPorcao').value) || 100;
+  const cat = document.getElementById('recCategoria').value.trim() || 'Receita';
+
+  if (!nome) { alert('Dê um nome à receita.'); return; }
+  if (_recIngredientes.length === 0) { alert('Adicione pelo menos um ingrediente.'); return; }
+
+  // Conflito de nome com alimento da TACO ou outra receita
+  const conflitoTACO = ALIMENTOS.some(a => normalizar(a.n) === normalizar(nome));
+  if (conflitoTACO) {
+    if (!confirm(`Já existe um alimento na base TACO chamado "${nome}". Salvar a receita com o mesmo nome pode confundir na busca. Deseja continuar?`)) return;
+  }
+  const conflitoReceita = RECEITAS.find(r => normalizar(r.n) === normalizar(nome) && r.id !== _recEditandoId);
+  if (conflitoReceita) {
+    alert(`Já existe uma receita chamada "${nome}". Escolha outro nome ou edite a receita existente.`);
+    return;
+  }
+
+  const calc = calcularReceita(_recIngredientes);
+  const receita = {
+    id: _recEditandoId || gerarIdReceita(),
+    n: nome,
+    cat: cat,
+    tipo: 'receita',
+    porcaoPadrao: porcao,
+    ingredientes: JSON.parse(JSON.stringify(_recIngredientes)),
+    // macros POR 100g — compatível com a estrutura de ALIMENTOS
+    k: +calc.por100.k.toFixed(2),
+    p: +calc.por100.p.toFixed(2),
+    c: +calc.por100.c.toFixed(2),
+    f: +calc.por100.f.toFixed(2),
+    // tratada como "unidade" => 1 porção = porcaoPadrao gramas
+    u: porcao,
+    uName: 'porção',
+    atualizadoEm: Date.now()
+  };
+
+  try {
+    await salvarReceita(receita);
+    fecharModalReceita();
+    toastNutri(_recEditandoId ? `✏️ Receita "${nome}" atualizada` : `🍳 Receita "${nome}" salva na base`);
+  } catch (e) {
+    console.error(e);
+    toastNutri('Erro ao salvar receita: ' + e.message, 'erro');
+  }
+}
+
+async function excluirReceitaAtual() {
+  if (!_recEditandoId) return;
+  const r = RECEITAS.find(x => x.id === _recEditandoId);
+  const nome = r ? r.n : 'esta receita';
+  if (!confirm(`Excluir a receita "${nome}"?\n\nObservação: planos de pacientes já salvos com esta receita NÃO são afetados — eles guardam uma cópia própria dos ingredientes. Só some da busca para novos planos.`)) return;
+  try {
+    await excluirReceita(_recEditandoId);
+    fecharModalReceita();
+    toastNutri(`🗑️ Receita "${nome}" excluída`);
+  } catch (e) {
+    console.error(e);
+    toastNutri('Erro ao excluir: ' + e.message, 'erro');
+  }
 }
 
 function toastNutri(msg, tipo = 'ok') {
@@ -6401,15 +6974,16 @@ async function exportarTodosPacientes() {
   const pacientes = await dbAll(STORE_PACIENTES);
   const versoes = await dbAll(STORE_VERSOES_PLANO);
   const avaliacoes = await dbAll(STORE_AVALIACOES);
-  if (pacientes.length === 0) { toastNutri('Nenhum paciente para exportar', 'aviso'); return; }
+  const receitas = await dbAll(STORE_RECEITAS);
+  if (pacientes.length === 0 && receitas.length === 0) { toastNutri('Nenhum paciente para exportar', 'aviso'); return; }
   const pacote = {
     tipo: 'nutrifuel_backup_completo',
-    versao_app: '3.8',
-    pacientes, versoes, avaliacoes,
+    versao_app: '3.8.2',
+    pacientes, versoes, avaliacoes, receitas,
     exportadoEm: new Date().toISOString()
   };
   baixarJSONPac(pacote, `nutrifuel_backup_${new Date().toISOString().split('T')[0]}.json`);
-  toastNutri(`📥 Backup com ${pacientes.length} paciente(s) exportado`);
+  toastNutri(`📥 Backup com ${pacientes.length} paciente(s)${receitas.length ? ' e ' + receitas.length + ' receita(s)' : ''} exportado`);
 }
 
 async function importarPacientes(event) {
@@ -6423,6 +6997,7 @@ async function importarPacientes(event) {
     let pacImp = [];
     let versoesImp = [];
     let avalsImp = [];
+    let receitasImp = [];
     let formato = '';
     
     if (pacote.tipo === 'nutrifuel_paciente' && pacote.paciente) {
@@ -6434,6 +7009,7 @@ async function importarPacientes(event) {
       pacImp = pacote.pacientes || [];
       versoesImp = pacote.versoes || [];
       avalsImp = pacote.avaliacoes || [];
+      receitasImp = pacote.receitas || [];
       formato = 'backup';
     } else if (pacote.planos || pacote.plano || pacote.cliente || pacote.dadosTMB) {
       // Formato ANTIGO: JSON da aba 📄 Exportar (v3.7 ou anteriores)
@@ -6477,7 +7053,7 @@ async function importarPacientes(event) {
     if (formato === 'ficha') {
       msg = `Importar a ficha de "${pacImp[0].dados?.nome || 'Paciente'}"?\n\n• ${versoesImp.length} versão(ões) de plano\n• ${avalsImp.length} avaliação(ões) física(s)`;
     } else if (formato === 'backup') {
-      msg = `Importar backup completo?\n\n• ${pacImp.length} paciente(s)\n• ${versoesImp.length} versão(ões)\n• ${avalsImp.length} avaliação(ões)\n\nPacientes com mesmo ID serão substituídos pelos mais recentes.`;
+      msg = `Importar backup completo?\n\n• ${pacImp.length} paciente(s)\n• ${versoesImp.length} versão(ões)\n• ${avalsImp.length} avaliação(ões)\n• ${receitasImp.length} receita(s)\n\nPacientes com mesmo ID serão substituídos pelos mais recentes. Receitas com mesmo nome serão atualizadas.`;
     } else {
       msg = `Criar novo paciente "${pacImp[0].dados?.nome}" a partir deste arquivo de plano?`;
     }
@@ -6515,13 +7091,39 @@ async function importarPacientes(event) {
       } catch (e) {}
     }
     
+    // Receitas globais — mescla por nome (a importada mais recente vence)
+    let rImp = 0;
+    if (receitasImp.length > 0) {
+      const atuais = await dbAll(STORE_RECEITAS);
+      for (const r of receitasImp) {
+        try {
+          if (!r || !r.n) continue;
+          const existente = atuais.find(x => normalizar(x.n) === normalizar(r.n));
+          const rec = { ...r };
+          if (existente) {
+            // mantém o id existente; só sobrescreve se a importada for >= recente
+            if ((r.atualizadoEm || 0) >= (existente.atualizadoEm || 0)) {
+              rec.id = existente.id;
+              await dbPut(STORE_RECEITAS, rec);
+              rImp++;
+            }
+          } else {
+            if (!rec.id) rec.id = gerarIdReceita();
+            await dbPut(STORE_RECEITAS, rec);
+            rImp++;
+          }
+        } catch (e) { /* ignora receita inválida */ }
+      }
+      await carregarReceitas();
+    }
+    
     await renderListaPacientes();
     await atualizarContadorPacientes();
     
     if (formato === 'antigo') {
       toastNutri(`✅ Paciente "${pacImp[0].dados?.nome}" criado a partir do JSON de plano`);
     } else {
-      toastNutri(`✅ ${imp} paciente(s)${vImp ? ', ' + vImp + ' versão(ões)' : ''}${aImp ? ' e ' + aImp + ' avaliação(ões)' : ''} importados`);
+      toastNutri(`✅ ${imp} paciente(s)${vImp ? ', ' + vImp + ' versão(ões)' : ''}${aImp ? ', ' + aImp + ' avaliação(ões)' : ''}${rImp ? ' e ' + rImp + ' receita(s)' : ''} importados`);
     }
     event.target.value = '';
   } catch (e) {
@@ -6870,6 +7472,7 @@ function navegarPara(panelId) {
 (async function inicializarPacientes() {
   try {
     await nutriDB();
+    await carregarReceitas();
     await atualizarContadorPacientes();
     await renderListaPacientes();
     atualizarBarraPacAtivo(null);
@@ -6900,7 +7503,7 @@ function navegarPara(panelId) {
       }
     });
     
-    console.log('✅ Módulo Pacientes v3.8.1 inicializado (com auto-save)');
+    console.log('✅ Módulo Pacientes v3.8.2 inicializado (com auto-save)');
   } catch (e) {
     console.error('Erro ao inicializar pacientes:', e);
   }
