@@ -624,6 +624,101 @@
     color: var(--orange);
   }
   
+  /* ===== Opções alternativas A/B/C (v3.9) ===== */
+  .opcao-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .opcao-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .opcao-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.74rem;
+    font-weight: 700;
+    transition: all 0.15s;
+  }
+  .opcao-tab:hover { border-color: var(--orange); color: var(--text); }
+  .opcao-tab.active {
+    background: var(--orange-soft);
+    border-color: var(--orange);
+    color: var(--orange);
+  }
+  .opcao-tab-kcal {
+    font-size: 0.66rem;
+    font-weight: 600;
+    opacity: 0.75;
+  }
+  .opcao-del-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    line-height: 1;
+    margin-left: 2px;
+  }
+  .opcao-del-btn:hover { background: #ef4444; color: #fff; }
+  .opcao-add-btn {
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px dashed var(--orange);
+    border-radius: 7px;
+    color: var(--orange);
+    cursor: pointer;
+    font-size: 0.72rem;
+    font-weight: 700;
+    transition: all 0.15s;
+  }
+  .opcao-add-btn:hover { background: var(--orange-soft); }
+  .opcao-aviso {
+    font-size: 0.72rem;
+    color: #f7a73a;
+    background: rgba(247,167,58,0.1);
+    border: 1px solid rgba(247,167,58,0.3);
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin-bottom: 10px;
+  }
+  .opcao-vazia {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    font-style: italic;
+    text-align: center;
+    padding: 16px 8px;
+  }
+  .meal-opcao-tag {
+    font-size: 0.62rem;
+    font-weight: 800;
+    color: var(--orange);
+    background: var(--orange-soft);
+    border: 1px solid var(--orange);
+    border-radius: 5px;
+    padding: 2px 6px;
+    vertical-align: middle;
+    letter-spacing: 0.04em;
+  }
+  
   .add-form {
     display: grid;
     grid-template-columns: 1fr 100px 110px auto;
@@ -1691,6 +1786,42 @@
     page-break-inside: avoid;
   }
   
+  /* Opções alternativas no PDF (v3.9) */
+  .pdf-opcao-group {
+    border: 1.5px solid #ffd9bf;
+    border-radius: 10px;
+    padding: 8px;
+    margin-bottom: 12px;
+    background: #fffaf5;
+    page-break-inside: avoid;
+  }
+  .pdf-opcao-group .pdf-meal {
+    margin-bottom: 0;
+  }
+  .pdf-opcao-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    color: #ffffff !important;
+    font-weight: 700;
+    opacity: 0.92;
+  }
+  .pdf-opcao-ou {
+    text-align: center;
+    padding: 6px 0;
+  }
+  .pdf-opcao-ou span {
+    font-family: 'Bebas Neue', Impact, sans-serif;
+    font-size: 0.9rem;
+    letter-spacing: 0.12em;
+    color: #ff6b1a;
+    background: #fff;
+    border: 1px solid #ffd9bf;
+    border-radius: 100px;
+    padding: 2px 16px;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
   .pdf-meal-header {
     background: #ff6b1a !important;
     background-color: #ff6b1a !important;
@@ -2032,7 +2163,7 @@
         </div>
         <div class="brand-meta-item">
           <span>Versão</span>
-          <strong>3.8.3</strong>
+          <strong>3.9.0</strong>
         </div>
       </div>
     </div>
@@ -2821,7 +2952,7 @@
   </div>
 
   <p class="footer-note">
-    <strong>NUTRI.FUEL · v3.8.3</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
+    <strong>NUTRI.FUEL · v3.9.0</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
   </p>
   
   <!-- ============== ÁREA DO PDF (oculta na tela, visível na impressão) ============== -->
@@ -3395,16 +3526,85 @@ function getPlanoAtivo() {
   return planos[ciclagem.diaAtivo];
 }
 
+// ============================================================
+// REFEIÇÕES ALTERNATIVAS — OPÇÃO A / B / C... (v3.9)
+// ------------------------------------------------------------
+// Cada plano pode ter `_opcoes[mealKey] = { ativa, listas, nomes }`.
+//   - listas: array de arrays de alimentos (1 por opção)
+//   - nomes: rótulos das opções (['A','B',...])
+//   - ativa: índice da opção em foco/edição
+// Quando uma refeição NÃO tem _opcoes, o array plano[mealKey] funciona
+// como antes (opção única) — 100% compatível com planos legados.
+// O alias OPCAO_LABELS converte índice → letra.
+// ============================================================
+const OPCAO_LABELS = ['A','B','C','D','E','F','G','H'];
+
+// Garante a estrutura interna de opções de um plano (sem alterá-la)
+function garantirOpcoes(p) {
+  if (!p) return;
+  if (!p._opcoes || typeof p._opcoes !== 'object') {
+    Object.defineProperty(p, '_opcoes', { value: {}, enumerable: false, writable: true, configurable: true });
+  } else if (Object.getOwnPropertyDescriptor(p, '_opcoes')?.enumerable) {
+    // Migra _opcoes que possa ter vindo enumerável de snapshot antigo
+    const dados = p._opcoes;
+    delete p._opcoes;
+    Object.defineProperty(p, '_opcoes', { value: dados, enumerable: false, writable: true, configurable: true });
+  }
+}
+
+// Quantas opções tem uma refeição (1 = sem alternativas)
+function totalOpcoes(p, mealKey) {
+  garantirOpcoes(p);
+  const op = p._opcoes[mealKey];
+  return (op && op.listas && op.listas.length) ? op.listas.length : 1;
+}
+
+// Índice da opção ativa de uma refeição
+function opcaoAtivaIdx(p, mealKey) {
+  garantirOpcoes(p);
+  const op = p._opcoes[mealKey];
+  if (!op || !op.listas || !op.listas.length) return 0;
+  let i = op.ativa | 0;
+  if (i < 0 || i >= op.listas.length) i = 0;
+  return i;
+}
+
+// Retorna o array de alimentos da opção ativa de uma refeição (referência viva)
+function listaAtivaRef(p, mealKey) {
+  garantirOpcoes(p);
+  const op = p._opcoes[mealKey];
+  if (op && op.listas && op.listas.length) {
+    return op.listas[opcaoAtivaIdx(p, mealKey)];
+  }
+  if (!Array.isArray(p[mealKey])) p[mealKey] = [];
+  return p[mealKey];
+}
+
 // Compatibilidade: redireciona TODA leitura/escrita em `plano` pra `getPlanoAtivo()`
 // Usando Proxy para que `plano[meal].push(...)`, `plano[meal][i]`, etc. funcionem
 // transparentemente mesmo nas funções antigas.
+// Quando a refeição tem opções alternativas, devolve a lista da OPÇÃO ATIVA.
 const plano = new Proxy({}, {
   get(_, key) {
     if (key === Symbol.iterator) return undefined;
-    return getPlanoAtivo()[key];
+    const pa = getPlanoAtivo();
+    if (typeof key === 'string' && REFEICOES[key]) {
+      return listaAtivaRef(pa, key);
+    }
+    return pa[key];
   },
   set(_, key, value) {
-    getPlanoAtivo()[key] = value;
+    const pa = getPlanoAtivo();
+    if (typeof key === 'string' && REFEICOES[key]) {
+      garantirOpcoes(pa);
+      const op = pa._opcoes[key];
+      if (op && op.listas && op.listas.length) {
+        op.listas[opcaoAtivaIdx(pa, key)] = value;
+        if (opcaoAtivaIdx(pa, key) === 0) pa[key] = value;
+        return true;
+      }
+    }
+    pa[key] = value;
     return true;
   },
   has(_, key) {
@@ -3417,6 +3617,212 @@ const plano = new Proxy({}, {
     return Object.getOwnPropertyDescriptor(getPlanoAtivo(), key);
   }
 });
+
+// ============================================================
+// GESTÃO DE OPÇÕES ALTERNATIVAS (v3.9)
+// ============================================================
+// Calcula kcal total de uma lista de alimentos
+function kcalDaLista(lista) {
+  let k = 0;
+  (lista || []).forEach(item => { k += calcMacrosItem(item).k; });
+  return k;
+}
+
+// Adiciona uma nova opção alternativa a uma refeição do plano ativo.
+// modo: 'vazia' = começa sem alimentos · 'copia' = duplica a opção ativa.
+function adicionarOpcao(mealKey, modo) {
+  const pa = getPlanoAtivo();
+  garantirOpcoes(pa);
+  let op = pa._opcoes[mealKey];
+
+  // Primeira vez: converte a refeição simples em multi-opção.
+  // A opção A passa a ser o array que JÁ existia em pa[mealKey] (mesma referência).
+  if (!op || !op.listas || !op.listas.length) {
+    if (!Array.isArray(pa[mealKey])) pa[mealKey] = [];
+    op = { ativa: 0, nomes: ['A'], listas: [pa[mealKey]] };
+    pa._opcoes[mealKey] = op;
+  }
+
+  // Nova lista de alimentos
+  let novaLista;
+  if (modo === 'copia') {
+    const base = op.listas[op.ativa] || [];
+    novaLista = base.map(item => ({
+      ...item,
+      subs: (item.subs || []).map(s => ({ ...s })),
+      ingredientes: item.ingredientes ? JSON.parse(JSON.stringify(item.ingredientes)) : undefined
+    }));
+  } else {
+    novaLista = [];
+  }
+
+  op.listas.push(novaLista);
+  op.nomes.push(OPCAO_LABELS[op.listas.length - 1] || String(op.listas.length));
+  op.ativa = op.listas.length - 1; // foca a opção recém-criada
+  return op.ativa;
+}
+
+// Troca qual opção está em foco/edição
+function selecionarOpcao(mealKey, idx) {
+  const pa = getPlanoAtivo();
+  garantirOpcoes(pa);
+  const op = pa._opcoes[mealKey];
+  if (!op || !op.listas) return;
+  if (idx < 0 || idx >= op.listas.length) return;
+  op.ativa = idx;
+  // Mantém o array flat sincronizado quando a opção A está ativa
+  if (idx === 0) pa[mealKey] = op.listas[0];
+  render();
+  if (typeof _markPacDirty === 'function') _markPacDirty();
+}
+
+// Remove uma opção. Se sobrar só 1, volta a ser refeição simples.
+function removerOpcao(mealKey, idx) {
+  const pa = getPlanoAtivo();
+  garantirOpcoes(pa);
+  const op = pa._opcoes[mealKey];
+  if (!op || !op.listas || op.listas.length <= 1) return;
+
+  const nome = op.nomes[idx] || OPCAO_LABELS[idx];
+  if (!confirm(`Excluir a Opção ${nome} de ${REFEICOES[mealKey]}?\n\nOs alimentos dessa opção serão perdidos.`)) return;
+
+  op.listas.splice(idx, 1);
+  op.nomes.splice(idx, 1);
+  // Renomeia em sequência (A, B, C...)
+  op.nomes = op.listas.map((_, i) => OPCAO_LABELS[i] || String(i + 1));
+  if (op.ativa >= op.listas.length) op.ativa = op.listas.length - 1;
+
+  // Sobrou só 1 → volta a ser refeição simples (sem _opcoes)
+  if (op.listas.length === 1) {
+    pa[mealKey] = op.listas[0];
+    delete pa._opcoes[mealKey];
+  } else {
+    pa[mealKey] = op.listas[0];
+  }
+  render();
+  if (typeof _markPacDirty === 'function') _markPacDirty();
+}
+
+// Handler do botão "Adicionar alternativa" — pergunta vazia/cópia + avisa kcal
+function novaOpcaoRefeicao(mealKey) {
+  const pa = getPlanoAtivo();
+  const temItens = totalOpcoes(pa, mealKey) > 1
+    ? (pa._opcoes[mealKey].listas[pa._opcoes[mealKey].ativa] || []).length > 0
+    : (Array.isArray(pa[mealKey]) && pa[mealKey].length > 0);
+
+  let modo = 'vazia';
+  if (temItens) {
+    // OK = copiar da opção atual · Cancelar = começar vazia
+    modo = confirm(
+      `Nova opção de ${REFEICOES[mealKey]}\n\n` +
+      `OK = copiar os alimentos da opção atual (e ajustar depois)\n` +
+      `Cancelar = começar uma opção vazia`
+    ) ? 'copia' : 'vazia';
+  }
+
+  const idx = adicionarOpcao(mealKey, modo);
+
+  // Aviso de diferença de kcal > 100 entre a nova opção e a opção A
+  const op = getPlanoAtivo()._opcoes[mealKey];
+  if (op && op.listas.length > 1) {
+    const kA = kcalDaLista(op.listas[0]);
+    const kNova = kcalDaLista(op.listas[idx]);
+    const diff = Math.abs(kA - kNova);
+    if (diff > 100 && modo !== 'copia') {
+      // só avisa quando já há itens; opção vazia recém-criada não dispara
+    }
+  }
+  render();
+  if (typeof _markPacDirty === 'function') _markPacDirty();
+}
+
+// Verifica desvio de kcal entre opções e devolve aviso (usado no render)
+function avisoOpcoes(p, mealKey) {
+  garantirOpcoes(p);
+  const op = p._opcoes[mealKey];
+  if (!op || !op.listas || op.listas.length < 2) return null;
+  const kcals = op.listas.map(kcalDaLista);
+  const min = Math.min(...kcals), max = Math.max(...kcals);
+  if (max - min > 100) {
+    return `As opções variam ${Math.round(max - min)} kcal entre si`;
+  }
+  return null;
+}
+
+// ============================================================
+// SERIALIZAÇÃO DE PLANOS (v3.9) — preserva _opcoes (não-enumerável)
+// ============================================================
+// Converte um plano (com _opcoes não-enumerável) em objeto JSON-safe.
+function planoParaJSON(p) {
+  const out = {};
+  ['cafe','lanche1','almoco','lanche2','jantar','ceia'].forEach(meal => {
+    out[meal] = JSON.parse(JSON.stringify(p[meal] || []));
+  });
+  if (p._opcoes && typeof p._opcoes === 'object' && Object.keys(p._opcoes).length) {
+    const op = {};
+    Object.keys(p._opcoes).forEach(meal => {
+      const o = p._opcoes[meal];
+      if (!o || !o.listas || !o.listas.length) return;
+      op[meal] = {
+        ativa: o.ativa | 0,
+        nomes: [...(o.nomes || [])],
+        listas: o.listas.map(l => JSON.parse(JSON.stringify(l || [])))
+      };
+    });
+    if (Object.keys(op).length) out._opcoes = op; // gravado como chave normal no JSON
+  }
+  return out;
+}
+
+// Reconstrói um plano a partir de JSON, restaurando _opcoes como não-enumerável.
+// Mantém listas[0] === array flat da refeição (mesma referência).
+function planoDeJSON(obj) {
+  const p = novoPlanoVazio();
+  if (!obj || typeof obj !== 'object') return p;
+  ['cafe','lanche1','almoco','lanche2','jantar','ceia'].forEach(meal => {
+    p[meal] = (Array.isArray(obj[meal]) ? obj[meal] : []).map(item => {
+      if (!item.subs) item.subs = [];
+      return item;
+    });
+  });
+  if (obj._opcoes && typeof obj._opcoes === 'object') {
+    const op = {};
+    Object.keys(obj._opcoes).forEach(meal => {
+      const o = obj._opcoes[meal];
+      if (!o || !o.listas || !o.listas.length) return;
+      const listas = o.listas.map((l, i) => {
+        const arr = (Array.isArray(l) ? l : []).map(item => {
+          if (!item.subs) item.subs = [];
+          return item;
+        });
+        return arr;
+      });
+      // listas[0] passa a SER o array flat da refeição (mesma referência)
+      if (listas.length) { p[meal] = listas[0]; }
+      op[meal] = {
+        ativa: Math.min(Math.max(o.ativa | 0, 0), listas.length - 1),
+        nomes: (o.nomes && o.nomes.length === listas.length)
+          ? [...o.nomes]
+          : listas.map((_, i) => OPCAO_LABELS[i] || String(i + 1)),
+        listas
+      };
+    });
+    if (Object.keys(op).length) {
+      Object.defineProperty(p, '_opcoes', { value: op, enumerable: false, writable: true, configurable: true });
+    }
+  }
+  return p;
+}
+
+// Serializa o objeto `planos` inteiro (4 dias) para JSON-safe
+function planosParaJSON() {
+  return {
+    unico: planoParaJSON(planos.unico),
+    alto:  planoParaJSON(planos.alto),
+    medio: planoParaJSON(planos.medio),
+    baixo: planoParaJSON(planos.baixo)
+  };
+}
 
 let metas = { kcal: null, prot: null, carb: null, fat: null };
 let cliente = { nome: '', idade: '', tel: '', peso: '', altura: '', objetivo: '', atividade: '', obs: '', profNome: '', planData: '' };
@@ -3464,8 +3870,8 @@ let resultadoGET = null;
 let subsContext = { mealKey: null, foodIdx: null };
 let subAlimentoSelecionado = null;
 
-// Atualiza badge total alimentos
-// Contagem inicial só de alimentos da TACO; carregarReceitas() soma as receitas depois
+// Atualiza badge total alimentos (RECEITAS ainda não foi inicializado aqui —
+// carregarReceitas() recalcula o badge incluindo as receitas depois)
 document.getElementById('metaTotalAlimentos').textContent = ALIMENTOS.length + '+';
 
 // Data padrão = hoje
@@ -3844,6 +4250,24 @@ function clonarPlano(p) {
   ['cafe', 'lanche1', 'almoco', 'lanche2', 'jantar', 'ceia'].forEach(m => {
     if (!novo[m]) novo[m] = [];
   });
+  // Clona opções alternativas (v3.9), mantendo listas[0] === array flat da refeição
+  if (p._opcoes && typeof p._opcoes === 'object') {
+    const opNovo = {};
+    Object.keys(p._opcoes).forEach(meal => {
+      const op = p._opcoes[meal];
+      if (!op || !op.listas || !op.listas.length) return;
+      const listas = op.listas.map((lst, i) => {
+        if (i === 0) return novo[meal]; // opção A === array flat já clonado
+        return (lst || []).map(item => ({
+          ...item,
+          subs: (item.subs || []).map(s => ({...s})),
+          ingredientes: item.ingredientes ? JSON.parse(JSON.stringify(item.ingredientes)) : undefined
+        }));
+      });
+      opNovo[meal] = { ativa: op.ativa | 0, nomes: [...(op.nomes || [])], listas };
+    });
+    Object.defineProperty(novo, '_opcoes', { value: opNovo, enumerable: false, writable: true, configurable: true });
+  }
   return novo;
 }
 
@@ -3855,20 +4279,29 @@ function ajustarQuantidadesCarbo(p, diaDestino) {
   const carboAlvoDest = ciclagem.carbos[diaDestino] || carboAlvoAlto;
   if (carboAlvoAlto === 0) return p;
   const fator = carboAlvoDest / carboAlvoAlto;
-  
-  Object.keys(p).forEach(meal => {
-    p[meal] = (p[meal] || []).map(item => {
-      const m = calcMacrosItem(item);
-      const kcalCarbo = (m.c || 0) * 4;
-      const totalKcal = m.k || 1;
-      const pctCarbo = kcalCarbo / totalKcal;
-      if (pctCarbo > 0.5) {
-        // Item rico em carbo → ajusta proporcionalmente
-        return { ...item, q: item.q * fator };
-      }
-      return item;
-    });
+
+  const ajustarLista = (lista) => (lista || []).map(item => {
+    const m = calcMacrosItem(item);
+    const kcalCarbo = (m.c || 0) * 4;
+    const totalKcal = m.k || 1;
+    const pctCarbo = kcalCarbo / totalKcal;
+    if (pctCarbo > 0.5) {
+      return { ...item, q: item.q * fator };
+    }
+    return item;
   });
+
+  Object.keys(p).forEach(meal => {
+    p[meal] = ajustarLista(p[meal]);
+  });
+  // Ajusta também as opções alternativas (v3.9)
+  if (p._opcoes && typeof p._opcoes === 'object') {
+    Object.keys(p._opcoes).forEach(meal => {
+      const op = p._opcoes[meal];
+      if (!op || !op.listas) return;
+      op.listas = op.listas.map((lst, i) => i === 0 ? p[meal] : ajustarLista(lst));
+    });
+  }
   return p;
 }
 
@@ -4222,6 +4655,9 @@ function render() {
   
   Object.keys(REFEICOES).forEach(key => {
     const itens = plano[key];
+    const pa = getPlanoAtivo();
+    const nOpcoes = totalOpcoes(pa, key);
+    const temOpcoes = nOpcoes > 1;
     let mKcal = 0, mProt = 0, mCarb = 0, mFat = 0;
     
     itens.forEach(item => {
@@ -4231,7 +4667,8 @@ function render() {
     
     totalKcal += mKcal; totalProt += mProt; totalCarb += mCarb; totalFat += mFat;
     
-    if (itens.length === 0) return;
+    // Pula refeição vazia — mas mantém o card se tiver opções alternativas
+    if (itens.length === 0 && !temOpcoes) return;
     
     // Indicador de meta da refeição (se distribuição estiver ativa)
     const metaRefKcal = getMetaRefeicao(key);
@@ -4262,11 +4699,36 @@ function render() {
       `;
     }
     
+    // ===== Mini-abas de opções alternativas (v3.9) =====
+    let opcoesHtml = '';
+    const ativaIdx = opcaoAtivaIdx(pa, key);
+    if (temOpcoes) {
+      const op = pa._opcoes[key];
+      const tabs = op.listas.map((lst, i) => {
+        const kOp = Math.round(kcalDaLista(lst));
+        const ativo = i === ativaIdx ? ' active' : '';
+        const delBtn = (i === ativaIdx && op.listas.length > 1)
+          ? `<span class="opcao-del-btn" data-meal="${key}" data-opidx="${i}" title="Excluir esta opção">×</span>`
+          : '';
+        return `<button type="button" class="opcao-tab${ativo}" data-meal="${key}" data-opidx="${i}">` +
+               `Opção ${op.nomes[i] || OPCAO_LABELS[i]}<span class="opcao-tab-kcal">${kOp} kcal</span>${delBtn}</button>`;
+      }).join('');
+      const aviso = avisoOpcoes(pa, key);
+      const avisoHtml = aviso
+        ? `<div class="opcao-aviso">⚠️ ${aviso}</div>` : '';
+      opcoesHtml = `
+        <div class="opcao-bar">
+          <div class="opcao-tabs">${tabs}</div>
+          <button type="button" class="opcao-add-btn" data-meal="${key}">➕ Alternativa</button>
+        </div>
+        ${avisoHtml}`;
+    }
+
     const card = document.createElement('div');
     card.className = 'meal-card';
     card.innerHTML = `
       <div class="meal-header">
-        <div class="meal-name">${REFEICOES[key]}</div>
+        <div class="meal-name">${REFEICOES[key]}${temOpcoes ? ` <span class="meal-opcao-tag">Opção ${pa._opcoes[key].nomes[ativaIdx] || OPCAO_LABELS[ativaIdx]}</span>` : ''}</div>
         <div class="meal-totals">
           <div class="meal-total-item"><span class="dot dot-kcal"></span><span><strong>${Math.round(mKcal)}</strong> kcal</span></div>
           <div class="meal-total-item"><span class="dot dot-prot"></span><span>P <strong>${mProt.toFixed(1)}g</strong></span></div>
@@ -4274,8 +4736,10 @@ function render() {
           <div class="meal-total-item"><span class="dot dot-fat"></span><span>G <strong>${mFat.toFixed(1)}g</strong></span></div>
         </div>
       </div>
+      ${opcoesHtml}
       ${mealMetaHtml}
       <div class="food-list">
+        ${itens.length === 0 ? `<div class="opcao-vazia">Opção sem alimentos — selecione a aba "${REFEICOES[key]}" acima e adicione alimentos aqui.</div>` : ''}
         ${itens.map((item, i) => {
           const m = calcMacrosItem(item);
           const unidadeLabel = item.modo === 'u' ? (item.uName || 'un') : 'g';
@@ -4801,6 +5265,28 @@ document.querySelectorAll('.meal-tab').forEach(tab => {
   });
 });
 
+// Delegação de cliques nas mini-abas de opção e no botão "Alternativa" (v3.9)
+document.getElementById('mealsContainer').addEventListener('click', (e) => {
+  const addBtn = e.target.closest('.opcao-add-btn');
+  if (addBtn) {
+    e.preventDefault();
+    novaOpcaoRefeicao(addBtn.dataset.meal);
+    return;
+  }
+  const delBtn = e.target.closest('.opcao-del-btn');
+  if (delBtn) {
+    e.preventDefault();
+    removerOpcao(delBtn.dataset.meal, parseInt(delBtn.dataset.opidx, 10));
+    return;
+  }
+  const opTab = e.target.closest('.opcao-tab');
+  if (opTab) {
+    e.preventDefault();
+    selecionarOpcao(opTab.dataset.meal, parseInt(opTab.dataset.opidx, 10));
+    return;
+  }
+});
+
 ['metaKcal', 'metaProt', 'metaCarb', 'metaFat'].forEach((id, i) => {
   const keys = ['kcal', 'prot', 'carb', 'fat'];
   document.getElementById(id).addEventListener('input', (e) => {
@@ -4917,20 +5403,68 @@ function buildPDFContent() {
   `;
   
   // Refeições
-  Object.keys(REFEICOES).forEach(key => {
-    const itens = plano[key];
-    if (itens.length === 0) return;
-    
+  // Helper: HTML de um alimento (com receita e substituições)
+  function pdfFoodRowHtml(item) {
+    const m = calcMacrosItem(item);
+    const qtyLabel = item.modo === 'u' ? `${item.q} ${item.uName || 'un'} (${Math.round(m.gramas)}g)` : `${item.q}g`;
+    let ingsHtml = '';
+    if (item.tipo === 'receita' && item.ingredientes && item.ingredientes.length > 0) {
+      const baseGramas = item.ingredientes.reduce((s, ing) => s + (parseFloat(ing.g) || 0), 0);
+      const fator = baseGramas > 0 ? (m.gramas / baseGramas) : 1;
+      const linhas = item.ingredientes.map(ing => {
+        const gEscala = (parseFloat(ing.g) || 0) * fator;
+        return `<div class="pdf-recipe-ing-line">↳ ${ing.n} — ${Math.round(gEscala)}g</div>`;
+      }).join('');
+      ingsHtml = `
+        <div class="pdf-recipe-ings">
+          <span class="pdf-recipe-ings-label">🍳 Ingredientes da receita</span>
+          ${linhas}
+        </div>
+      `;
+    }
+    let rowHtml = `
+      <div class="pdf-food">
+        <div>
+          <div class="pdf-food-name">${item.n}</div>
+          <div class="pdf-food-qty">${qtyLabel}</div>
+          ${ingsHtml}
+        </div>
+        <div class="pdf-food-macros">
+          <div><strong>${Math.round(m.k)}</strong> kcal</div>
+          <div>P ${m.p.toFixed(1)}g · C ${m.c.toFixed(1)}g · G ${m.f.toFixed(1)}g</div>
+        </div>
+      </div>
+    `;
+    if (item.subs && item.subs.length > 0) {
+      rowHtml += `<div class="pdf-subs">
+        <div class="pdf-subs-title">⇄ Substituições Equivalentes</div>`;
+      item.subs.forEach(sub => {
+        const ms = calcMacrosItem(sub);
+        const qLabel = sub.modo === 'u' ? `${sub.q} ${sub.uName || 'un'}` : `${sub.q}g`;
+        const gInfo = sub.modo === 'u' ? ` <span style="color:#999; font-size:0.92em;">(${Math.round(ms.gramas)}g)</span>` : '';
+        rowHtml += `
+          <div class="pdf-sub-item">
+            <div><strong>${sub.n}</strong>${gInfo}</div>
+            <div class="pdf-sub-qty">${qLabel} · ${Math.round(ms.k)} kcal</div>
+          </div>
+        `;
+      });
+      rowHtml += `</div>`;
+    }
+    return rowHtml;
+  }
+
+  // Helper: bloco de uma refeição (uma opção). `rotulo` = sufixo "— OPÇÃO A" (ou vazio)
+  function pdfMealBlockHtml(mealKey, itens, rotulo) {
     let mK = 0, mP = 0, mC = 0, mF = 0;
     itens.forEach(item => {
       const m = calcMacrosItem(item);
       mK += m.k; mP += m.p; mC += m.c; mF += m.f;
     });
-    
-    html += `
+    let bloco = `
       <div class="pdf-meal">
         <div class="pdf-meal-header">
-          <div class="pdf-meal-name">${REFEICOES[key]}</div>
+          <div class="pdf-meal-name">${REFEICOES[mealKey]}${rotulo}</div>
           <div class="pdf-meal-totals">
             <span><strong>${Math.round(mK)}</strong> kcal</span>
             <span>P <strong>${mP.toFixed(1)}g</strong></span>
@@ -4940,63 +5474,33 @@ function buildPDFContent() {
         </div>
         <div class="pdf-foods">
     `;
-    
-    itens.forEach(item => {
-      const m = calcMacrosItem(item);
-      const qtyLabel = item.modo === 'u' ? `${item.q} ${item.uName || 'un'} (${Math.round(m.gramas)}g)` : `${item.q}g`;
-      
-      // Receita: monta a lista de ingredientes proporcionada à quantidade usada
-      let ingsHtml = '';
-      if (item.tipo === 'receita' && item.ingredientes && item.ingredientes.length > 0) {
-        // gramas totais da receita-base e fator de escala para a porção no plano
-        const baseGramas = item.ingredientes.reduce((s, ing) => s + (parseFloat(ing.g) || 0), 0);
-        const fator = baseGramas > 0 ? (m.gramas / baseGramas) : 1;
-        const linhas = item.ingredientes.map(ing => {
-          const gEscala = (parseFloat(ing.g) || 0) * fator;
-          return `<div class="pdf-recipe-ing-line">↳ ${ing.n} — ${Math.round(gEscala)}g</div>`;
-        }).join('');
-        ingsHtml = `
-          <div class="pdf-recipe-ings">
-            <span class="pdf-recipe-ings-label">🍳 Ingredientes da receita</span>
-            ${linhas}
-          </div>
-        `;
-      }
-      
-      html += `
-        <div class="pdf-food">
-          <div>
-            <div class="pdf-food-name">${item.n}</div>
-            <div class="pdf-food-qty">${qtyLabel}</div>
-            ${ingsHtml}
-          </div>
-          <div class="pdf-food-macros">
-            <div><strong>${Math.round(m.k)}</strong> kcal</div>
-            <div>P ${m.p.toFixed(1)}g · C ${m.c.toFixed(1)}g · G ${m.f.toFixed(1)}g</div>
-          </div>
-        </div>
-      `;
-      
-      // Substituições
-      if (item.subs && item.subs.length > 0) {
-        html += `<div class="pdf-subs">
-          <div class="pdf-subs-title">⇄ Substituições Equivalentes</div>`;
-        item.subs.forEach(sub => {
-          const ms = calcMacrosItem(sub);
-          const qLabel = sub.modo === 'u' ? `${sub.q} ${sub.uName || 'un'}` : `${sub.q}g`;
-          const gInfo = sub.modo === 'u' ? ` <span style="color:#999; font-size:0.92em;">(${Math.round(ms.gramas)}g)</span>` : '';
-          html += `
-            <div class="pdf-sub-item">
-              <div><strong>${sub.n}</strong>${gInfo}</div>
-              <div class="pdf-sub-qty">${qLabel} · ${Math.round(ms.k)} kcal</div>
-            </div>
-          `;
-        });
-        html += `</div>`;
-      }
-    });
-    
-    html += `</div></div>`;
+    itens.forEach(item => { bloco += pdfFoodRowHtml(item); });
+    bloco += `</div></div>`;
+    return bloco;
+  }
+
+  const planoPDF = getPlanoAtivo();
+  Object.keys(REFEICOES).forEach(key => {
+    const nOp = totalOpcoes(planoPDF, key);
+    if (nOp > 1) {
+      // Refeição com opções alternativas → renderiza todas com separador "OU"
+      const op = planoPDF._opcoes[key];
+      const blocosNaoVazios = op.listas
+        .map((lst, i) => ({ lst, i }))
+        .filter(o => o.lst && o.lst.length > 0);
+      if (blocosNaoVazios.length === 0) return;
+      html += `<div class="pdf-opcao-group">`;
+      blocosNaoVazios.forEach((o, ord) => {
+        const nome = op.nomes[o.i] || OPCAO_LABELS[o.i];
+        if (ord > 0) html += `<div class="pdf-opcao-ou"><span>OU</span></div>`;
+        html += pdfMealBlockHtml(key, o.lst, ` <span class="pdf-opcao-tag">— OPÇÃO ${nome}</span>`);
+      });
+      html += `</div>`;
+    } else {
+      const itens = plano[key];
+      if (itens.length === 0) return;
+      html += pdfMealBlockHtml(key, itens, '');
+    }
   });
   
   // Footer
@@ -5100,7 +5604,7 @@ async function gerarPDF() {
         }
       },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
-      pagebreak: { mode: ['css', 'legacy'], avoid: ['.pdf-meal', '.pdf-stat', '.pdf-client', '.pdf-header'] }
+      pagebreak: { mode: ['css', 'legacy'], avoid: ['.pdf-meal', '.pdf-opcao-group', '.pdf-stat', '.pdf-client', '.pdf-header'] }
     };
     
     await html2pdf().set(opt).from(document.getElementById('pdfRenderInner')).save();
@@ -5205,34 +5709,32 @@ async function exportarHTML() {
       let totalKcal = 0, totalP = 0, totalC = 0, totalF = 0;
       let refeicoesHtml = '';
       
-      Object.keys(REFEICOES).forEach(mealKey => {
-        const itens = planoAjustado[mealKey];
-        if (!itens || itens.length === 0) return;
-        
+      // Helper: monta o bloco HTML de uma refeição (uma opção).
+      // Atualiza exGlobal/modaisHtml/totais via closure.
+      function montarMealBlock(mealKey, itens, rotulo) {
         let mKcal = 0, mP = 0, mC = 0, mF = 0;
         let itensHtml = '';
-        
+
         itens.forEach(item => {
           exGlobal++;
           const m = calcMacrosItem(item);
           mKcal += m.k; mP += m.p; mC += m.c; mF += m.f;
-          
+
           const unidadeLabel = item.modo === 'u' ? (item.uName || 'un') : 'g';
-          const qFmt = item.modo === 'u' 
-            ? `${item.q.toFixed(item.q % 1 === 0 ? 0 : 1)} ${unidadeLabel} <span style="color:#888; font-size:0.85em;">(${Math.round(m.gramas)}g)</span>` 
+          const qFmt = item.modo === 'u'
+            ? `${item.q.toFixed(item.q % 1 === 0 ? 0 : 1)} ${unidadeLabel} <span style="color:#888; font-size:0.85em;">(${Math.round(m.gramas)}g)</span>`
             : `${Math.round(item.q)}g`;
-          
+
           // Substituições (modal CSS :target)
           let subsLink = '';
           if (item.subs && item.subs.length > 0) {
             const modalId = `modal-sub-${exGlobal}`;
             subsLink = `<a href="#${modalId}" class="food-sub-link">⇄ ${item.subs.length} ${item.subs.length === 1 ? 'substituição' : 'substituições'}</a>`;
-            
-            // Constrói modal de subs
+
             let subsListHtml = '';
             item.subs.forEach(sub => {
               const sm = calcMacrosItem(sub);
-              const subQFmt = sub.modo === 'u' 
+              const subQFmt = sub.modo === 'u'
                 ? `${sub.q.toFixed(sub.q % 1 === 0 ? 0 : 1)} ${sub.uName || 'un'} (${Math.round(sm.gramas)}g)`
                 : `${Math.round(sub.q)}g`;
               subsListHtml += `
@@ -5248,7 +5750,7 @@ async function exportarHTML() {
                 </div>
               `;
             });
-            
+
             modaisHtml += `
               <div class="sub-modal" id="${modalId}">
                 <a href="#voltar-${exGlobal}" class="sub-modal-bg"></a>
@@ -5265,13 +5767,24 @@ async function exportarHTML() {
               </div>
             `;
           }
-          
+
+          // Receita: ingredientes proporcionados
+          let recIngsHtml = '';
+          if (item.tipo === 'receita' && item.ingredientes && item.ingredientes.length > 0) {
+            const baseGramas = item.ingredientes.reduce((s, ing) => s + (parseFloat(ing.g) || 0), 0);
+            const fator = baseGramas > 0 ? (m.gramas / baseGramas) : 1;
+            recIngsHtml = `<div class="food-recipe-ings">` +
+              item.ingredientes.map(ing => `↳ ${escapeHtmlNutri(ing.n)} ${Math.round((parseFloat(ing.g)||0) * fator)}g`).join(' · ') +
+              `</div>`;
+          }
+
           itensHtml += `
             <div class="food-item" id="voltar-${exGlobal}">
               <div class="food-line">
                 <div class="food-info">
                   <div class="food-name">${escapeHtmlNutri(item.n)}</div>
                   <div class="food-qty">${qFmt}</div>
+                  ${recIngsHtml}
                   ${subsLink}
                 </div>
                 <div class="food-macros">
@@ -5286,9 +5799,7 @@ async function exportarHTML() {
             </div>
           `;
         });
-        
-        totalKcal += mKcal; totalP += mP; totalC += mC; totalF += mF;
-        
+
         // Meta da refeição (se distribuição ativa)
         let metaRefHtml = '';
         if (distribuicao.ativa && distribuicao.pcts[mealKey] > 0) {
@@ -5296,11 +5807,13 @@ async function exportarHTML() {
           const metaKcal = Math.round(dia.metas.kcal * pct / 100);
           metaRefHtml = `<span class="meal-meta-pct">Meta: ${metaKcal} kcal (${pct}%)</span>`;
         }
-        
-        refeicoesHtml += `
+
+        return {
+          mKcal, mP, mC, mF,
+          html: `
           <div class="meal-block">
             <div class="meal-block-header">
-              <div class="meal-block-title">${REFEICOES[mealKey]}</div>
+              <div class="meal-block-title">${REFEICOES[mealKey]}${rotulo}</div>
               ${metaRefHtml}
             </div>
             <div class="meal-block-totals">
@@ -5313,7 +5826,38 @@ async function exportarHTML() {
               ${itensHtml}
             </div>
           </div>
-        `;
+        `};
+      }
+
+      Object.keys(REFEICOES).forEach(mealKey => {
+        const nOp = totalOpcoes(planoAjustado, mealKey);
+        if (nOp > 1) {
+          // Refeição com opções alternativas
+          const op = planoAjustado._opcoes[mealKey];
+          const blocos = op.listas
+            .map((lst, i) => ({ lst, i }))
+            .filter(o => o.lst && o.lst.length > 0);
+          if (blocos.length === 0) return;
+          // Totais do dia usam a OPÇÃO ATIVA (1ª não-vazia se a ativa estiver vazia)
+          const idxParaTotal = blocos.some(b => b.i === op.ativa) ? op.ativa : blocos[0].i;
+          refeicoesHtml += `<div class="opcao-group">`;
+          blocos.forEach((o, ord) => {
+            const nome = op.nomes[o.i] || OPCAO_LABELS[o.i];
+            if (ord > 0) refeicoesHtml += `<div class="opcao-ou"><span>OU</span></div>`;
+            const r = montarMealBlock(mealKey, o.lst, ` <span class="opcao-tag">— OPÇÃO ${nome}</span>`);
+            refeicoesHtml += r.html;
+            if (o.i === idxParaTotal) {
+              totalKcal += r.mKcal; totalP += r.mP; totalC += r.mC; totalF += r.mF;
+            }
+          });
+          refeicoesHtml += `</div>`;
+        } else {
+          const itens = planoAjustado[mealKey];
+          if (!itens || itens.length === 0) return;
+          const r = montarMealBlock(mealKey, itens, '');
+          refeicoesHtml += r.html;
+          totalKcal += r.mKcal; totalP += r.mP; totalC += r.mC; totalF += r.mF;
+        }
       });
       
       // Card do dia completo
@@ -5544,6 +6088,42 @@ async function exportarHTML() {
     border-bottom: 1px solid #f0f0f0;
   }
   .meal-block:last-child { border-bottom: none; }
+  /* Opções alternativas (v3.9) */
+  .opcao-group {
+    border-bottom: 1px solid #f0f0f0;
+    background: #fafafa;
+  }
+  .opcao-group:last-child { border-bottom: none; }
+  .opcao-group .meal-block { border-bottom: none; }
+  .opcao-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: #ff6b1a;
+    letter-spacing: 0.04em;
+  }
+  .opcao-ou {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 20px 6px 20px;
+  }
+  .opcao-ou span {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.95rem;
+    letter-spacing: 0.12em;
+    color: #ff6b1a;
+    background: #fff;
+    border: 1px solid #ffd9bf;
+    border-radius: 100px;
+    padding: 3px 18px;
+  }
+  .food-recipe-ings {
+    font-size: 0.72rem;
+    color: #888;
+    margin-top: 3px;
+    line-height: 1.5;
+  }
   
   .meal-block-header {
     padding: 14px 20px 8px 20px;
@@ -5818,9 +6398,9 @@ async function exportarHTML() {
 // ============================================================
 function exportarJSON() {
   const data = {
-    versao: '3.8.3',
-    planos: planos,                    // novo: salva todos os 4 planos
-    plano: getPlanoAtivo(),            // legacy: para compatibilidade com importações antigas
+    versao: '3.9.0',
+    planos: planosParaJSON(),          // novo: salva todos os 4 planos (com opções alternativas)
+    plano: planoParaJSON(getPlanoAtivo()), // legacy: para compatibilidade com importações antigas
     metas,
     ciclagem: {
       ativa: ciclagem.ativa,
@@ -5867,28 +6447,17 @@ function importarJSON(e) {
         // v3.3+: tem todos os 4 planos
         ['unico', 'alto', 'medio', 'baixo'].forEach(diaKey => {
           if (data.planos[diaKey]) {
-            // Garante compatibilidade — itens antigos sem "subs"
-            Object.keys(data.planos[diaKey]).forEach(meal => {
-              (data.planos[diaKey][meal] || []).forEach(item => {
-                if (!item.subs) item.subs = [];
-              });
-            });
-            planos[diaKey] = data.planos[diaKey];
+            planos[diaKey] = planoDeJSON(data.planos[diaKey]);
           } else {
             planos[diaKey] = novoPlanoVazio();
           }
         });
       } else if (data.plano) {
         // Legacy (até v3.2): só tinha um plano — coloca no "unico"
-        Object.keys(data.plano).forEach(k => {
-          (data.plano[k] || []).forEach(item => {
-            if (!item.subs) item.subs = [];
-          });
-        });
-        planos.unico = data.plano;
-        planos.alto = clonarPlano(data.plano);
-        planos.medio = clonarPlano(data.plano);
-        planos.baixo = clonarPlano(data.plano);
+        planos.unico = planoDeJSON(data.plano);
+        planos.alto = clonarPlano(planos.unico);
+        planos.medio = clonarPlano(planos.unico);
+        planos.baixo = clonarPlano(planos.unico);
       }
       
       // === CARREGAR ESTADO CICLAGEM ===
@@ -5981,17 +6550,24 @@ function exportarTexto() {
   if (metas.kcal) txt += `META: ${metas.kcal} kcal | P:${metas.prot}g · C:${metas.carb}g · G:${metas.fat}g\n\n`;
   
   let tK = 0, tP = 0, tC = 0, tF = 0;
-  
-  Object.keys(REFEICOES).forEach(key => {
-    if (plano[key].length === 0) return;
-    txt += `▸ ${REFEICOES[key].toUpperCase()}\n`;
+  const planoTxt = getPlanoAtivo();
+
+  // Imprime uma lista de alimentos; retorna os macros somados
+  function imprimirLista(lista) {
     let mK = 0, mP = 0, mC = 0, mF = 0;
-    plano[key].forEach(item => {
+    lista.forEach(item => {
       const m = calcMacrosItem(item);
       mK += m.k; mP += m.p; mC += m.c; mF += m.f;
       const qtdLabel = item.modo === 'u' ? `${item.q} ${item.uName || 'un'} (${Math.round(m.gramas)}g)` : `${item.q}g`;
       txt += `   • ${item.n} — ${qtdLabel}\n`;
       txt += `     ${Math.round(m.k)} kcal | P:${m.p.toFixed(1)} C:${m.c.toFixed(1)} G:${m.f.toFixed(1)}\n`;
+      if (item.tipo === 'receita' && item.ingredientes && item.ingredientes.length > 0) {
+        const baseG = item.ingredientes.reduce((s, ing) => s + (parseFloat(ing.g) || 0), 0);
+        const fator = baseG > 0 ? (m.gramas / baseG) : 1;
+        item.ingredientes.forEach(ing => {
+          txt += `        ↳ ${ing.n} — ${Math.round((parseFloat(ing.g)||0) * fator)}g\n`;
+        });
+      }
       if (item.subs && item.subs.length > 0) {
         txt += `     ⇄ Substituições:\n`;
         item.subs.forEach(sub => {
@@ -6001,8 +6577,32 @@ function exportarTexto() {
         });
       }
     });
-    txt += `   Subtotal: ${Math.round(mK)} kcal · P${mP.toFixed(1)} C${mC.toFixed(1)} G${mF.toFixed(1)}\n\n`;
-    tK += mK; tP += mP; tC += mC; tF += mF;
+    return { mK, mP, mC, mF };
+  }
+
+  Object.keys(REFEICOES).forEach(key => {
+    const nOp = totalOpcoes(planoTxt, key);
+    if (nOp > 1) {
+      const op = planoTxt._opcoes[key];
+      const blocos = op.listas.map((lst, i) => ({ lst, i })).filter(o => o.lst && o.lst.length > 0);
+      if (blocos.length === 0) return;
+      const idxTotal = blocos.some(b => b.i === op.ativa) ? op.ativa : blocos[0].i;
+      blocos.forEach((o, ord) => {
+        const nome = op.nomes[o.i] || OPCAO_LABELS[o.i];
+        if (ord > 0) txt += `   ─── OU ───\n`;
+        txt += `▸ ${REFEICOES[key].toUpperCase()} — OPÇÃO ${nome}\n`;
+        const r = imprimirLista(o.lst);
+        txt += `   Subtotal: ${Math.round(r.mK)} kcal · P${r.mP.toFixed(1)} C${r.mC.toFixed(1)} G${r.mF.toFixed(1)}\n`;
+        if (o.i === idxTotal) { tK += r.mK; tP += r.mP; tC += r.mC; tF += r.mF; }
+      });
+      txt += `\n`;
+    } else {
+      if (plano[key].length === 0) return;
+      txt += `▸ ${REFEICOES[key].toUpperCase()}\n`;
+      const r = imprimirLista(plano[key]);
+      txt += `   Subtotal: ${Math.round(r.mK)} kcal · P${r.mP.toFixed(1)} C${r.mC.toFixed(1)} G${r.mF.toFixed(1)}\n\n`;
+      tK += r.mK; tP += r.mP; tC += r.mC; tF += r.mF;
+    }
   });
   
   txt += `═══════════════════════════════════════\n`;
@@ -6027,7 +6627,7 @@ function exportarTexto() {
 // INIT
 // ============================================================
 render();
-console.log(`✅ NUTRI.FUEL v3.8.3 carregado · ${ALIMENTOS.length} alimentos · ${ALIMENTOS.filter(a => a.u).length} com unidade definida`);
+console.log(`✅ NUTRI.FUEL v3.9.0 carregado · ${ALIMENTOS.length} alimentos · ${ALIMENTOS.filter(a => a.u).length} com unidade definida`);
 
 // ============================================================
 // MÓDULO PACIENTES v3.8 — IndexedDB, CRUD, Avaliações, Import/Export
@@ -6503,7 +7103,7 @@ window._markPacDirty = marcarPacComoPendente;
 function coletarSnapshotCompleto() {
   return {
     dados: coletarCliente(),
-    planos: JSON.parse(JSON.stringify(planos)),
+    planos: planosParaJSON(),
     metas: JSON.parse(JSON.stringify(metas)),
     ciclagem: {
       ativa: ciclagem.ativa,
@@ -6561,7 +7161,7 @@ function aplicarSnapshot(snap) {
   if (snap.planos) {
     ['unico','alto','medio','baixo'].forEach(k => {
       if (snap.planos[k]) {
-        planos[k] = JSON.parse(JSON.stringify(snap.planos[k]));
+        planos[k] = planoDeJSON(snap.planos[k]);
       }
     });
   }
@@ -6979,7 +7579,7 @@ async function exportarTodosPacientes() {
   if (pacientes.length === 0 && receitas.length === 0) { toastNutri('Nenhum paciente para exportar', 'aviso'); return; }
   const pacote = {
     tipo: 'nutrifuel_backup_completo',
-    versao_app: '3.8.3',
+    versao_app: '3.9.0',
     pacientes, versoes, avaliacoes, receitas,
     exportadoEm: new Date().toISOString()
   };
@@ -7504,7 +8104,7 @@ function navegarPara(panelId) {
       }
     });
     
-    console.log('✅ Módulo Pacientes v3.8.3 inicializado (com auto-save)');
+    console.log('✅ Módulo Pacientes v3.9.0 inicializado (com auto-save)');
   } catch (e) {
     console.error('Erro ao inicializar pacientes:', e);
   }
