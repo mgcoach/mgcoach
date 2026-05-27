@@ -1,5 +1,5 @@
-// NUTRI.FUEL Service Worker v3.9.0
-const CACHE_NAME = 'nutrifuel-v3-9-0-0';
+// NUTRI.FUEL Service Worker v3.10.0
+const CACHE_NAME = 'nutrifuel-v3-10-0-0';
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', (event) => {

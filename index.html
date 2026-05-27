@@ -879,7 +879,29 @@
     letter-spacing: 0.04em;
     color: var(--orange);
   }
-  
+  .meal-name-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .meal-swap-btn {
+    padding: 4px 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.68rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.15s;
+  }
+  .meal-swap-btn:hover {
+    border-color: var(--orange);
+    color: var(--orange);
+    background: var(--orange-soft);
+  }
   .meal-totals {
     display: flex;
     gap: 14px;
@@ -1282,6 +1304,38 @@
   
   .modal-overlay.active { display: flex; }
   
+  /* Modal de trocar horário (v3.10) */
+  .swap-destino-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: left;
+  }
+  .swap-destino-btn:hover {
+    border-color: var(--orange);
+    background: var(--orange-soft);
+  }
+  .swap-destino-nome {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    color: var(--orange);
+    letter-spacing: 0.03em;
+  }
+  .swap-destino-preview {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+  }
+  
   .modal {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -1485,6 +1539,27 @@
   .ciclo-day-btn:not(.active):hover {
     background: rgba(255, 107, 26, 0.15);
     color: var(--text);
+  }
+  .ciclo-copy-btn {
+    flex: 0 0 auto;
+    padding: 8px 12px;
+    background: transparent;
+    border: 1px dashed var(--orange);
+    border-radius: 6px;
+    color: var(--orange);
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.72rem;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.15s;
+    margin-left: 4px;
+  }
+  .ciclo-copy-btn:hover {
+    background: var(--orange-soft);
+  }
+  @media (max-width: 600px) {
+    .ciclo-day-selector { flex-wrap: wrap; }
+    .ciclo-copy-btn { flex: 1 1 100%; margin-left: 0; margin-top: 4px; }
   }
   
   /* Indicador de meta da refeição */
@@ -2163,7 +2238,7 @@
         </div>
         <div class="brand-meta-item">
           <span>Versão</span>
-          <strong>3.9.0</strong>
+          <strong>3.10.0</strong>
         </div>
       </div>
     </div>
@@ -2952,7 +3027,7 @@
   </div>
 
   <p class="footer-note">
-    <strong>NUTRI.FUEL · v3.9.0</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
+    <strong>NUTRI.FUEL · v3.10.0</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
   </p>
   
   <!-- ============== ÁREA DO PDF (oculta na tela, visível na impressão) ============== -->
@@ -3044,6 +3119,20 @@
       <button class="action-btn" id="recBtnExcluir" style="display:none;" onclick="excluirReceitaAtual()">🗑️ Excluir receita</button>
       <button class="action-btn rec-save" onclick="salvarReceitaDoModal()">💾 Salvar receita</button>
     </div>
+  </div>
+</div>
+
+<!-- ============== MODAL TROCAR HORÁRIO DE REFEIÇÃO (Feature A) ============== -->
+<div class="modal-overlay" id="swapModal">
+  <div class="modal" style="max-width: 460px;">
+    <button class="modal-close" onclick="fecharModalSwap()">×</button>
+    <div class="modal-title">⇄ Trocar horário</div>
+    <div class="modal-subtitle">
+      Mover <strong id="swapOrigemLabel">—</strong> para qual outro horário?
+      <br><span style="font-size:0.74rem; color:var(--text-dim);">As duas refeições trocam de lugar (swap). Conteúdo de ambas é preservado.</span>
+    </div>
+    <div id="swapDestinosLista" style="display:flex; flex-direction:column; gap:8px; margin-top:14px;"></div>
+    <button class="modal-close-text" onclick="fecharModalSwap()" style="margin-top:14px; width:100%; padding:10px; background:transparent; border:1px solid var(--border); border-radius:8px; color:var(--text-muted); cursor:pointer; font-weight:600;">Cancelar</button>
   </div>
 </div>
 
@@ -3747,6 +3836,110 @@ function avisoOpcoes(p, mealKey) {
     return `As opções variam ${Math.round(max - min)} kcal entre si`;
   }
   return null;
+}
+
+// ============================================================
+// TROCAR HORÁRIO DE REFEIÇÃO (Feature A / v3.10)
+// ============================================================
+// Faz swap das refeições `mealA` <-> `mealB` em um plano `p`.
+// Troca a lista flat E as opções alternativas (`_opcoes`) se existirem.
+// As referências dos arrays não mudam — só as CHAVES que apontam pra elas —
+// então listas[0] continua referenciando o array correto automaticamente.
+function swapRefeicoesNoPlano(p, mealA, mealB) {
+  if (!p || mealA === mealB) return;
+  garantirOpcoes(p);
+
+  // 1) Troca os arrays flat
+  const tmp = p[mealA];
+  p[mealA] = p[mealB];
+  p[mealB] = tmp;
+
+  // 2) Troca a entrada em _opcoes
+  // Cada `op.listas[0]` é uma referência ao array que originalmente estava
+  // em p[meal] — esse mesmo array continua existindo, apenas mudou de chave.
+  // Logo, basta trocar as entradas de _opcoes; nada a atualizar dentro de cada `op`.
+  const opA = p._opcoes[mealA];
+  const opB = p._opcoes[mealB];
+  if (opA) delete p._opcoes[mealA]; else delete p._opcoes[mealA];
+  if (opB) delete p._opcoes[mealB]; else delete p._opcoes[mealB];
+  if (opA) p._opcoes[mealB] = opA;
+  if (opB) p._opcoes[mealA] = opB;
+}
+
+// Estado temporário do modal de swap
+let _swapEmCurso = null;
+
+function abrirModalSwap(mealKey) {
+  _swapEmCurso = mealKey;
+  const pa = getPlanoAtivo();
+  document.getElementById('swapOrigemLabel').textContent = REFEICOES[mealKey];
+
+  const destinos = Object.keys(REFEICOES).filter(k => k !== mealKey);
+  const lista = document.getElementById('swapDestinosLista');
+
+  const previewMeal = (k) => {
+    const itens = pa[k] || [];
+    const nOp = totalOpcoes(pa, k);
+    let kcal = 0;
+    itens.forEach(it => kcal += calcMacrosItem(it).k);
+    if (itens.length === 0 && nOp <= 1) return '<span style="color:var(--text-dim);">— vazio</span>';
+    const partes = [];
+    if (itens.length > 0) partes.push(`${itens.length} ${itens.length === 1 ? 'alimento' : 'alimentos'} · ${Math.round(kcal)} kcal`);
+    if (nOp > 1) partes.push(`<span style="color:var(--orange);">${nOp} opções</span>`);
+    return partes.join(' · ');
+  };
+
+  lista.innerHTML = destinos.map(k => `
+    <button type="button" class="swap-destino-btn" data-destino="${k}">
+      <div class="swap-destino-nome">${REFEICOES[k]}</div>
+      <div class="swap-destino-preview">${previewMeal(k)}</div>
+    </button>
+  `).join('');
+
+  // Delega cliques dentro da lista
+  lista.querySelectorAll('.swap-destino-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      executarSwap(_swapEmCurso, btn.dataset.destino);
+    });
+  });
+
+  document.getElementById('swapModal').classList.add('active');
+}
+
+function fecharModalSwap() {
+  document.getElementById('swapModal').classList.remove('active');
+  _swapEmCurso = null;
+}
+
+// Após o usuário escolher destino, pergunta o escopo (se ciclagem) e executa
+function executarSwap(mealA, mealB) {
+  fecharModalSwap();
+  if (mealA === mealB || !REFEICOES[mealA] || !REFEICOES[mealB]) return;
+
+  if (ciclagem.ativa) {
+    // Pergunta o escopo: só este dia, todos os dias, ou cancelar
+    // Confirm com 3 opções via prompt seria ruim → usa dois confirms encadeados
+    const aplicarEmTodos = confirm(
+      `Trocar ${REFEICOES[mealA]} ↔ ${REFEICOES[mealB]}?\n\n` +
+      `OK = aplicar em TODOS os dias da ciclagem (Alto, Médio, Baixo)\n` +
+      `Cancelar = aplicar SÓ no dia ativo (${ciclagem.diaAtivo.toUpperCase()})`
+    );
+    if (aplicarEmTodos) {
+      ['alto', 'medio', 'baixo'].forEach(d => swapRefeicoesNoPlano(planos[d], mealA, mealB));
+    } else {
+      // Segunda confirmação leve só pra ter certeza de que o usuário queria mesmo "só esse dia"
+      // (sem isso, usuário que clica Cancelar por engano perde a ação)
+      const soEste = confirm(`Confirma: trocar ${REFEICOES[mealA]} ↔ ${REFEICOES[mealB]} APENAS no dia ${ciclagem.diaAtivo.toUpperCase()}?`);
+      if (!soEste) return;
+      swapRefeicoesNoPlano(planos[ciclagem.diaAtivo], mealA, mealB);
+    }
+  } else {
+    swapRefeicoesNoPlano(planos.unico, mealA, mealB);
+  }
+
+  if (typeof _markPacDirty === 'function') _markPacDirty();
+  render();
 }
 
 // ============================================================
@@ -4524,8 +4717,10 @@ function mostrarSeletorDia() {
     <button class="ciclo-day-btn active" data-dia="alto" onclick="setDiaAtivo('alto')">🔥 Dia ALTO</button>
     <button class="ciclo-day-btn" data-dia="medio" onclick="setDiaAtivo('medio')">⚖️ MÉDIO</button>
     <button class="ciclo-day-btn" data-dia="baixo" onclick="setDiaAtivo('baixo')">💤 BAIXO</button>
+    <button id="btnCopiarAlto" class="ciclo-copy-btn" onclick="copiarAltoParaMedioBaixo()" title="Copia as refeições do Alto para dias vazios">📎 Copiar p/ Médio e Baixo</button>
   `;
   mealTabsParent.insertBefore(seletor, document.getElementById('mealTabs'));
+  atualizarVisibilidadeBtnCopiar();
 }
 
 function esconderSeletorDia() {
@@ -4533,11 +4728,72 @@ function esconderSeletorDia() {
   if (seletor) seletor.remove();
 }
 
+// O botão "Copiar" só faz sentido quando o dia ativo é o Alto
+function atualizarVisibilidadeBtnCopiar() {
+  const btn = document.getElementById('btnCopiarAlto');
+  if (!btn) return;
+  btn.style.display = (ciclagem.ativa && ciclagem.diaAtivo === 'alto') ? '' : 'none';
+}
+
+// Um plano é "vazio" quando nenhuma refeição tem alimentos (e não tem opções alternativas)
+function planoEstaVazio(p) {
+  if (!p) return true;
+  for (const meal of Object.keys(REFEICOES)) {
+    if ((p[meal] || []).length > 0) return false;
+  }
+  // Considera também opções alternativas: se alguma opção tem alimentos, não está vazio
+  if (p._opcoes) {
+    for (const meal of Object.keys(p._opcoes)) {
+      const op = p._opcoes[meal];
+      if (op && op.listas && op.listas.some(l => l && l.length > 0)) return false;
+    }
+  }
+  return true;
+}
+
+// Copia o plano do Alto para Médio e Baixo, MAS só sobrescreve dias vazios
+function copiarAltoParaMedioBaixo() {
+  if (!ciclagem.ativa) return;
+  const altoVazio = planoEstaVazio(planos.alto);
+  if (altoVazio) {
+    alert('O dia Alto está vazio — não há nada para copiar. Monte o cardápio do Alto primeiro.');
+    return;
+  }
+
+  const resultados = [];
+  ['medio', 'baixo'].forEach(diaDestino => {
+    const labelDestino = diaDestino === 'medio' ? 'Médio' : 'Baixo';
+    if (planoEstaVazio(planos[diaDestino])) {
+      planos[diaDestino] = clonarPlano(planos.alto);
+      resultados.push({ dia: labelDestino, acao: 'copiado' });
+    } else {
+      resultados.push({ dia: labelDestino, acao: 'pulado' });
+    }
+  });
+
+  // Feedback claro
+  const copiados = resultados.filter(r => r.acao === 'copiado').map(r => r.dia);
+  const pulados = resultados.filter(r => r.acao === 'pulado').map(r => r.dia);
+
+  let msg = '';
+  if (copiados.length > 0) msg += `✅ Copiado para: ${copiados.join(' e ')}.`;
+  if (pulados.length > 0) {
+    if (msg) msg += '\n\n';
+    msg += `⚠️ Pulado: ${pulados.join(' e ')} — já tinha refeições montadas.\nPara regerar, limpe esse(s) dia(s) manualmente antes.`;
+  }
+  alert(msg);
+
+  // Salva e re-renderiza (caso o usuário esteja vendo Médio/Baixo depois)
+  if (typeof _markPacDirty === 'function') _markPacDirty();
+  render();
+}
+
 function setDiaAtivo(dia) {
   ciclagem.diaAtivo = dia;
   document.querySelectorAll('.ciclo-day-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.dia === dia);
   });
+  atualizarVisibilidadeBtnCopiar();
   // Atualiza Distribuição de Macros (na aba inicial) pro dia escolhido
   if (resultadoGET) calcularMacros();
   // Atualiza divisão por refeição (kcal de cada refeição muda conforme dia)
@@ -4728,7 +4984,10 @@ function render() {
     card.className = 'meal-card';
     card.innerHTML = `
       <div class="meal-header">
-        <div class="meal-name">${REFEICOES[key]}${temOpcoes ? ` <span class="meal-opcao-tag">Opção ${pa._opcoes[key].nomes[ativaIdx] || OPCAO_LABELS[ativaIdx]}</span>` : ''}</div>
+        <div class="meal-name-wrap">
+          <div class="meal-name">${REFEICOES[key]}${temOpcoes ? ` <span class="meal-opcao-tag">Opção ${pa._opcoes[key].nomes[ativaIdx] || OPCAO_LABELS[ativaIdx]}</span>` : ''}</div>
+          <button type="button" class="meal-swap-btn" data-meal-swap="${key}" title="Trocar este horário de refeição com outro">⇄ Trocar horário</button>
+        </div>
         <div class="meal-totals">
           <div class="meal-total-item"><span class="dot dot-kcal"></span><span><strong>${Math.round(mKcal)}</strong> kcal</span></div>
           <div class="meal-total-item"><span class="dot dot-prot"></span><span>P <strong>${mProt.toFixed(1)}g</strong></span></div>
@@ -5257,6 +5516,11 @@ document.getElementById('receitaModal').addEventListener('click', (e) => {
   if (e.target.id === 'receitaModal') fecharModalReceita();
 });
 
+// Fecha o modal de swap de horário ao clicar fora (v3.10)
+document.getElementById('swapModal').addEventListener('click', (e) => {
+  if (e.target.id === 'swapModal') fecharModalSwap();
+});
+
 document.querySelectorAll('.meal-tab').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('.meal-tab').forEach(t => t.classList.remove('active'));
@@ -5283,6 +5547,13 @@ document.getElementById('mealsContainer').addEventListener('click', (e) => {
   if (opTab) {
     e.preventDefault();
     selecionarOpcao(opTab.dataset.meal, parseInt(opTab.dataset.opidx, 10));
+    return;
+  }
+  // Botão "⇄ Trocar horário" (v3.10 / Feature A)
+  const swapBtn = e.target.closest('.meal-swap-btn');
+  if (swapBtn) {
+    e.preventDefault();
+    abrirModalSwap(swapBtn.dataset.mealSwap);
     return;
   }
 });
@@ -6398,7 +6669,7 @@ async function exportarHTML() {
 // ============================================================
 function exportarJSON() {
   const data = {
-    versao: '3.9.0',
+    versao: '3.10.0',
     planos: planosParaJSON(),          // novo: salva todos os 4 planos (com opções alternativas)
     plano: planoParaJSON(getPlanoAtivo()), // legacy: para compatibilidade com importações antigas
     metas,
@@ -6627,7 +6898,7 @@ function exportarTexto() {
 // INIT
 // ============================================================
 render();
-console.log(`✅ NUTRI.FUEL v3.9.0 carregado · ${ALIMENTOS.length} alimentos · ${ALIMENTOS.filter(a => a.u).length} com unidade definida`);
+console.log(`✅ NUTRI.FUEL v3.10.0 carregado · ${ALIMENTOS.length} alimentos · ${ALIMENTOS.filter(a => a.u).length} com unidade definida`);
 
 // ============================================================
 // MÓDULO PACIENTES v3.8 — IndexedDB, CRUD, Avaliações, Import/Export
@@ -7579,7 +7850,7 @@ async function exportarTodosPacientes() {
   if (pacientes.length === 0 && receitas.length === 0) { toastNutri('Nenhum paciente para exportar', 'aviso'); return; }
   const pacote = {
     tipo: 'nutrifuel_backup_completo',
-    versao_app: '3.9.0',
+    versao_app: '3.10.0',
     pacientes, versoes, avaliacoes, receitas,
     exportadoEm: new Date().toISOString()
   };
@@ -8104,7 +8375,7 @@ function navegarPara(panelId) {
       }
     });
     
-    console.log('✅ Módulo Pacientes v3.9.0 inicializado (com auto-save)');
+    console.log('✅ Módulo Pacientes v3.10.0 inicializado (com auto-save)');
   } catch (e) {
     console.error('Erro ao inicializar pacientes:', e);
   }
