@@ -1540,6 +1540,20 @@
     background: rgba(255, 107, 26, 0.15);
     color: var(--text);
   }
+  .indicador-backup {
+    font-size: 0.78rem;
+    color: #4ade80;
+    background: rgba(74, 222, 128, 0.08);
+    border: 1px solid rgba(74, 222, 128, 0.25);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-family: var(--font-mono);
+  }
+  .indicador-backup.alerta {
+    color: #f7a73a;
+    background: rgba(247, 167, 58, 0.1);
+    border-color: rgba(247, 167, 58, 0.35);
+  }
   .ciclo-copy-btn {
     flex: 0 0 auto;
     padding: 8px 12px;
@@ -2238,7 +2252,7 @@
         </div>
         <div class="brand-meta-item">
           <span>Versão</span>
-          <strong>3.10.0</strong>
+          <strong>3.11.0</strong>
         </div>
       </div>
     </div>
@@ -2262,6 +2276,7 @@
       <button onclick="exportarTodosPacientes()" class="btn-export" style="background: var(--bg-2); color: var(--text); border: 1px solid var(--border); padding: 10px 16px;">📥 Backup Completo</button>
       <input type="file" id="importPacientesFile" accept=".json" style="display:none" onchange="importarPacientes(event)">
     </div>
+    <div id="indicadorBackup" class="indicador-backup" style="margin-bottom: 16px;">🛟 Backup automático ativo</div>
     
     <div class="info-card" style="margin-bottom: 16px;">
       💡 <strong>Como funciona:</strong> Cada paciente guarda ficha completa, plano alimentar (todos os dias da ciclagem), avaliações físicas com histórico, e histórico de versões do plano. Tudo offline no seu dispositivo. Use <strong>📤 Importar JSON</strong> pra trazer pacientes de outro dispositivo — aceita backup novo, ficha individual, ou JSON antigo da aba "📄 Exportar".
@@ -3027,7 +3042,7 @@
   </div>
 
   <p class="footer-note">
-    <strong>NUTRI.FUEL · v3.10.0</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
+    <strong>NUTRI.FUEL · v3.11.0</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
   </p>
   
   <!-- ============== ÁREA DO PDF (oculta na tela, visível na impressão) ============== -->
@@ -6669,7 +6684,7 @@ async function exportarHTML() {
 // ============================================================
 function exportarJSON() {
   const data = {
-    versao: '3.10.0',
+    versao: '3.11.0',
     planos: planosParaJSON(),          // novo: salva todos os 4 planos (com opções alternativas)
     plano: planoParaJSON(getPlanoAtivo()), // legacy: para compatibilidade com importações antigas
     metas,
@@ -6898,7 +6913,7 @@ function exportarTexto() {
 // INIT
 // ============================================================
 render();
-console.log(`✅ NUTRI.FUEL v3.10.0 carregado · ${ALIMENTOS.length} alimentos · ${ALIMENTOS.filter(a => a.u).length} com unidade definida`);
+console.log(`✅ NUTRI.FUEL v3.11.0 carregado · ${ALIMENTOS.length} alimentos · ${ALIMENTOS.filter(a => a.u).length} com unidade definida`);
 
 // ============================================================
 // MÓDULO PACIENTES v3.8 — IndexedDB, CRUD, Avaliações, Import/Export
@@ -7666,6 +7681,9 @@ async function salvarPacienteAtivo() {
   const totalKcal = (pac.snapshot?.metas?.kcal || 0);
   const versoes = await listarVersoesPaciente(pac.id);
   toastNutri(`✅ ${dados.nome} salvo${totalKcal ? ' · ' + Math.round(totalKcal) + ' kcal' : ''} — versão #${versoes.length}`);
+
+  // Backup automático: dispara se já passou o intervalo (v3.11)
+  checarBackupAutomatico();
 }
 
 function fecharPacienteAtivo() {
@@ -7850,12 +7868,98 @@ async function exportarTodosPacientes() {
   if (pacientes.length === 0 && receitas.length === 0) { toastNutri('Nenhum paciente para exportar', 'aviso'); return; }
   const pacote = {
     tipo: 'nutrifuel_backup_completo',
-    versao_app: '3.10.0',
+    versao_app: '3.11.0',
     pacientes, versoes, avaliacoes, receitas,
     exportadoEm: new Date().toISOString()
   };
   baixarJSONPac(pacote, `nutrifuel_backup_${new Date().toISOString().split('T')[0]}.json`);
   toastNutri(`📥 Backup com ${pacientes.length} paciente(s)${receitas.length ? ' e ' + receitas.length + ' receita(s)' : ''} exportado`);
+}
+
+// ============================================================
+// BACKUP AUTOMÁTICO (v3.11) — proteção contra perda de dados
+// ------------------------------------------------------------
+// Dispara um download de backup completo automaticamente quando:
+//   1) o usuário salva um paciente, E
+//   2) já passaram >= 2h desde o último backup automático.
+// Usa a MESMA estrutura do "Backup Completo" manual (formato idêntico
+// ao que o "Importar JSON" entende), pra não criar divergência.
+// A data do último backup fica no localStorage (sobrevive a reloads).
+// ============================================================
+const BACKUP_AUTO_KEY = 'nutrifuel_ultimo_backup_auto';
+const BACKUP_AUTO_INTERVALO_MS = 2 * 60 * 60 * 1000; // 2 horas
+
+function getUltimoBackupAuto() {
+  try {
+    const v = localStorage.getItem(BACKUP_AUTO_KEY);
+    return v ? parseInt(v, 10) : 0;
+  } catch (e) { return 0; }
+}
+
+function setUltimoBackupAuto(ts) {
+  try { localStorage.setItem(BACKUP_AUTO_KEY, String(ts)); } catch (e) {}
+}
+
+// Gera o pacote de backup (mesma forma de exportarTodosPacientes) e baixa
+async function gerarBackupAutomatico() {
+  const pacientes = await dbAll(STORE_PACIENTES);
+  const versoes = await dbAll(STORE_VERSOES_PLANO);
+  const avaliacoes = await dbAll(STORE_AVALIACOES);
+  const receitas = await dbAll(STORE_RECEITAS);
+  // Não baixa backup vazio (evita arquivos inúteis e não "marca" como feito)
+  if (pacientes.length === 0 && receitas.length === 0) return false;
+
+  const pacote = {
+    tipo: 'nutrifuel_backup_completo',
+    versao_app: '3.11.0',
+    automatico: true,
+    pacientes, versoes, avaliacoes, receitas,
+    exportadoEm: new Date().toISOString()
+  };
+  // Nome com data E hora pra acumular vários por dia sem sobrescrever
+  const agora = new Date();
+  const stamp = agora.toISOString().slice(0, 16).replace('T', '_').replace(':', 'h');
+  baixarJSONPac(pacote, `nutrifuel_AUTO_${stamp}.json`);
+  setUltimoBackupAuto(Date.now());
+  atualizarIndicadorBackup();
+  toastNutri(`🛟 Backup automático salvo (${pacientes.length} paciente(s)) — confira em Downloads`);
+  return true;
+}
+
+// Checa se está na hora e dispara. Chamada após cada salvamento.
+async function checarBackupAutomatico() {
+  const agora = Date.now();
+  const ultimo = getUltimoBackupAuto();
+  if (agora - ultimo >= BACKUP_AUTO_INTERVALO_MS) {
+    try {
+      await gerarBackupAutomatico();
+    } catch (e) {
+      console.warn('Backup automático falhou:', e);
+    }
+  }
+}
+
+// Indicador visível "último backup há X"
+function atualizarIndicadorBackup() {
+  const el = document.getElementById('indicadorBackup');
+  if (!el) return;
+  const ultimo = getUltimoBackupAuto();
+  if (!ultimo) {
+    el.innerHTML = '⚠️ Nenhum backup automático ainda';
+    el.className = 'indicador-backup alerta';
+    return;
+  }
+  const diffMs = Date.now() - ultimo;
+  const horas = Math.floor(diffMs / (60 * 60 * 1000));
+  const mins = Math.floor(diffMs / (60 * 1000));
+  let txt;
+  if (mins < 1) txt = 'agora mesmo';
+  else if (mins < 60) txt = `há ${mins} min`;
+  else if (horas < 24) txt = `há ${horas}h`;
+  else txt = `há ${Math.floor(horas / 24)} dia(s)`;
+  const alerta = diffMs > 24 * 60 * 60 * 1000;
+  el.innerHTML = `🛟 Último backup automático: ${txt}`;
+  el.className = 'indicador-backup' + (alerta ? ' alerta' : '');
 }
 
 async function importarPacientes(event) {
@@ -8375,7 +8479,12 @@ function navegarPara(panelId) {
       }
     });
     
-    console.log('✅ Módulo Pacientes v3.10.0 inicializado (com auto-save)');
+    console.log('✅ Módulo Pacientes v3.11.0 inicializado (com auto-save + backup automático)');
+    // Inicializa indicador de backup e atualiza a cada minuto
+    if (typeof atualizarIndicadorBackup === 'function') {
+      atualizarIndicadorBackup();
+      setInterval(atualizarIndicadorBackup, 60 * 1000);
+    }
   } catch (e) {
     console.error('Erro ao inicializar pacientes:', e);
   }
