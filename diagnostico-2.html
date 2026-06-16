@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NUTRI.FUEL — Diagnóstico</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 20px;
+    background: #0a0a0a;
+    color: #e5e5e5;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+    line-height: 1.5;
+    font-size: 15px;
+  }
+  h1 {
+    color: #ff6b1a;
+    font-size: 1.4rem;
+    margin: 0 0 6px 0;
+    letter-spacing: 0.02em;
+  }
+  .sub {
+    color: #888;
+    font-size: 0.85rem;
+    margin-bottom: 24px;
+  }
+  .box {
+    background: #1a1a1a;
+    border: 1px solid #2e2e2e;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .label {
+    color: #ff6b1a;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+  .val { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
+  .ok { color: #4ade80; }
+  .err { color: #ef4444; }
+  .warn { color: #f7a73a; }
+  pre {
+    background: #0a0a0a;
+    border: 1px solid #2e2e2e;
+    border-radius: 6px;
+    padding: 10px;
+    overflow-x: auto;
+    font-size: 0.78rem;
+    color: #aaa;
+    max-height: 380px;
+    overflow-y: auto;
+    margin: 6px 0;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .pac {
+    background: #0a0a0a;
+    border-left: 3px solid #ff6b1a;
+    padding: 10px 12px;
+    margin: 8px 0;
+    border-radius: 4px;
+  }
+  .pac-nome { color: #ff6b1a; font-weight: 700; font-size: 1rem; }
+  .pac-meta { color: #888; font-size: 0.78rem; margin-top: 4px; font-family: monospace; }
+  button {
+    background: #ff6b1a;
+    color: #1a1a1a;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 18px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin-top: 14px;
+    width: 100%;
+  }
+  .small-btn {
+    background: transparent;
+    color: #ff6b1a;
+    border: 1px solid #ff6b1a;
+    width: auto;
+    padding: 8px 14px;
+    font-size: 0.78rem;
+  }
+</style>
+</head>
+<body>
+
+<h1>🔍 NUTRI.FUEL — Diagnóstico</h1>
+<div class="sub">Esta página <strong>só lê</strong> o banco de dados. Não escreve nada, não apaga nada.</div>
+
+<div class="box">
+  <div class="label">Suporte do navegador</div>
+  <div class="val" id="suporte">checando...</div>
+</div>
+
+<div class="box">
+  <div class="label">Bancos IndexedDB encontrados</div>
+  <div class="val" id="bancos">checando...</div>
+</div>
+
+<div class="box">
+  <div class="label">Pacientes encontrados</div>
+  <div class="val" id="pacientesStatus">aguardando...</div>
+  <div id="pacientesLista"></div>
+</div>
+
+<div class="box">
+  <div class="label">Outros dados (planos, avaliações, receitas)</div>
+  <div class="val" id="outrosDados">aguardando...</div>
+</div>
+
+<div class="box">
+  <div class="label">Log técnico</div>
+  <pre id="log"></pre>
+  <button class="small-btn" onclick="copiarLog()">📋 Copiar log inteiro</button>
+</div>
+
+<button onclick="exportarTudoEncontrado()" id="btnExport" style="display:none;">
+  💾 Exportar TUDO encontrado para arquivo JSON
+</button>
+
+<script>
+const logEl = document.getElementById('log');
+const linhasLog = [];
+function log(msg, tipo) {
+  const prefix = tipo === 'ok' ? '✓ ' : tipo === 'err' ? '✗ ' : tipo === 'warn' ? '⚠ ' : '· ';
+  const linha = prefix + msg;
+  linhasLog.push(linha);
+  logEl.textContent = linhasLog.join('\n');
+}
+function copiarLog() {
+  const tudo = linhasLog.join('\n');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(tudo).then(() => alert('Log copiado.'));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = tudo;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    alert('Log copiado.');
+  }
+}
+
+let dadosEncontrados = { pacientes: [], planos: [], avaliacoes: [], receitas: [] };
+
+async function diagnosticar() {
+  // 1. Suporte
+  const tem = !!window.indexedDB;
+  document.getElementById('suporte').innerHTML = tem
+    ? '<span class="ok">✓ IndexedDB disponível</span>'
+    : '<span class="err">✗ IndexedDB NÃO disponível neste navegador</span>';
+  log('IndexedDB disponível: ' + tem, tem ? 'ok' : 'err');
+
+  if (!tem) return;
+
+  // 2. Listar bancos
+  let bancos = [];
+  try {
+    if (indexedDB.databases) {
+      bancos = await indexedDB.databases();
+      log('indexedDB.databases() retornou ' + bancos.length + ' banco(s)', 'ok');
+    } else {
+      log('navegador não suporta databases() — vou abrir o banco diretamente', 'warn');
+      bancos = [{ name: 'NUTRIFUEL_DB' }, { name: 'nutrifuel' }];
+    }
+  } catch (e) {
+    log('erro listando bancos: ' + e.message, 'err');
+  }
+
+  if (bancos.length === 0) {
+    document.getElementById('bancos').innerHTML = '<span class="err">Nenhum banco IndexedDB encontrado neste endereço.</span>';
+    log('NENHUM banco encontrado — IndexedDB vazio para mgcoach.github.io/mgcoach/', 'err');
+    document.getElementById('pacientesStatus').innerHTML = '<span class="err">Sem dados.</span>';
+    document.getElementById('outrosDados').innerHTML = '<span class="err">Sem dados.</span>';
+    return;
+  }
+
+  document.getElementById('bancos').innerHTML = bancos.map(b =>
+    `<div>• <strong>${b.name}</strong>${b.version ? ' (v' + b.version + ')' : ''}</div>`
+  ).join('');
+
+  // 3. Abrir cada banco e listar object stores
+  for (const b of bancos) {
+    if (!b.name) continue;
+    log('abrindo banco: ' + b.name, 'ok');
+    try {
+      await abrirEInspecionar(b.name);
+    } catch (e) {
+      log('erro no banco ' + b.name + ': ' + e.message, 'err');
+    }
+  }
+
+  // 4. Resumo final
+  const total = dadosEncontrados.pacientes.length;
+  if (total > 0) {
+    document.getElementById('pacientesStatus').innerHTML = `<span class="ok">✓ ${total} paciente(s) encontrado(s)</span>`;
+    const lista = document.getElementById('pacientesLista');
+    dadosEncontrados.pacientes.forEach((p, i) => {
+      const nome = p.nome || p.dados?.nome || p.cliente?.nome || `Paciente ${i + 1}`;
+      const id = p.id || '—';
+      const dataMod = p.atualizadoEm || p.criadoEm || p.updatedAt || p.createdAt;
+      const dataStr = dataMod ? new Date(dataMod).toLocaleString('pt-BR') : '—';
+      const tamanho = JSON.stringify(p).length;
+      const div = document.createElement('div');
+      div.className = 'pac';
+      div.innerHTML = `
+        <div class="pac-nome">${escapeHtml(nome)}</div>
+        <div class="pac-meta">id: ${escapeHtml(String(id))} · atualizado: ${dataStr} · ${tamanho.toLocaleString('pt-BR')} bytes</div>
+      `;
+      lista.appendChild(div);
+    });
+    document.getElementById('btnExport').style.display = '';
+  } else {
+    document.getElementById('pacientesStatus').innerHTML = '<span class="err">Nenhum paciente encontrado nos bancos abertos.</span>';
+  }
+
+  const outros = [];
+  if (dadosEncontrados.planos.length) outros.push(`${dadosEncontrados.planos.length} versões de plano`);
+  if (dadosEncontrados.avaliacoes.length) outros.push(`${dadosEncontrados.avaliacoes.length} avaliações físicas`);
+  if (dadosEncontrados.receitas.length) outros.push(`${dadosEncontrados.receitas.length} receitas`);
+  document.getElementById('outrosDados').innerHTML = outros.length
+    ? '<span class="ok">' + outros.join(' · ') + '</span>'
+    : '<span class="warn">Nenhum dado auxiliar encontrado.</span>';
+}
+
+function abrirEInspecionar(nome) {
+  return new Promise((resolve) => {
+    const req = indexedDB.open(nome);
+    req.onerror = () => {
+      log('  ✗ erro ao abrir ' + nome + ': ' + (req.error?.message || 'desconhecido'), 'err');
+      resolve();
+    };
+    req.onblocked = () => {
+      log('  ⚠ banco ' + nome + ' BLOQUEADO (outra aba está usando?)', 'warn');
+      resolve();
+    };
+    req.onsuccess = (ev) => {
+      const db = ev.target.result;
+      log('  banco aberto: versão ' + db.version, 'ok');
+      const stores = Array.from(db.objectStoreNames);
+      log('  object stores: ' + (stores.join(', ') || '(nenhum)'), 'ok');
+
+      if (stores.length === 0) {
+        db.close();
+        resolve();
+        return;
+      }
+
+      try {
+        const tx = db.transaction(stores, 'readonly');
+        let pendentes = stores.length;
+        stores.forEach(s => {
+          try {
+            const reqAll = tx.objectStore(s).getAll();
+            reqAll.onsuccess = () => {
+              const items = reqAll.result || [];
+              log('    store "' + s + '": ' + items.length + ' registro(s)', items.length > 0 ? 'ok' : 'warn');
+              classificar(s, items);
+              if (--pendentes === 0) { db.close(); resolve(); }
+            };
+            reqAll.onerror = () => {
+              log('    ✗ erro lendo store "' + s + '": ' + (reqAll.error?.message || ''), 'err');
+              if (--pendentes === 0) { db.close(); resolve(); }
+            };
+          } catch (e) {
+            log('    ✗ exceção em store "' + s + '": ' + e.message, 'err');
+            if (--pendentes === 0) { db.close(); resolve(); }
+          }
+        });
+      } catch (e) {
+        log('  ✗ erro abrindo transação: ' + e.message, 'err');
+        db.close();
+        resolve();
+      }
+    };
+  });
+}
+
+function classificar(storeName, items) {
+  const n = storeName.toLowerCase();
+  if (n.includes('paciente')) dadosEncontrados.pacientes.push(...items);
+  else if (n.includes('vers') || n.includes('plano')) dadosEncontrados.planos.push(...items);
+  else if (n.includes('aval')) dadosEncontrados.avaliacoes.push(...items);
+  else if (n.includes('receita')) dadosEncontrados.receitas.push(...items);
+  else {
+    // tenta inferir pelo formato
+    items.forEach(it => {
+      if (it && (it.nome || it.dados?.nome) && (it.id || it.uuid)) {
+        dadosEncontrados.pacientes.push(it);
+      }
+    });
+  }
+}
+
+function exportarTudoEncontrado() {
+  const blob = new Blob([JSON.stringify({
+    diagnostico: true,
+    quando: new Date().toISOString(),
+    versaoApp: 'recuperação a partir do IndexedDB local',
+    dados: dadosEncontrados
+  }, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `nutrifuel-recuperacao-${Date.now()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  alert('Arquivo baixado. Guarde-o em local seguro.');
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+diagnosticar();
+</script>
+
+</body>
+</html>
