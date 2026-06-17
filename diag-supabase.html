@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diagnóstico Supabase</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
+<style>
+  body { background:#0a0a0a; color:#e5e5e5; font-family:-apple-system,sans-serif; padding:18px; line-height:1.5; }
+  h1 { color:#ff6b1a; font-size:1.3rem; }
+  .t { background:#1a1a1a; border:1px solid #2e2e2e; border-radius:10px; padding:14px; margin:10px 0; }
+  .ok { color:#4ade80; } .err { color:#ef4444; } .wait { color:#f7a73a; }
+  .lbl { color:#ff6b1a; font-weight:700; font-size:0.75rem; text-transform:uppercase; }
+  pre { background:#000; padding:8px; border-radius:6px; font-size:0.72rem; overflow-x:auto; white-space:pre-wrap; word-break:break-all; color:#aaa; }
+  input { width:100%; padding:10px; margin:8px 0; background:#0f0f0f; border:1px solid #2e2e2e; border-radius:8px; color:#fff; box-sizing:border-box; }
+  button { background:#ff6b1a; color:#1a1a1a; border:none; padding:12px 18px; border-radius:8px; font-weight:700; cursor:pointer; width:100%; }
+</style>
+</head>
+<body>
+<h1>🔧 Diagnóstico de Conexão Supabase</h1>
+
+<div class="t">
+  <div class="lbl">1. Biblioteca Supabase carregou?</div>
+  <div id="t1" class="wait">checando...</div>
+</div>
+
+<div class="t">
+  <div class="lbl">2. Cliente criado?</div>
+  <div id="t2" class="wait">aguardando...</div>
+</div>
+
+<div class="t">
+  <div class="lbl">3. Alcança o servidor Supabase? (teste de rede puro)</div>
+  <div id="t3" class="wait">aguardando...</div>
+</div>
+
+<div class="t">
+  <div class="lbl">4. Tenta login</div>
+  <input type="email" id="email" placeholder="seu e-mail" value="vagalsete@gmail.com">
+  <input type="password" id="senha" placeholder="sua senha">
+  <button onclick="testarLogin()">Testar login</button>
+  <div id="t4" style="margin-top:10px;"></div>
+</div>
+
+<div class="t">
+  <div class="lbl">Log completo</div>
+  <pre id="log"></pre>
+</div>
+
+<script>
+const URL_SB = 'https://stesnqxjxlzcrmzxacgb.supabase.co';
+const KEY_SB = 'sb_publishable_orj4Vr4aOe--dmkSNvdH8A_Pp-kN5Kq';
+const logs = [];
+function L(m){ logs.push(m); document.getElementById('log').textContent = logs.join('\n'); }
+let client = null;
+
+async function rodar() {
+  // Teste 1: lib carregou?
+  if (window.supabase && window.supabase.createClient) {
+    document.getElementById('t1').innerHTML = '<span class="ok">✓ Biblioteca carregada (window.supabase existe)</span>';
+    L('1 OK: window.supabase presente');
+  } else {
+    document.getElementById('t1').innerHTML = '<span class="err">✗ Biblioteca NÃO carregou — o CDN falhou ou foi bloqueado</span>';
+    L('1 FALHOU: window.supabase ausente. Causa provável do "Failed to fetch".');
+    return;
+  }
+
+  // Teste 2: cria cliente
+  try {
+    client = window.supabase.createClient(URL_SB, KEY_SB);
+    document.getElementById('t2').innerHTML = '<span class="ok">✓ Cliente criado</span>';
+    L('2 OK: createClient funcionou');
+  } catch (e) {
+    document.getElementById('t2').innerHTML = '<span class="err">✗ Erro ao criar cliente: ' + e.message + '</span>';
+    L('2 FALHOU: ' + e.message);
+    return;
+  }
+
+  // Teste 3: alcança o servidor? (fetch puro, sem auth)
+  try {
+    L('3: testando fetch para ' + URL_SB + '/auth/v1/health ...');
+    const resp = await fetch(URL_SB + '/auth/v1/health', { headers: { apikey: KEY_SB } });
+    document.getElementById('t3').innerHTML = '<span class="ok">✓ Servidor respondeu (HTTP ' + resp.status + ')</span>';
+    L('3 OK: servidor respondeu status ' + resp.status);
+  } catch (e) {
+    document.getElementById('t3').innerHTML = '<span class="err">✗ NÃO alcançou o servidor: ' + e.message + '</span>';
+    L('3 FALHOU: ' + e.message + ' — isto é o "Failed to fetch". Causa: rede, DNS, ou URL.');
+  }
+}
+
+async function testarLogin() {
+  const email = document.getElementById('email').value.trim();
+  const senha = document.getElementById('senha').value;
+  const el = document.getElementById('t4');
+  if (!client) { el.innerHTML = '<span class="err">Cliente não criado (ver testes acima)</span>'; return; }
+  el.innerHTML = '<span class="wait">tentando...</span>';
+  L('4: tentando signInWithPassword...');
+  try {
+    const { data, error } = await client.auth.signInWithPassword({ email, password: senha });
+    if (error) {
+      el.innerHTML = '<span class="err">✗ ' + error.message + '</span>';
+      L('4 ERRO retornado: ' + error.message + ' (status ' + (error.status||'?') + ')');
+    } else {
+      el.innerHTML = '<span class="ok">✓ LOGIN OK! user id: ' + data.user.id + '</span>';
+      L('4 OK: logou! ' + data.user.id);
+    }
+  } catch (e) {
+    el.innerHTML = '<span class="err">✗ exceção: ' + e.message + '</span>';
+    L('4 EXCEÇÃO: ' + e.message);
+  }
+}
+
+rodar();
+</script>
+</body>
+</html>
