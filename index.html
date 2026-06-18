@@ -1554,6 +1554,21 @@
     background: rgba(247, 167, 58, 0.1);
     border-color: rgba(247, 167, 58, 0.35);
   }
+  .btn-drive-mini {
+    background: var(--orange, #ff6b1a);
+    color: #1a1a1a;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-weight: 700;
+    font-size: 0.72rem;
+    cursor: pointer;
+    margin-left: 6px;
+  }
+  .status-nuvem { font-weight: 600; }
+  .status-nuvem.ok { color: #4ade80; }
+  .status-nuvem.sync { color: #f7a73a; }
+  .status-nuvem.off { color: #ef4444; }
   .ciclo-copy-btn {
     flex: 0 0 auto;
     padding: 8px 12px;
@@ -2222,9 +2237,97 @@
     color: var(--text-dim);
     line-height: 1.5;
   }
+  /* ============== TELA DE LOGIN (v4.0 nuvem) ============== */
+  .login-overlay {
+    position: fixed;
+    inset: 0;
+    background: #0a0a0a;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .login-box {
+    width: 100%;
+    max-width: 360px;
+    background: var(--bg-card, #1a1a1a);
+    border: 1px solid var(--border, #2e2e2e);
+    border-radius: 16px;
+    padding: 32px 24px;
+    text-align: center;
+  }
+  .login-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .login-star {
+    width: 40px; height: 40px;
+    background: var(--orange, #ff6b1a);
+    color: #1a1a1a;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
+  }
+  .login-brand {
+    font-family: var(--font-display, sans-serif);
+    font-size: 1.6rem;
+    color: #fff;
+    letter-spacing: 0.02em;
+  }
+  .login-brand span { color: var(--orange, #ff6b1a); }
+  .login-sub {
+    color: var(--text-muted, #999);
+    font-size: 0.85rem;
+    margin-bottom: 22px;
+  }
+  .login-input {
+    width: 100%;
+    padding: 13px 14px;
+    margin-bottom: 12px;
+    background: var(--bg-input, #0f0f0f);
+    border: 1px solid var(--border, #2e2e2e);
+    border-radius: 9px;
+    color: #fff;
+    font-size: 1rem;
+    box-sizing: border-box;
+  }
+  .login-input:focus { outline: none; border-color: var(--orange, #ff6b1a); }
+  .login-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--orange, #ff6b1a);
+    color: #1a1a1a;
+    border: none;
+    border-radius: 9px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  .login-btn:disabled { opacity: 0.6; cursor: wait; }
+  .login-erro {
+    background: rgba(239,68,68,0.12);
+    border: 1px solid rgba(239,68,68,0.4);
+    color: #f87171;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 0.82rem;
+    margin-bottom: 14px;
+  }
+  .login-status {
+    color: var(--text-muted, #999);
+    font-size: 0.8rem;
+    margin-top: 14px;
+    min-height: 18px;
+  }
 </style>
 </head>
 <body>
+
 <div class="container">
   
   <!-- ============== HEADER MARCA ============== -->
@@ -2252,7 +2355,7 @@
         </div>
         <div class="brand-meta-item">
           <span>Versão</span>
-          <strong>3.11.0</strong>
+          <strong>3.13.0</strong>
         </div>
       </div>
     </div>
@@ -2274,6 +2377,7 @@
       <button onclick="novoPaciente()" class="btn-export" style="background: var(--orange); color:#fff; border:none; padding: 10px 16px; font-weight: 700;">➕ Novo Paciente</button>
       <button onclick="document.getElementById('importPacientesFile').click()" class="btn-export" style="background: var(--bg-2); color: var(--text); border: 1px solid var(--border); padding: 10px 16px;">📤 Importar JSON</button>
       <button onclick="exportarTodosPacientes()" class="btn-export" style="background: var(--bg-2); color: var(--text); border: 1px solid var(--border); padding: 10px 16px;">📥 Backup Completo</button>
+      <button onclick="salvarNoDrive()" class="btn-export" style="background: var(--orange); color: #1a1a1a; border: none; padding: 10px 16px; font-weight:700;">☁️ Salvar no Drive</button>
       <input type="file" id="importPacientesFile" accept=".json" style="display:none" onchange="importarPacientes(event)">
     </div>
     <div id="indicadorBackup" class="indicador-backup" style="margin-bottom: 16px;">🛟 Backup automático ativo</div>
@@ -2510,6 +2614,17 @@
           </div>
         </div>
         
+        <div class="field" style="border:1px solid var(--orange);border-radius:12px;padding:12px;background:rgba(255,107,26,0.08);margin-bottom:14px;">
+          <label style="color:var(--orange);font-weight:700;font-size:0.74rem;text-transform:uppercase;letter-spacing:0.04em;">★ Aluno (compartilhado entre os 3 apps)</label>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:6px;">
+            <select id="comumSeletor" onchange="aoEscolherPessoa()" style="flex:1;">
+              <option value="">— Escolher aluno cadastrado / criar novo abaixo —</option>
+            </select>
+            <button type="button" onclick="vincularPessoaAtual()" class="btn-mini" style="flex:0 0 auto;background:var(--orange);color:#1a1a1a;border:none;border-radius:8px;padding:9px 12px;font-weight:700;cursor:pointer;white-space:nowrap;">💾 Salvar aluno</button>
+          </div>
+          <div style="font-size:0.7rem;color:var(--text-3);margin-top:6px;">Preencha nome, sexo, nascimento, telefone e altura abaixo e toque em "Salvar aluno" para compartilhar com TRAIN e Organizer. Ou escolha um já cadastrado.</div>
+        </div>
+
         <div class="field-grid" style="grid-template-columns: 2fr 1fr 1fr 1fr;">
           <div class="field">
             <label>Nome do Paciente *</label>
@@ -2526,6 +2641,7 @@
           <div class="field">
             <label>Idade</label>
             <input type="number" id="cliIdade" placeholder="anos" min="1" max="120">
+            <input type="hidden" id="cliNasc">
           </div>
           <div class="field">
             <label>Telefone</label>
@@ -3042,7 +3158,7 @@
   </div>
 
   <p class="footer-note">
-    <strong>NUTRI.FUEL · v3.11.0</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
+    <strong>NUTRI.FUEL · v3.13.0</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
   </p>
   
   <!-- ============== ÁREA DO PDF (oculta na tela, visível na impressão) ============== -->
@@ -6684,7 +6800,7 @@ async function exportarHTML() {
 // ============================================================
 function exportarJSON() {
   const data = {
-    versao: '3.11.0',
+    versao: '3.13.0',
     planos: planosParaJSON(),          // novo: salva todos os 4 planos (com opções alternativas)
     plano: planoParaJSON(getPlanoAtivo()), // legacy: para compatibilidade com importações antigas
     metas,
@@ -6913,7 +7029,7 @@ function exportarTexto() {
 // INIT
 // ============================================================
 render();
-console.log(`✅ NUTRI.FUEL v3.11.0 carregado · ${ALIMENTOS.length} alimentos · ${ALIMENTOS.filter(a => a.u).length} com unidade definida`);
+console.log(`✅ NUTRI.FUEL v3.13.0 carregado`);
 
 // ============================================================
 // MÓDULO PACIENTES v3.8 — IndexedDB, CRUD, Avaliações, Import/Export
@@ -6925,6 +7041,70 @@ const STORE_PACIENTES = 'pacientes';
 const STORE_VERSOES_PLANO = 'versoes_plano';
 const STORE_AVALIACOES = 'avaliacoes';
 const STORE_RECEITAS = 'receitas';
+
+// ============================================================
+// CADASTRO COMPARTILHADO (v3.13) — banco comum entre os 3 apps
+// ------------------------------------------------------------
+// Banco próprio "mgcoach_comum", tabela "pessoas", acessível pelos
+// três apps (mesma origem mgcoach.github.io). Guarda só o básico:
+// nome, contato, nascimento, sexo, altura. Peso fica em cada app.
+// ============================================================
+const COMUM_DB = 'mgcoach_comum';
+const COMUM_STORE = 'pessoas';
+let _comumDB = null;
+
+function comumDB() {
+  if (_comumDB) return Promise.resolve(_comumDB);
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(COMUM_DB, 1);
+    req.onupgradeneeded = (ev) => {
+      const db = ev.target.result;
+      if (!db.objectStoreNames.contains(COMUM_STORE)) {
+        db.createObjectStore(COMUM_STORE, { keyPath: 'id' });
+      }
+    };
+    req.onsuccess = (ev) => { _comumDB = ev.target.result; resolve(_comumDB); };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function comumOp(mode, fn) {
+  const db = await comumDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(COMUM_STORE, mode);
+    const store = tx.objectStore(COMUM_STORE);
+    const r = fn(store);
+    r.onsuccess = () => resolve(r.result);
+    r.onerror = () => reject(r.error);
+  });
+}
+
+async function listarPessoas() {
+  try { return await comumOp('readonly', s => s.getAll()) || []; }
+  catch (e) { console.warn('listarPessoas', e); return []; }
+}
+async function getPessoa(id) {
+  try { return await comumOp('readonly', s => s.get(id)); }
+  catch (e) { return null; }
+}
+async function salvarPessoa(p) {
+  if (!p.id) p.id = 'pessoa_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+  p.atualizadoEm = new Date().toISOString();
+  await comumOp('readwrite', s => s.put(p));
+  return p;
+}
+
+// Calcula idade a partir da data de nascimento (YYYY-MM-DD)
+function idadeDeNascimento(nascimento) {
+  if (!nascimento) return '';
+  const d = new Date(nascimento);
+  if (isNaN(d)) return '';
+  const hoje = new Date();
+  let idade = hoje.getFullYear() - d.getFullYear();
+  const m = hoje.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && hoje.getDate() < d.getDate())) idade--;
+  return idade >= 0 && idade < 130 ? idade : '';
+}
 
 let _nutriDB = null;
 let pacienteAtivoId = null;
@@ -7629,6 +7809,73 @@ function filtrarPacientes() {
 }
 
 // ============================================================
+// SELETOR DE PESSOA COMPARTILHADA (v3.13)
+// ============================================================
+async function popularSeletorPessoas() {
+  const sel = document.getElementById('comumSeletor');
+  if (!sel) return;
+  const pessoas = await listarPessoas();
+  const atual = sel.value;
+  sel.innerHTML = '<option value="">— Escolher aluno cadastrado / criar novo abaixo —</option>';
+  pessoas.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+  pessoas.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.nome || '(sem nome)';
+    sel.appendChild(opt);
+  });
+  if (atual) sel.value = atual;
+}
+
+// Ao escolher uma pessoa, preenche os campos básicos (inclui altura p/ TMB)
+async function aoEscolherPessoa() {
+  const sel = document.getElementById('comumSeletor');
+  if (!sel || !sel.value) return;
+  const p = await getPessoa(sel.value);
+  if (!p) return;
+  const set = (id, v) => { const el = document.getElementById(id); if (el != null && v != null) el.value = v; };
+  set('cliNome', p.nome || '');
+  set('cliSexo', p.sexo || '');
+  set('cliTel', p.contato || '');
+  set('cliAltura', p.altura || '');
+  if (p.nascimento) {
+    const idade = idadeDeNascimento(p.nascimento);
+    if (idade !== '') set('cliIdade', idade);
+    const elN = document.getElementById('cliNasc');
+    if (elN) elN.value = p.nascimento;
+  } else if (p.idade) {
+    set('cliIdade', p.idade);
+  }
+  // recalcula TMB se a função existir
+  if (typeof calcularTMB === 'function') { try { calcularTMB(); } catch (e) {} }
+  toastNutri('✓ Dados básicos preenchidos de ' + (p.nome || 'aluno'));
+}
+
+// Salva/atualiza a pessoa no banco comum com o que está nos campos
+async function vincularPessoaAtual() {
+  const g = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  const nome = g('cliNome');
+  if (!nome) { toastNutri('Preencha o nome antes de salvar o aluno', 'aviso'); return; }
+  const sel = document.getElementById('comumSeletor');
+  const idExistente = sel && sel.value ? sel.value : null;
+  const nascExistente = g('cliNasc');
+  const pessoa = {
+    id: idExistente || null,
+    nome,
+    sexo: g('cliSexo'),
+    contato: g('cliTel'),
+    altura: g('cliAltura'),
+    nascimento: nascExistente || null,
+    idade: g('cliIdade') || null
+  };
+  // se não tem data de nascimento mas tem idade, não inventa data — guarda idade aproximada
+  const salva = await salvarPessoa(pessoa);
+  await popularSeletorPessoas();
+  if (sel) sel.value = salva.id;
+  toastNutri('★ Aluno salvo no cadastro compartilhado — já aparece no TRAIN e Organizer');
+}
+
+// ============================================================
 // AÇÕES — Novo, Abrir, Salvar, Excluir
 // ============================================================
 function novoPaciente() {
@@ -7868,12 +8115,75 @@ async function exportarTodosPacientes() {
   if (pacientes.length === 0 && receitas.length === 0) { toastNutri('Nenhum paciente para exportar', 'aviso'); return; }
   const pacote = {
     tipo: 'nutrifuel_backup_completo',
-    versao_app: '3.11.0',
+    versao_app: '3.13.0',
     pacientes, versoes, avaliacoes, receitas,
     exportadoEm: new Date().toISOString()
   };
   baixarJSONPac(pacote, `nutrifuel_backup_${new Date().toISOString().split('T')[0]}.json`);
   toastNutri(`📥 Backup com ${pacientes.length} paciente(s)${receitas.length ? ' e ' + receitas.length + ' receita(s)' : ''} exportado`);
+}
+
+// ============================================================
+// SALVAR NO DRIVE (v3.12) — backup pra fora do aparelho, sem servidor
+// ------------------------------------------------------------
+// Gera o backup completo e abre a bandeja de compartilhar do aparelho
+// (Web Share API), onde o usuário escolhe Drive, WhatsApp, e-mail etc.
+// Não depende de login, servidor ou rede com o Supabase.
+// ============================================================
+const BACKUP_DRIVE_KEY = 'nutrifuel_ultimo_backup_drive';
+
+function getUltimoBackupDrive() {
+  try { const v = localStorage.getItem(BACKUP_DRIVE_KEY); return v ? parseInt(v, 10) : 0; }
+  catch (e) { return 0; }
+}
+function setUltimoBackupDrive(ts) {
+  try { localStorage.setItem(BACKUP_DRIVE_KEY, String(ts)); } catch (e) {}
+}
+
+async function salvarNoDrive() {
+  const pacientes = await dbAll(STORE_PACIENTES);
+  const versoes = await dbAll(STORE_VERSOES_PLANO);
+  const avaliacoes = await dbAll(STORE_AVALIACOES);
+  const receitas = await dbAll(STORE_RECEITAS);
+  if (pacientes.length === 0 && receitas.length === 0) {
+    toastNutri('Nenhum paciente para salvar ainda', 'aviso');
+    return;
+  }
+  const pacote = {
+    tipo: 'nutrifuel_backup_completo',
+    versao_app: '3.13.0',
+    pacientes, versoes, avaliacoes, receitas,
+    exportadoEm: new Date().toISOString()
+  };
+  const stamp = new Date().toISOString().slice(0, 16).replace('T', '_').replace(':', 'h');
+  const nomeArq = `nutrifuel_backup_${stamp}.json`;
+  const conteudo = JSON.stringify(pacote, null, 2);
+
+  // Tenta compartilhar como ARQUIVO (Drive, WhatsApp, e-mail...)
+  try {
+    const arquivo = new File([conteudo], nomeArq, { type: 'application/json' });
+    if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+      await navigator.share({
+        files: [arquivo],
+        title: 'Backup NUTRI.FUEL',
+        text: `Backup com ${pacientes.length} paciente(s) — salve no Google Drive`
+      });
+      setUltimoBackupDrive(Date.now());
+      atualizarIndicadorBackup();
+      toastNutri('✅ Backup compartilhado — confirme que salvou no Drive');
+      return;
+    }
+  } catch (e) {
+    // usuário cancelou o compartilhar, ou não suportado — cai pro download
+    if (e && e.name === 'AbortError') { return; } // cancelou de propósito
+    console.warn('Web Share falhou, baixando local:', e);
+  }
+
+  // Fallback: baixa o arquivo (aí o usuário sobe no Drive manualmente)
+  baixarJSONPac(pacote, nomeArq);
+  setUltimoBackupDrive(Date.now());
+  atualizarIndicadorBackup();
+  toastNutri('📥 Backup baixado — suba esse arquivo no seu Google Drive');
 }
 
 // ============================================================
@@ -7911,7 +8221,7 @@ async function gerarBackupAutomatico() {
 
   const pacote = {
     tipo: 'nutrifuel_backup_completo',
-    versao_app: '3.11.0',
+    versao_app: '3.13.0',
     automatico: true,
     pacientes, versoes, avaliacoes, receitas,
     exportadoEm: new Date().toISOString()
@@ -7943,23 +8253,34 @@ async function checarBackupAutomatico() {
 function atualizarIndicadorBackup() {
   const el = document.getElementById('indicadorBackup');
   if (!el) return;
-  const ultimo = getUltimoBackupAuto();
-  if (!ultimo) {
-    el.innerHTML = '⚠️ Nenhum backup automático ainda';
-    el.className = 'indicador-backup alerta';
-    return;
-  }
-  const diffMs = Date.now() - ultimo;
-  const horas = Math.floor(diffMs / (60 * 60 * 1000));
-  const mins = Math.floor(diffMs / (60 * 1000));
-  let txt;
-  if (mins < 1) txt = 'agora mesmo';
-  else if (mins < 60) txt = `há ${mins} min`;
-  else if (horas < 24) txt = `há ${horas}h`;
-  else txt = `há ${Math.floor(horas / 24)} dia(s)`;
-  const alerta = diffMs > 24 * 60 * 60 * 1000;
-  el.innerHTML = `🛟 Último backup automático: ${txt}`;
-  el.className = 'indicador-backup' + (alerta ? ' alerta' : '');
+
+  const fmt = (ts) => {
+    if (!ts) return null;
+    const diffMs = Date.now() - ts;
+    const dias = Math.floor(diffMs / (24 * 60 * 60 * 1000));
+    const horas = Math.floor(diffMs / (60 * 60 * 1000));
+    const mins = Math.floor(diffMs / (60 * 1000));
+    if (mins < 1) return 'agora mesmo';
+    if (mins < 60) return `há ${mins} min`;
+    if (horas < 24) return `há ${horas}h`;
+    return `há ${dias} dia(s)`;
+  };
+
+  const ultimoAuto = getUltimoBackupAuto();
+  const ultimoDrive = (typeof getUltimoBackupDrive === 'function') ? getUltimoBackupDrive() : 0;
+
+  // Lembrete do Drive: alerta se passou de 7 dias (ou nunca)
+  const diasDrive = ultimoDrive ? Math.floor((Date.now() - ultimoDrive) / (24 * 60 * 60 * 1000)) : 999;
+  const precisaDrive = diasDrive >= 7;
+
+  const linhaAuto = ultimoAuto ? `🛟 Backup local: ${fmt(ultimoAuto)}` : '🛟 Backup local ativo';
+  const linhaDrive = ultimoDrive
+    ? `☁️ No Drive: ${fmt(ultimoDrive)}`
+    : '☁️ Ainda não salvou no Drive';
+
+  el.innerHTML = `${linhaAuto} · ${linhaDrive} ` +
+    `<button onclick="salvarNoDrive()" class="btn-drive-mini">☁️ Salvar no Drive</button>`;
+  el.className = 'indicador-backup' + (precisaDrive ? ' alerta' : '');
 }
 
 async function importarPacientes(event) {
@@ -8452,6 +8773,7 @@ function navegarPara(panelId) {
     await atualizarContadorPacientes();
     await renderListaPacientes();
     atualizarBarraPacAtivo(null);
+    try { await popularSeletorPessoas(); } catch (e) { console.warn('seletor pessoas:', e); }
     
     // Auto-save: listeners para campos da ficha + TMB
     const camposParaMonitorar = [
@@ -8479,7 +8801,7 @@ function navegarPara(panelId) {
       }
     });
     
-    console.log('✅ Módulo Pacientes v3.11.0 inicializado (com auto-save + backup automático)');
+    console.log('✅ Módulo Pacientes v3.12.0 (auto-save + backup local + Drive)');
     // Inicializa indicador de backup e atualiza a cada minuto
     if (typeof atualizarIndicadorBackup === 'function') {
       atualizarIndicadorBackup();
