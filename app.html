@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>MG COACH — Central</title>
+<link rel="manifest" href="./manifest.json">
+<style>
+  :root {
+    --bg: #0a0a0a; --bg-card: #1a1a1a; --border: #2e2e2e;
+    --orange: #ff6b1a; --orange-soft: rgba(255,107,26,0.12);
+    --text: #e5e5e5; --text-muted: #999;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; overflow: hidden; }
+  body { display: flex; flex-direction: column; }
+
+  /* Barra superior */
+  .topbar {
+    flex: 0 0 auto;
+    background: linear-gradient(90deg, #1f1f1f, #141414);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px; gap: 10px;
+  }
+  .brand { display: flex; align-items: center; gap: 8px; }
+  .brand-star { width: 30px; height: 30px; background: var(--orange); color:#1a1a1a; border-radius: 8px; display:flex; align-items:center; justify-content:center; font-size:1rem; }
+  .brand-txt { font-weight: 800; color: #fff; font-size: 0.95rem; letter-spacing: 0.02em; }
+  .brand-txt span { color: var(--orange); }
+  .backup-area { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .bk-btn {
+    background: var(--orange); color: #1a1a1a; border: none; border-radius: 8px;
+    padding: 8px 12px; font-weight: 700; font-size: 0.74rem; cursor: pointer;
+  }
+  .bk-btn.sec { background: transparent; color: var(--orange); border: 1px solid var(--orange); }
+  .bk-status { font-size: 0.66rem; color: var(--text-muted); font-family: monospace; width: 100%; text-align: right; }
+  .bk-status.alerta { color: #f7a73a; }
+
+  /* Abas */
+  .tabs { flex: 0 0 auto; display: flex; background: #141414; border-bottom: 1px solid var(--border); }
+  .tab {
+    flex: 1; padding: 12px 8px; background: transparent; border: none;
+    color: var(--text-muted); font-weight: 700; font-size: 0.82rem; cursor: pointer;
+    border-bottom: 3px solid transparent; transition: all 0.15s; font-family: inherit;
+  }
+  .tab.active { color: var(--orange); border-bottom-color: var(--orange); background: var(--orange-soft); }
+
+  /* Área dos apps */
+  .frames { flex: 1 1 auto; position: relative; }
+  iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; display: none; background: var(--bg); }
+  iframe.active { display: block; }
+
+  /* Overlay de progresso do backup */
+  .ov { position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px; }
+  .ov.show { display: flex; }
+  .ov-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 24px; max-width: 380px; width: 100%; text-align: center; }
+  .ov-box h3 { color: var(--orange); margin-bottom: 12px; }
+  .ov-log { font-family: monospace; font-size: 0.74rem; color: var(--text-muted); text-align: left; background:#0a0a0a; border-radius:8px; padding:10px; margin-top:10px; max-height:200px; overflow-y:auto; white-space:pre-wrap; }
+  .ov-box button { margin-top: 14px; width: 100%; padding: 12px; background: var(--orange); color:#1a1a1a; border:none; border-radius:8px; font-weight:700; cursor:pointer; }
+  input[type=file] { display: none; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-star">★</div>
+    <div class="brand-txt">MG<span> COACH</span></div>
+  </div>
+  <div class="backup-area">
+    <button class="bk-btn" onclick="salvarTudoNoDrive()">☁️ Salvar TUDO</button>
+    <button class="bk-btn sec" onclick="document.getElementById('restoreFile').click()">📥 Restaurar</button>
+    <input type="file" id="restoreFile" accept=".json" onchange="restaurarTudo(event)">
+    <div class="bk-status" id="bkStatus">backup: —</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-app="nutri" onclick="trocarAba('nutri')">🍎 NUTRI</button>
+  <button class="tab" data-app="train" onclick="trocarAba('train')">💪 TRAIN</button>
+  <button class="tab" data-app="org" onclick="trocarAba('org')">📋 ORGANIZER</button>
+</div>
+
+<div class="frames">
+  <iframe id="f-nutri" class="active" data-src="https://mgcoach.github.io/mgcoach/"></iframe>
+  <iframe id="f-train" data-src="https://mgcoach.github.io/mgcoachtreino/"></iframe>
+  <iframe id="f-org" data-src="https://mgcoach.github.io/organizer/"></iframe>
+</div>
+
+<div class="ov" id="ov">
+  <div class="ov-box">
+    <h3 id="ovTitle">Trabalhando...</h3>
+    <div class="ov-log" id="ovLog"></div>
+    <button id="ovBtn" onclick="fecharOv()" style="display:none;">Fechar</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// MG COACH — Central (casca com abas + backup único)
+// ============================================================
+// Carrega os iframes sob demanda (lazy) pra não pesar tudo de vez
+const frames = {
+  nutri: document.getElementById('f-nutri'),
+  train: document.getElementById('f-train'),
+  org: document.getElementById('f-org')
+};
+let carregado = { nutri: false, train: false, org: false };
+
+function carregarFrame(app) {
+  if (carregado[app]) return;
+  const f = frames[app];
+  f.src = f.dataset.src;
+  carregado[app] = true;
+}
+// carrega o nutri de cara
+carregarFrame('nutri');
+
+function trocarAba(app) {
+  Object.keys(frames).forEach(k => {
+    frames[k].classList.toggle('active', k === app);
+    document.querySelector(`.tab[data-app="${k}"]`).classList.toggle('active', k === app);
+  });
+  carregarFrame(app);
+}
+
+// ---------- BACKUP ÚNICO DOS TRÊS BANCOS ----------
+// Bancos conhecidos dos três apps (no mesmo domínio)
+const BANCOS = ['nutrifuel_db', 'trainfuel_db', 'mgcoach_organizer'];
+const ULT_BACKUP_KEY = 'mgcoach_ultimo_backup_geral';
+
+function ovLog(msg) {
+  const el = document.getElementById('ovLog');
+  el.textContent += msg + '\n';
+  el.scrollTop = el.scrollHeight;
+}
+function abrirOv(titulo) {
+  document.getElementById('ovTitle').textContent = titulo;
+  document.getElementById('ovLog').textContent = '';
+  document.getElementById('ovBtn').style.display = 'none';
+  document.getElementById('ov').classList.add('show');
+}
+function fecharOv() { document.getElementById('ov').classList.remove('show'); }
+function ovPronto() { document.getElementById('ovBtn').style.display = 'block'; }
+
+// Abre um banco e lê TODOS os object stores dinamicamente
+function lerBancoCompleto(nome) {
+  return new Promise((resolve) => {
+    let req;
+    try { req = indexedDB.open(nome); } catch (e) { resolve(null); return; }
+    req.onerror = () => { ovLog('  ✗ erro ao abrir ' + nome); resolve(null); };
+    req.onsuccess = (ev) => {
+      const db = ev.target.result;
+      const stores = Array.from(db.objectStoreNames);
+      if (stores.length === 0) { db.close(); resolve({ versao: db.version, stores: {} }); return; }
+      const resultado = { versao: db.version, stores: {} };
+      let pend = stores.length;
+      const tx = db.transaction(stores, 'readonly');
+      stores.forEach(s => {
+        const r = tx.objectStore(s).getAll();
+        r.onsuccess = () => {
+          resultado.stores[s] = r.result || [];
+          ovLog(`  ${nome} · ${s}: ${(r.result||[]).length} registro(s)`);
+          if (--pend === 0) { db.close(); resolve(resultado); }
+        };
+        r.onerror = () => { resultado.stores[s] = []; if (--pend === 0) { db.close(); resolve(resultado); } };
+      });
+    };
+  });
+}
+
+async function montarPacoteGeral() {
+  const pacote = { tipo: 'mgcoach_backup_geral', versao: 1, exportadoEm: new Date().toISOString(), bancos: {} };
+  for (const nome of BANCOS) {
+    ovLog('Lendo ' + nome + '...');
+    const dados = await lerBancoCompleto(nome);
+    if (dados) pacote.bancos[nome] = dados;
+  }
+  return pacote;
+}
+
+async function salvarTudoNoDrive() {
+  abrirOv('☁️ Salvando tudo...');
+  try {
+    const pacote = await montarPacoteGeral();
+    const totalReg = Object.values(pacote.bancos).reduce((acc, b) =>
+      acc + Object.values(b.stores).reduce((a, arr) => a + arr.length, 0), 0);
+    ovLog(`\nTotal: ${totalReg} registros nos 3 apps.`);
+    const conteudo = JSON.stringify(pacote);
+    const stamp = new Date().toISOString().slice(0,16).replace('T','_').replace(':','h');
+    const nomeArq = `MGCOACH_backup_completo_${stamp}.json`;
+
+    try {
+      const arquivo = new File([conteudo], nomeArq, { type: 'application/json' });
+      if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+        await navigator.share({ files: [arquivo], title: 'Backup MG COACH (3 apps)', text: `Backup completo: ${totalReg} registros` });
+        marcarBackup(); ovLog('\n✅ Compartilhado. Confirme que salvou no Drive.'); ovPronto(); return;
+      }
+    } catch (e) {
+      if (e && e.name === 'AbortError') { ovLog('\n(cancelado)'); ovPronto(); return; }
+      ovLog('\nCompartilhar indisponível, baixando arquivo...');
+    }
+    // fallback: download
+    const blob = new Blob([conteudo], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = nomeArq;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    marcarBackup(); ovLog('\n📥 Baixado. Suba esse arquivo no seu Google Drive.'); ovPronto();
+  } catch (e) {
+    ovLog('\n✗ Erro: ' + e.message); ovPronto();
+  }
+}
+
+// Restaura os três bancos a partir de um arquivo de backup geral
+function gravarBancoCompleto(nome, dados) {
+  return new Promise((resolve) => {
+    const stores = Object.keys(dados.stores || {});
+    if (stores.length === 0) { resolve(); return; }
+    // Abre o banco; se não existir, cria com os stores do backup
+    const req = indexedDB.open(nome, dados.versao || undefined);
+    req.onupgradeneeded = (ev) => {
+      const db = ev.target.result;
+      stores.forEach(s => {
+        if (!db.objectStoreNames.contains(s)) {
+          // tenta detectar se usa autoIncrement (versoes) ou keyPath id
+          db.createObjectStore(s, { keyPath: 'id' });
+        }
+      });
+    };
+    req.onerror = () => { ovLog('  ✗ erro abrindo ' + nome + ' p/ restaurar'); resolve(); };
+    req.onsuccess = (ev) => {
+      const db = ev.target.result;
+      const storesValidos = stores.filter(s => db.objectStoreNames.contains(s));
+      if (storesValidos.length === 0) { db.close(); resolve(); return; }
+      const tx = db.transaction(storesValidos, 'readwrite');
+      let pend = storesValidos.length;
+      storesValidos.forEach(s => {
+        const os = tx.objectStore(s);
+        const clear = os.clear();
+        clear.onsuccess = () => {
+          (dados.stores[s] || []).forEach(item => { try { os.put(item); } catch(e){} });
+        };
+        tx.oncomplete = tx.oncomplete || (() => {});
+      });
+      tx.oncomplete = () => { ovLog('  ✓ ' + nome + ' restaurado'); db.close(); resolve(); };
+      tx.onerror = () => { ovLog('  ✗ erro restaurando ' + nome); db.close(); resolve(); };
+    };
+  });
+}
+
+async function restaurarTudo(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (!confirm('Restaurar vai SUBSTITUIR os dados atuais dos três apps pelos do arquivo. Continuar?')) { event.target.value=''; return; }
+  abrirOv('📥 Restaurando...');
+  try {
+    const texto = await file.text();
+    const pacote = JSON.parse(texto);
+    if (pacote.tipo !== 'mgcoach_backup_geral') {
+      ovLog('✗ Arquivo não é um backup geral do MG COACH.'); ovPronto(); event.target.value=''; return;
+    }
+    for (const nome of Object.keys(pacote.bancos || {})) {
+      ovLog('Restaurando ' + nome + '...');
+      await gravarBancoCompleto(nome, pacote.bancos[nome]);
+    }
+    ovLog('\n✅ Pronto! Recarregue os apps nas abas para ver os dados.'); ovPronto();
+  } catch (e) {
+    ovLog('\n✗ Erro: ' + e.message); ovPronto();
+  }
+  event.target.value = '';
+}
+
+function marcarBackup() {
+  try { localStorage.setItem(ULT_BACKUP_KEY, String(Date.now())); } catch(e){}
+  atualizarStatus();
+}
+function atualizarStatus() {
+  const el = document.getElementById('bkStatus');
+  let ts = 0;
+  try { ts = parseInt(localStorage.getItem(ULT_BACKUP_KEY) || '0', 10); } catch(e){}
+  if (!ts) { el.textContent = '⚠️ nunca salvou tudo no Drive'; el.className = 'bk-status alerta'; return; }
+  const dias = Math.floor((Date.now() - ts) / (24*60*60*1000));
+  const horas = Math.floor((Date.now() - ts) / (60*60*1000));
+  const txt = dias >= 1 ? `há ${dias} dia(s)` : (horas >= 1 ? `há ${horas}h` : 'agora mesmo');
+  el.textContent = `backup geral: ${txt}`;
+  el.className = 'bk-status' + (dias >= 7 ? ' alerta' : '');
+}
+atualizarStatus();
+setInterval(atualizarStatus, 60000);
+</script>
+</body>
+</html>
