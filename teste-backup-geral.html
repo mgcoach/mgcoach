@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teste backup geral</title>
+<style>
+  body{background:#0a0a0a;color:#e5e5e5;font-family:-apple-system,sans-serif;padding:18px;line-height:1.6}
+  h1{color:#ff6b1a;font-size:1.2rem}
+  .b{background:#1a1a1a;border:1px solid #2e2e2e;border-radius:10px;padding:12px;margin:10px 0}
+  .ok{color:#4ade80}.err{color:#ef4444}.w{color:#f7a73a}
+  pre{background:#000;padding:8px;border-radius:6px;font-size:0.75rem;color:#aaa;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<h1>🔍 Teste: a página consegue ler os 3 bancos?</h1>
+<p style="font-size:0.85rem;color:#999">Isto confirma se um backup único dos três apps é possível a partir desta pasta.</p>
+<div class="b"><pre id="out">testando...</pre></div>
+<script>
+const BANCOS = ['nutrifuel_db','trainfuel_db','mgcoach_organizer'];
+const out = document.getElementById('out');
+function L(m){ out.textContent += m + '\n'; }
+function ler(nome){
+  return new Promise(res=>{
+    const req = indexedDB.open(nome);
+    req.onerror = ()=>{ L('✗ '+nome+': erro ao abrir'); res(); };
+    req.onsuccess = ev=>{
+      const db = ev.target.result;
+      const stores = Array.from(db.objectStoreNames);
+      if(!stores.length){ L('• '+nome+': existe mas vazio (0 tabelas)'); db.close(); res(); return; }
+      const tx = db.transaction(stores,'readonly');
+      let pend = stores.length, total=0;
+      stores.forEach(s=>{
+        const r = tx.objectStore(s).getAll();
+        r.onsuccess = ()=>{ const n=(r.result||[]).length; total+=n; L('   '+nome+' · '+s+': '+n+' registro(s)'); if(--pend===0){ L('✓ '+nome+': '+total+' registros totais\n'); db.close(); res(); } };
+        r.onerror = ()=>{ if(--pend===0){ db.close(); res(); } };
+      });
+    };
+  });
+}
+(async()=>{
+  out.textContent='';
+  for(const b of BANCOS){ L('Abrindo '+b+'...'); await ler(b); }
+  L('\n=== Se os três apareceram com registros, o backup único FUNCIONA daqui. ===');
+})();
+</script>
+</body>
+</html>
