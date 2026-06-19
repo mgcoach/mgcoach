@@ -69,6 +69,7 @@
   </div>
   <div class="backup-area">
     <button class="bk-btn" onclick="salvarTudoNoDrive()">☁️ Salvar TUDO</button>
+    <button class="bk-btn" style="background:#25D366;color:#072d16;" onclick="enviarWhatsApp()">📲 WhatsApp</button>
     <button class="bk-btn sec" onclick="document.getElementById('restoreFile').click()">📥 Restaurar</button>
     <input type="file" id="restoreFile" accept=".json" onchange="restaurarTudo(event)">
     <div class="bk-status" id="bkStatus">backup: —</div>
@@ -177,6 +178,49 @@ async function montarPacoteGeral() {
     if (dados) pacote.bancos[nome] = dados;
   }
   return pacote;
+}
+
+// Envia backup pro WhatsApp: baixa o arquivo E tenta compartilhar
+async function enviarWhatsApp() {
+  abrirOv('📲 Preparando backup pro WhatsApp...');
+  try {
+    const pacote = await montarPacoteGeral();
+    const totalReg = Object.values(pacote.bancos).reduce((acc, b) =>
+      acc + Object.values(b.stores).reduce((a, arr) => a + arr.length, 0), 0);
+    ovLog(`\nTotal: ${totalReg} registros nos 3 apps.`);
+    const conteudo = JSON.stringify(pacote);
+    const stamp = new Date().toISOString().slice(0,16).replace('T','_').replace(':','h');
+    const nomeArq = `MGCOACH_backup_${stamp}.json`;
+
+    // 1) Baixa sempre o arquivo (garante que está no aparelho pra anexar)
+    const blob = new Blob([conteudo], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = nomeArq;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    ovLog('\n📥 Arquivo baixado em Downloads: ' + nomeArq);
+
+    // 2) Tenta compartilhar como ARQUIVO (se o aparelho deixar, vai direto pro WhatsApp)
+    try {
+      const arquivo = new File([conteudo], nomeArq, { type: 'application/json' });
+      if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+        await navigator.share({ files: [arquivo], title: 'Backup MG COACH', text: `Backup MG COACH — ${totalReg} registros` });
+        marcarBackup(); ovLog('\n✅ Compartilhado! Escolha o WhatsApp na lista.'); ovPronto(); return;
+      }
+    } catch (e) {
+      if (e && e.name === 'AbortError') { ovLog('\n(cancelado — o arquivo já está em Downloads)'); ovPronto(); return; }
+    }
+
+    // 3) Se não deu, abre o WhatsApp com instrução (texto) e você anexa o arquivo de Downloads
+    marcarBackup();
+    ovLog('\n📲 Vou abrir o WhatsApp. Lá, toque no clipe 📎 → Documento → escolha o arquivo "' + nomeArq + '" da pasta Downloads.');
+    ovPronto();
+    const msg = encodeURIComponent(`Backup MG COACH (${totalReg} registros) — ${stamp}. Anexar o arquivo ${nomeArq} da pasta Downloads.`);
+    // abre o WhatsApp (conversa consigo mesmo não é possível via link; abre a lista de conversas)
+    setTimeout(() => { window.open('https://wa.me/?text=' + msg, '_blank'); }, 800);
+  } catch (e) {
+    ovLog('\n✗ Erro: ' + e.message); ovPronto();
+  }
 }
 
 async function salvarTudoNoDrive() {
