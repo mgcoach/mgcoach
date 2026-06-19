@@ -2624,9 +2624,10 @@
           </div>
           <div style="font-size:0.7rem;color:var(--text-3);margin-top:6px;">Preencha nome, sexo, nascimento, telefone e altura abaixo e toque em "Salvar aluno" para compartilhar com TRAIN e Organizer. Ou escolha um já cadastrado.</div>
           <div style="margin-top:10px;border-top:1px dashed var(--border);padding-top:10px;">
-            <button type="button" onclick="document.getElementById('importAnamneseFile').click()" style="width:100%;background:var(--bg-2);color:var(--orange);border:1px solid var(--orange);border-radius:8px;padding:10px;font-weight:700;cursor:pointer;">📋 Importar anamnese (.json)</button>
+            <button type="button" onclick="document.getElementById('importAnamneseFile').click()" style="width:100%;background:var(--bg-2);color:var(--orange);border:1px solid var(--orange);border-radius:8px;padding:10px;font-weight:700;cursor:pointer;">📋 Importar anamnese (arquivo .json)</button>
             <input type="file" id="importAnamneseFile" accept=".json" style="display:none" onchange="importarAnamnese(event)">
-            <div style="font-size:0.68rem;color:var(--text-3);margin-top:5px;">Suba o arquivo .json que o aluno gerou na anamnese — preenche nome, peso, altura, idade, sexo e calcula a TMB automaticamente.</div>
+            <button type="button" onclick="importarAnamneseColada()" style="width:100%;background:var(--bg-2);color:var(--orange);border:1px solid var(--orange);border-radius:8px;padding:10px;font-weight:700;cursor:pointer;margin-top:8px;">📨 Importar anamnese (colar do e-mail)</button>
+            <div style="font-size:0.68rem;color:var(--text-3);margin-top:5px;">Recebeu por e-mail? Copie o e-mail todo (ou só o trecho de dados) e use "colar do e-mail" — preenche nome, peso, altura, idade, sexo e calcula a TMB.</div>
           </div>
         </div>
 
@@ -7883,56 +7884,73 @@ async function vincularPessoaAtual() {
 // ============================================================
 // IMPORTAR ANAMNESE (v3.14) — lê o .json gerado na anamnese
 // ============================================================
+function _aplicarAnamnese(pacote) {
+  if (!pacote || pacote.tipo !== 'mgcoach_anamnese') {
+    toastNutri('Esse conteúdo não é uma anamnese do MG COACH', 'aviso');
+    return false;
+  }
+  const b = pacote.basico || {};
+  const n = pacote.nutri || {};
+  const set = (id, v) => { const el = document.getElementById(id); if (el != null && v != null && v !== '') el.value = v; };
+
+  set('cliNome', b.nome);
+  set('cliSexo', b.sexo);
+  set('cliIdade', b.idade);
+  set('cliTel', b.contato);
+  set('cliAltura', b.altura);
+  set('cliPeso', n.peso);
+
+  const r = pacote.respostasCompletas || {};
+  const linhas = [];
+  if (n.objetivo) linhas.push('Objetivo: ' + n.objetivo);
+  if (n.prazo) linhas.push('Prazo: ' + n.prazo);
+  if (n.profissao) linhas.push('Profissão: ' + n.profissao);
+  if (n.cidade) linhas.push('Cidade: ' + n.cidade);
+  if (r.q_alimentosFav) linhas.push('Alimentos favoritos: ' + r.q_alimentosFav);
+  if (r.q_alimentosNao) linhas.push('Não come: ' + r.q_alimentosNao);
+  if (r.q_medicamentos) linhas.push('Medicamentos: ' + r.q_medicamentos);
+  if (r.q_lesaoDesc) linhas.push('Lesões: ' + r.q_lesaoDesc);
+  if (r.q_observacoes) linhas.push('Observações: ' + r.q_observacoes);
+  const elObs = document.getElementById('cliObs') || document.getElementById('cliObservacoes');
+  if (elObs && linhas.length) {
+    elObs.value = (elObs.value ? elObs.value + '\n\n' : '') + '— Da anamnese —\n' + linhas.join('\n');
+  }
+
+  if (typeof calcularTMB === 'function') { try { calcularTMB(); } catch (e) {} }
+  toastNutri('✅ Anamnese de ' + (b.nome || 'aluno') + ' importada! Confira os dados e salve.');
+  return true;
+}
+
 async function importarAnamnese(event) {
   const file = event.target.files[0];
   if (!file) return;
   try {
     const texto = await file.text();
-    const pacote = JSON.parse(texto);
-    if (pacote.tipo !== 'mgcoach_anamnese') {
-      toastNutri('Esse arquivo não é uma anamnese do MG COACH', 'aviso');
-      event.target.value = '';
-      return;
-    }
-    const b = pacote.basico || {};
-    const n = pacote.nutri || {};
-    const set = (id, v) => { const el = document.getElementById(id); if (el != null && v != null && v !== '') el.value = v; };
-
-    // Preenche os campos básicos (vão pro cadastro compartilhado ao salvar)
-    set('cliNome', b.nome);
-    set('cliSexo', b.sexo);
-    set('cliIdade', b.idade);
-    set('cliTel', b.contato);
-    set('cliAltura', b.altura);
-    // Peso e ficha do NUTRI
-    set('cliPeso', n.peso);
-
-    // Monta observações ricas a partir das respostas completas
-    const r = pacote.respostasCompletas || {};
-    const linhas = [];
-    if (n.objetivo) linhas.push('Objetivo: ' + n.objetivo);
-    if (n.prazo) linhas.push('Prazo: ' + n.prazo);
-    if (n.profissao) linhas.push('Profissão: ' + n.profissao);
-    if (n.cidade) linhas.push('Cidade: ' + n.cidade);
-    if (r.q_alimentosFav) linhas.push('Alimentos favoritos: ' + r.q_alimentosFav);
-    if (r.q_alimentosNao) linhas.push('Não come: ' + r.q_alimentosNao);
-    if (r.q_medicamentos) linhas.push('Medicamentos: ' + r.q_medicamentos);
-    if (r.q_lesaoDesc) linhas.push('Lesões: ' + r.q_lesaoDesc);
-    if (r.q_observacoes) linhas.push('Observações: ' + r.q_observacoes);
-    const elObs = document.getElementById('cliObs') || document.getElementById('cliObservacoes');
-    if (elObs && linhas.length) {
-      elObs.value = (elObs.value ? elObs.value + '\n\n' : '') + '— Da anamnese —\n' + linhas.join('\n');
-    }
-
-    // Recalcula TMB com os dados preenchidos
-    if (typeof calcularTMB === 'function') { try { calcularTMB(); } catch (e) {} }
-
-    toastNutri('✅ Anamnese de ' + (b.nome || 'aluno') + ' importada! Confira os dados e salve.');
+    _aplicarAnamnese(JSON.parse(texto));
   } catch (e) {
     console.error('importarAnamnese', e);
     toastNutri('Erro ao ler a anamnese: ' + e.message, 'aviso');
   }
   event.target.value = '';
+}
+
+// Importa colando o e-mail (extrai o JSON entre os marcadores)
+function importarAnamneseColada() {
+  const texto = prompt('Cole aqui o e-mail da anamnese (ou só o trecho de dados):');
+  if (!texto) return;
+  try {
+    let jsonStr = texto.trim();
+    // se veio o e-mail inteiro, extrai o que está entre os marcadores
+    const ini = texto.indexOf('###MGCOACH_INICIO###');
+    const fim = texto.indexOf('###MGCOACH_FIM###');
+    if (ini !== -1 && fim !== -1) {
+      jsonStr = texto.substring(ini + '###MGCOACH_INICIO###'.length, fim).trim();
+    }
+    _aplicarAnamnese(JSON.parse(jsonStr));
+  } catch (e) {
+    console.error('importarAnamneseColada', e);
+    toastNutri('Não consegui ler os dados. Cole o e-mail completo ou o trecho entre as linhas.', 'aviso');
+  }
 }
 
 // ============================================================
