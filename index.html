@@ -2355,7 +2355,7 @@
         </div>
         <div class="brand-meta-item">
           <span>Versão</span>
-          <strong>3.13.0</strong>
+          <strong>3.14.0</strong>
         </div>
       </div>
     </div>
@@ -2623,6 +2623,11 @@
             <button type="button" onclick="vincularPessoaAtual()" class="btn-mini" style="flex:0 0 auto;background:var(--orange);color:#1a1a1a;border:none;border-radius:8px;padding:9px 12px;font-weight:700;cursor:pointer;white-space:nowrap;">💾 Salvar aluno</button>
           </div>
           <div style="font-size:0.7rem;color:var(--text-3);margin-top:6px;">Preencha nome, sexo, nascimento, telefone e altura abaixo e toque em "Salvar aluno" para compartilhar com TRAIN e Organizer. Ou escolha um já cadastrado.</div>
+          <div style="margin-top:10px;border-top:1px dashed var(--border);padding-top:10px;">
+            <button type="button" onclick="document.getElementById('importAnamneseFile').click()" style="width:100%;background:var(--bg-2);color:var(--orange);border:1px solid var(--orange);border-radius:8px;padding:10px;font-weight:700;cursor:pointer;">📋 Importar anamnese (.json)</button>
+            <input type="file" id="importAnamneseFile" accept=".json" style="display:none" onchange="importarAnamnese(event)">
+            <div style="font-size:0.68rem;color:var(--text-3);margin-top:5px;">Suba o arquivo .json que o aluno gerou na anamnese — preenche nome, peso, altura, idade, sexo e calcula a TMB automaticamente.</div>
+          </div>
         </div>
 
         <div class="field-grid" style="grid-template-columns: 2fr 1fr 1fr 1fr;">
@@ -3158,7 +3163,7 @@
   </div>
 
   <p class="footer-note">
-    <strong>NUTRI.FUEL · v3.13.0</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
+    <strong>NUTRI.FUEL · v3.14.0</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
   </p>
   
   <!-- ============== ÁREA DO PDF (oculta na tela, visível na impressão) ============== -->
@@ -6800,7 +6805,7 @@ async function exportarHTML() {
 // ============================================================
 function exportarJSON() {
   const data = {
-    versao: '3.13.0',
+    versao: '3.14.0',
     planos: planosParaJSON(),          // novo: salva todos os 4 planos (com opções alternativas)
     plano: planoParaJSON(getPlanoAtivo()), // legacy: para compatibilidade com importações antigas
     metas,
@@ -7029,7 +7034,7 @@ function exportarTexto() {
 // INIT
 // ============================================================
 render();
-console.log(`✅ NUTRI.FUEL v3.13.0 carregado`);
+console.log(`✅ NUTRI.FUEL v3.14.0 carregado`);
 
 // ============================================================
 // MÓDULO PACIENTES v3.8 — IndexedDB, CRUD, Avaliações, Import/Export
@@ -7876,6 +7881,61 @@ async function vincularPessoaAtual() {
 }
 
 // ============================================================
+// IMPORTAR ANAMNESE (v3.14) — lê o .json gerado na anamnese
+// ============================================================
+async function importarAnamnese(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  try {
+    const texto = await file.text();
+    const pacote = JSON.parse(texto);
+    if (pacote.tipo !== 'mgcoach_anamnese') {
+      toastNutri('Esse arquivo não é uma anamnese do MG COACH', 'aviso');
+      event.target.value = '';
+      return;
+    }
+    const b = pacote.basico || {};
+    const n = pacote.nutri || {};
+    const set = (id, v) => { const el = document.getElementById(id); if (el != null && v != null && v !== '') el.value = v; };
+
+    // Preenche os campos básicos (vão pro cadastro compartilhado ao salvar)
+    set('cliNome', b.nome);
+    set('cliSexo', b.sexo);
+    set('cliIdade', b.idade);
+    set('cliTel', b.contato);
+    set('cliAltura', b.altura);
+    // Peso e ficha do NUTRI
+    set('cliPeso', n.peso);
+
+    // Monta observações ricas a partir das respostas completas
+    const r = pacote.respostasCompletas || {};
+    const linhas = [];
+    if (n.objetivo) linhas.push('Objetivo: ' + n.objetivo);
+    if (n.prazo) linhas.push('Prazo: ' + n.prazo);
+    if (n.profissao) linhas.push('Profissão: ' + n.profissao);
+    if (n.cidade) linhas.push('Cidade: ' + n.cidade);
+    if (r.q_alimentosFav) linhas.push('Alimentos favoritos: ' + r.q_alimentosFav);
+    if (r.q_alimentosNao) linhas.push('Não come: ' + r.q_alimentosNao);
+    if (r.q_medicamentos) linhas.push('Medicamentos: ' + r.q_medicamentos);
+    if (r.q_lesaoDesc) linhas.push('Lesões: ' + r.q_lesaoDesc);
+    if (r.q_observacoes) linhas.push('Observações: ' + r.q_observacoes);
+    const elObs = document.getElementById('cliObs') || document.getElementById('cliObservacoes');
+    if (elObs && linhas.length) {
+      elObs.value = (elObs.value ? elObs.value + '\n\n' : '') + '— Da anamnese —\n' + linhas.join('\n');
+    }
+
+    // Recalcula TMB com os dados preenchidos
+    if (typeof calcularTMB === 'function') { try { calcularTMB(); } catch (e) {} }
+
+    toastNutri('✅ Anamnese de ' + (b.nome || 'aluno') + ' importada! Confira os dados e salve.');
+  } catch (e) {
+    console.error('importarAnamnese', e);
+    toastNutri('Erro ao ler a anamnese: ' + e.message, 'aviso');
+  }
+  event.target.value = '';
+}
+
+// ============================================================
 // AÇÕES — Novo, Abrir, Salvar, Excluir
 // ============================================================
 function novoPaciente() {
@@ -8115,7 +8175,7 @@ async function exportarTodosPacientes() {
   if (pacientes.length === 0 && receitas.length === 0) { toastNutri('Nenhum paciente para exportar', 'aviso'); return; }
   const pacote = {
     tipo: 'nutrifuel_backup_completo',
-    versao_app: '3.13.0',
+    versao_app: '3.14.0',
     pacientes, versoes, avaliacoes, receitas,
     exportadoEm: new Date().toISOString()
   };
@@ -8151,7 +8211,7 @@ async function salvarNoDrive() {
   }
   const pacote = {
     tipo: 'nutrifuel_backup_completo',
-    versao_app: '3.13.0',
+    versao_app: '3.14.0',
     pacientes, versoes, avaliacoes, receitas,
     exportadoEm: new Date().toISOString()
   };
@@ -8221,7 +8281,7 @@ async function gerarBackupAutomatico() {
 
   const pacote = {
     tipo: 'nutrifuel_backup_completo',
-    versao_app: '3.13.0',
+    versao_app: '3.14.0',
     automatico: true,
     pacientes, versoes, avaliacoes, receitas,
     exportadoEm: new Date().toISOString()
