@@ -691,6 +691,7 @@
     transition: all 0.15s;
   }
   .opcao-add-btn:hover { background: var(--orange-soft); }
+  .opcao-bar-solo { justify-content: flex-start; }
   .opcao-aviso {
     font-size: 0.72rem;
     color: #f7a73a;
@@ -2355,7 +2356,7 @@
         </div>
         <div class="brand-meta-item">
           <span>Versão</span>
-          <strong>3.14.0</strong>
+          <strong>3.14.1</strong>
         </div>
       </div>
     </div>
@@ -3164,7 +3165,7 @@
   </div>
 
   <p class="footer-note">
-    <strong>NUTRI.FUEL · v3.14.0</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
+    <strong>NUTRI.FUEL · v3.14.1</strong> — Base nutricional: TACO 4ª ed. (UNICAMP) + USDA FoodData Central. Os valores são aproximados e variam conforme preparo, marca e procedência. Fórmulas: Mifflin-St Jeor (1990), Harris-Benedict revisada (Roza & Shizgal 1984), Katch-McArdle, Cunningham.
   </p>
   
   <!-- ============== ÁREA DO PDF (oculta na tela, visível na impressão) ============== -->
@@ -5115,6 +5116,14 @@ function render() {
           <button type="button" class="opcao-add-btn" data-meal="${key}">➕ Alternativa</button>
         </div>
         ${avisoHtml}`;
+    } else {
+      // Refeição com 1 opção: ainda assim mostra o botão pra criar a 1ª alternativa.
+      // (até a v3.14.0 o botão só existia com 2+ opções → era impossível criar a primeira)
+      opcoesHtml = `
+        <div class="opcao-bar opcao-bar-solo">
+          <div class="opcao-tabs"></div>
+          <button type="button" class="opcao-add-btn" data-meal="${key}">➕ Adicionar refeição alternativa</button>
+        </div>`;
     }
 
     const card = document.createElement('div');
@@ -7035,7 +7044,7 @@ function exportarTexto() {
 // INIT
 // ============================================================
 render();
-console.log(`✅ NUTRI.FUEL v3.14.0 carregado`);
+console.log(`✅ NUTRI.FUEL v3.14.1 carregado`);
 
 // ============================================================
 // MÓDULO PACIENTES v3.8 — IndexedDB, CRUD, Avaliações, Import/Export
